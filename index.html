@@ -1,0 +1,2351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INDOOR SPORT SAS - Dashboard de Flujo de Caja</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background: #F1F5F9; margin: 0; }
+        .tab-active { border-bottom: 3px solid #1E40AF; color: #1E40AF; font-weight: 600; }
+        .tab-inactive { color: #64748B; }
+        .tab-inactive:hover { color: #1E40AF; background: #EFF6FF; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; }
+        .drop-zone { border: 2px dashed #CBD5E1; border-radius: 12px; padding: 48px; text-align: center; transition: all 0.3s; }
+        .drop-zone.active { border-color: #1E40AF; background: #EFF6FF; }
+        .badge-green { background: #DCFCE7; color: #166534; }
+        .badge-red { background: #FEE2E2; color: #991B1B; }
+        .badge-yellow { background: #FEF9C3; color: #854D0E; }
+        .badge-blue { background: #DBEAFE; color: #1E40AF; }
+        input[type="range"] { -webkit-appearance: none; height: 8px; border-radius: 4px; background: #E2E8F0; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #1E40AF; cursor: pointer; }
+        .chart-container { position: relative; width: 100%; }
+        table th { position: sticky; top: 0; background: #F8FAFC; z-index: 1; }
+        .health-indicator { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .editable-cell:hover { background: #EFF6FF; cursor: pointer; }
+        .pagination-btn { min-width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+        .pagination-btn.active { background: #1E40AF; color: white; }
+        .pagination-btn:not(.active):hover { background: #E2E8F0; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #F1F5F9; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+        // ==================== UTILITY FUNCTIONS ====================
+        const formatCOP = (num) => {
+            if (num === null || num === undefined || isNaN(num)) return '$0';
+            const abs = Math.abs(Math.round(num));
+            const formatted = abs.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            return num < 0 ? `-$${formatted}` : `$${formatted}`;
+        };
+
+        const formatDate = (date) => {
+            if (!date) return '';
+            const d = new Date(date);
+            if (isNaN(d.getTime())) return '';
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        };
+
+        const parseDate = (val) => {
+            if (!val) return null;
+            if (val instanceof Date) return val;
+            if (typeof val === 'number') {
+                const d = new Date((val - 25569) * 86400 * 1000);
+                return isNaN(d.getTime()) ? null : d;
+            }
+            const str = String(val).trim();
+            // DD/MM/YYYY
+            let m = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+            if (m) return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+            // YYYY-MM-DD
+            m = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+            if (m) return new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+            const d = new Date(str);
+            return isNaN(d.getTime()) ? null : d;
+        };
+
+        const cleanNumber = (val) => {
+            if (val === null || val === undefined || val === '') return 0;
+            if (typeof val === 'number') return val;
+            const str = String(val).replace(/[^\d.,-]/g, '').replace(/\./g, '').replace(',', '.');
+            return parseFloat(str) || 0;
+        };
+
+        // ==================== CATEGORIZATION ENGINE ====================
+        const categorizeTransaction = (desc, amount) => {
+            const d = (desc || '').toUpperCase().trim();
+            // PROVEEDORES
+            if (d.includes('PAGO A PROVE') || d.includes('PAGO DE PROV') || d.includes('COMPRA EN')) {
+                let vendor = d;
+                if (d.includes('PAGO A PROVE')) vendor = d.split('PAGO A PROVE')[1] || d;
+                else if (d.includes('PAGO DE PROV')) vendor = d.split('PAGO DE PROV')[1] || d;
+                else if (d.includes('COMPRA EN')) vendor = d.split('COMPRA EN')[1] || d;
+                vendor = vendor.replace(/^[^A-Z]*/, '').trim() || 'SIN NOMBRE';
+                return { category: 'PROVEEDORES', vendor: vendor.substring(0, 40) };
+            }
+            // INGRESOS
+            if (amount > 0 && (d.includes('CONSIGNACION') || d.includes('TRANSFERENCIA DESDE') || d.includes('PAGO INTERBANC') || d.includes('PAGO QR') || d.includes('ABONO') || d.includes('DEPOSITO'))) {
+                return { category: 'INGRESOS', vendor: null };
+            }
+            // GASTOS FINANCIEROS (check before operacionales for overlap)
+            if (d.includes('RETEFUENTE') || d.includes('PAGO INTERES') || (d.includes('COMISION') && (d.includes('BANC') || d.includes('FINANC')))) {
+                return { category: 'GASTOS FINANCIEROS', vendor: null };
+            }
+            // GASTOS OPERACIONALES
+            if (d.includes('CUOTA') || d.includes('IVA') || d.includes('COMISION') || d.includes('INTERES') || d.includes('MANTENIMIENTO') || d.includes('TRANSFERENCIA CANAL') || d.includes('PSE') || d.includes('RETIRO')) {
+                return { category: 'GASTOS OPERACIONALES', vendor: null };
+            }
+            // MOVIMIENTOS INTERNOS
+            if (d.includes('TRASLADO') || d.includes('FONDO DE INVERSION') || d.includes('SUC VIRTUAL') || d.includes('CTA SUC')) {
+                return { category: 'MOVIMIENTOS INTERNOS', vendor: null };
+            }
+            // INGRESOS if positive
+            if (amount > 0) return { category: 'INGRESOS', vendor: null };
+            return { category: 'OTROS', vendor: null };
+        };
+
+        // ==================== DEMO DATA GENERATOR ====================
+        const generateDemoData = () => {
+            const txns = [];
+            let balance = 181146049;
+            const startDate = new Date(2026, 1, 1); // Feb 1 2026
+
+            const vendors = [
+                { name: 'TEXTILES DEL SUR SAS', range: [8000000, 25000000] },
+                { name: 'HILOS Y CONFECCIONES ANTIOQUIA', range: [3000000, 8000000] },
+                { name: 'TELAS INDUSTRIALES MEDELLIN', range: [5000000, 15000000] },
+                { name: 'DISTRIBUIDORA DE ELASTICOS LTDA', range: [1000000, 4000000] },
+                { name: 'QUIMICA TEXTIL COLOMBIA SAS', range: [2000000, 6000000] },
+                { name: 'ESTAMPADOS Y SUBLIMADOS EXPRESS', range: [1500000, 5000000] },
+                { name: 'EMPAQUES Y ETIQUETAS DEL VALLE', range: [800000, 3000000] },
+                { name: 'TRANSPORTES ENVIOS RAPIDOS', range: [1200000, 4500000] },
+                { name: 'CONFECCIONES EL PROGRESO', range: [2000000, 7000000] },
+                { name: 'INSUMOS DEPORTIVOS NACIONALES', range: [3000000, 10000000] },
+            ];
+
+            const incomeDescs = [
+                'CONSIGNACION CLIENTE ALMACENES EXITO',
+                'TRANSFERENCIA DESDE FALABELLA COLOMBIA',
+                'PAGO INTERBANC DEPORTES MUNDIAL',
+                'CONSIGNACION CLIENTE DECATHLON CO',
+                'PAGO QR TIENDA VIRTUAL INDOOR',
+                'ABONO CARTERA DISTRIBUIDORA NORTE',
+                'TRANSFERENCIA DESDE ALKOSTO SA',
+                'DEPOSITO EFECTIVO PUNTO VENTA ITAGUI',
+                'CONSIGNACION CLIENTE MERCADO LIBRE',
+                'PAGO INTERBANC OLIMPICA SA',
+            ];
+
+            const opExpenses = [
+                { desc: 'CUOTA LEASING MAQUINA CORTE INDUSTRIAL', range: [4500000, 4500000] },
+                { desc: 'IVA DECLARACION BIMESTRAL', range: [8000000, 12000000] },
+                { desc: 'MANTENIMIENTO PLANTA PRODUCCION', range: [1500000, 3000000] },
+                { desc: 'PSE PAGO SERVICIOS PUBLICOS EPM', range: [2800000, 3500000] },
+                { desc: 'RETIRO CAJERO NOMINA OPERARIOS', range: [15000000, 22000000] },
+                { desc: 'TRANSFERENCIA CANAL PAGO ARRIENDO LOCAL', range: [5500000, 5500000] },
+                { desc: 'PSE PAGO SEGURIDAD SOCIAL', range: [6000000, 8000000] },
+                { desc: 'CUOTA CREDITO ROTATIVO BANCOLOMBIA', range: [3200000, 3200000] },
+                { desc: 'PSE PAGO ARL SURA', range: [1800000, 2200000] },
+                { desc: 'RETIRO CAJERO GASTOS MENORES', range: [500000, 1500000] },
+            ];
+
+            const finExpenses = [
+                { desc: 'COMISION BANCARIA MANEJO CUENTA', range: [180000, 250000] },
+                { desc: 'RETEFUENTE RENDIMIENTOS FINANCIEROS', range: [120000, 350000] },
+                { desc: 'PAGO INTERES CREDITO EMPRESARIAL', range: [1800000, 2200000] },
+                { desc: 'COMISION TRANSFERENCIAS ACH', range: [50000, 150000] },
+                { desc: 'INTERES MORA PAGO TARDIO', range: [80000, 200000] },
+            ];
+
+            const internal = [
+                { desc: 'TRASLADO CUENTA AHORRO A CORRIENTE', range: [10000000, 30000000] },
+                { desc: 'FONDO DE INVERSION BANCOLOMBIA', range: [5000000, 15000000] },
+                { desc: 'TRASLADO ENTRE CUENTAS SUC VIRTUAL', range: [3000000, 8000000] },
+            ];
+
+            const rand = (min, max) => Math.round(min + Math.random() * (max - min));
+            const roundTo = (n, r) => Math.round(n / r) * r;
+
+            // Generate ~100 transactions spread across February 2026
+            for (let day = 1; day <= 28; day++) {
+                const date = new Date(2026, 1, day);
+                const dow = date.getDay();
+                if (dow === 0) continue; // skip Sundays
+
+                const numTxns = dow === 6 ? rand(1, 2) : rand(2, 5);
+
+                for (let t = 0; t < numTxns; t++) {
+                    const r = Math.random();
+                    let desc, amount, isIncome;
+
+                    if (r < 0.30) {
+                        // Income
+                        desc = incomeDescs[rand(0, incomeDescs.length - 1)];
+                        amount = roundTo(rand(5000000, 45000000), 100000);
+                        isIncome = true;
+                    } else if (r < 0.55) {
+                        // Vendor payment
+                        const v = vendors[rand(0, vendors.length - 1)];
+                        desc = `PAGO A PROVEEDOR ${v.name}`;
+                        amount = roundTo(rand(v.range[0], v.range[1]), 10000);
+                        isIncome = false;
+                    } else if (r < 0.78) {
+                        // Operational expense
+                        const e = opExpenses[rand(0, opExpenses.length - 1)];
+                        desc = e.desc;
+                        amount = roundTo(rand(e.range[0], e.range[1]), 10000);
+                        isIncome = false;
+                    } else if (r < 0.88) {
+                        // Financial expense
+                        const e = finExpenses[rand(0, finExpenses.length - 1)];
+                        desc = e.desc;
+                        amount = roundTo(rand(e.range[0], e.range[1]), 10000);
+                        isIncome = false;
+                    } else {
+                        // Internal
+                        const e = internal[rand(0, internal.length - 1)];
+                        desc = e.desc;
+                        amount = roundTo(rand(e.range[0], e.range[1]), 1000000);
+                        isIncome = Math.random() > 0.5;
+                    }
+
+                    if (isIncome) {
+                        balance += amount;
+                        txns.push({ date, description: desc, income: amount, expense: 0, balance });
+                    } else {
+                        balance -= amount;
+                        txns.push({ date, description: desc, income: 0, expense: amount, balance });
+                    }
+                }
+            }
+
+            // Sort by date
+            txns.sort((a, b) => a.date - b.date);
+
+            // Recalculate balances
+            let bal = 181146049;
+            txns.forEach(tx => {
+                bal = bal + tx.income - tx.expense;
+                tx.balance = bal;
+            });
+
+            return txns.map((tx, i) => {
+                const net = tx.income - tx.expense;
+                const cat = categorizeTransaction(tx.description, net);
+                return {
+                    id: i + 1,
+                    date: tx.date,
+                    description: tx.description,
+                    income: tx.income,
+                    expense: tx.expense,
+                    balance: tx.balance,
+                    category: cat.category,
+                    vendor: cat.vendor,
+                    originalCategory: cat.category,
+                };
+            });
+        };
+
+        // ==================== PARSE EXCEL ====================
+        const parseExcelFile = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const wb = XLSX.read(data, { type: 'array', cellDates: true });
+                        const sheet = wb.Sheets[wb.SheetNames[0]];
+                        const json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+                        if (json.length === 0) { reject('El archivo no contiene datos'); return; }
+
+                        // Auto-detect column headers
+                        const headers = Object.keys(json[0]);
+                        const findCol = (keywords) => headers.find(h => keywords.some(k => h.toUpperCase().includes(k)));
+
+                        const dateCol = findCol(['FECHA', 'DATE']);
+                        const descCol = findCol(['DESCRIPCION', 'CONCEPTO', 'DETALLE', 'REFERENCIA', 'DESCRIPTION']);
+                        const incomeCol = findCol(['INGRESO', 'CREDITO', 'ABONO', 'DEPOSITO', 'CREDIT']);
+                        const expenseCol = findCol(['EGRESO', 'DEBITO', 'CARGO', 'RETIRO', 'DEBIT']);
+                        const balanceCol = findCol(['SALDO', 'BALANCE']);
+                        const amountCol = findCol(['VALOR', 'MONTO', 'AMOUNT']);
+
+                        if (!dateCol && !descCol) {
+                            reject('No se pudieron detectar las columnas del extracto. Asegurese que tenga columnas de Fecha y Descripcion.');
+                            return;
+                        }
+
+                        const transactions = json.map((row, i) => {
+                            const date = parseDate(row[dateCol]);
+                            if (!date) return null;
+
+                            let income = 0, expense = 0;
+                            if (incomeCol && expenseCol) {
+                                income = Math.abs(cleanNumber(row[incomeCol]));
+                                expense = Math.abs(cleanNumber(row[expenseCol]));
+                            } else if (amountCol) {
+                                const val = cleanNumber(row[amountCol]);
+                                if (val > 0) income = val;
+                                else expense = Math.abs(val);
+                            }
+
+                            const bal = balanceCol ? cleanNumber(row[balanceCol]) : 0;
+                            const desc = String(row[descCol] || '').trim();
+                            const net = income - expense;
+                            const cat = categorizeTransaction(desc, net);
+
+                            return {
+                                id: i + 1,
+                                date,
+                                description: desc,
+                                income,
+                                expense,
+                                balance: bal,
+                                category: cat.category,
+                                vendor: cat.vendor,
+                                originalCategory: cat.category,
+                            };
+                        }).filter(Boolean);
+
+                        if (transactions.length === 0) {
+                            reject('No se encontraron transacciones validas en el archivo.');
+                            return;
+                        }
+
+                        resolve(transactions);
+                    } catch (err) {
+                        reject('Error al procesar el archivo: ' + err.message);
+                    }
+                };
+                reader.onerror = () => reject('Error al leer el archivo');
+                reader.readAsArrayBuffer(file);
+            });
+        };
+
+        // ==================== CHART HELPER ====================
+        const useChart = (canvasRef, configFn, deps) => {
+            const chartRef = useRef(null);
+            useEffect(() => {
+                if (!canvasRef.current) return;
+                if (chartRef.current) chartRef.current.destroy();
+                const ctx = canvasRef.current.getContext('2d');
+                chartRef.current = new Chart(ctx, configFn());
+                return () => { if (chartRef.current) chartRef.current.destroy(); };
+            }, deps);
+        };
+
+        // ==================== MAIN APP ====================
+        function App() {
+            const [transactions, setTransactions] = useState([]);
+            const [activeTab, setActiveTab] = useState(0);
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [fileName, setFileName] = useState('');
+            const [invoices, setInvoices] = useState([]);
+            const [allMonthsData, setAllMonthsData] = useState([]);
+
+            const tabs = [
+                { name: 'Resumen', icon: '\u{1F4CA}' },
+                { name: 'Proveedores', icon: '\u{1F3ED}' },
+                { name: 'Flujo Diario', icon: '\u{1F4C8}' },
+                { name: 'Recurrentes', icon: '\u{1F504}' },
+                { name: 'Proyecciones', icon: '\u{1F52E}' },
+                { name: 'Transacciones', icon: '\u{1F4CB}' },
+                { name: 'Cargar Facturas', icon: '\u{1F4C4}' },
+                { name: 'Comparativo', icon: '\u{2696}' },
+            ];
+
+            const loadDemoData = () => {
+                const data = generateDemoData();
+                setTransactions(data);
+                setFileName('datos_demo_febrero_2026.xlsx');
+                setAllMonthsData([{ month: 'Febrero 2026', data }]);
+                setActiveTab(0);
+                setError(null);
+            };
+
+            const handleFile = async (file) => {
+                if (!file) return;
+                if (!file.name.match(/\.xlsx?$/i)) {
+                    setError('Por favor cargue un archivo Excel (.xlsx)');
+                    return;
+                }
+                setLoading(true);
+                setError(null);
+                try {
+                    const data = await parseExcelFile(file);
+                    setTransactions(data);
+                    setFileName(file.name);
+                    const monthKey = data[0]?.date ? `${data[0].date.toLocaleString('es-CO', { month: 'long', year: 'numeric' })}` : 'Desconocido';
+                    setAllMonthsData(prev => {
+                        const existing = prev.filter(m => m.month !== monthKey);
+                        return [...existing, { month: monthKey, data }];
+                    });
+                    setActiveTab(0);
+                } catch (err) {
+                    setError(typeof err === 'string' ? err : err.message);
+                }
+                setLoading(false);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const file = e.dataTransfer?.files?.[0];
+                if (file) handleFile(file);
+            };
+
+            const handleFileInput = (e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+            };
+
+            const exportToExcel = () => {
+                if (transactions.length === 0) return;
+                const wsData = transactions.map(tx => ({
+                    'Fecha': formatDate(tx.date),
+                    'Descripcion': tx.description,
+                    'Categoria': tx.category,
+                    'Proveedor': tx.vendor || '',
+                    'Ingreso': tx.income || '',
+                    'Egreso': tx.expense || '',
+                    'Saldo': tx.balance,
+                }));
+                const ws = XLSX.utils.json_to_sheet(wsData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Transacciones');
+
+                // Summary sheet
+                const summary = stats;
+                const sumData = [
+                    { 'Concepto': 'Saldo Inicial', 'Valor': summary.saldoInicial },
+                    { 'Concepto': 'Total Ingresos', 'Valor': summary.totalIncome },
+                    { 'Concepto': 'Total Egresos', 'Valor': summary.totalExpense },
+                    { 'Concepto': 'Flujo Neto', 'Valor': summary.netFlow },
+                    { 'Concepto': 'Saldo Final', 'Valor': summary.saldoFinal },
+                ];
+                const ws2 = XLSX.utils.json_to_sheet(sumData);
+                XLSX.utils.book_append_sheet(wb, ws2, 'Resumen');
+
+                XLSX.writeFile(wb, `analisis_indoor_sport_${new Date().toISOString().slice(0,10)}.xlsx`);
+            };
+
+            // ==================== COMPUTED STATS ====================
+            const stats = useMemo(() => {
+                if (transactions.length === 0) return null;
+                const sorted = [...transactions].sort((a, b) => a.date - b.date);
+                const totalIncome = sorted.reduce((s, t) => s + (t.income || 0), 0);
+                const totalExpense = sorted.reduce((s, t) => s + (t.expense || 0), 0);
+                const saldoInicial = sorted[0].balance - sorted[0].income + sorted[0].expense;
+                const saldoFinal = sorted[sorted.length - 1].balance;
+                const netFlow = totalIncome - totalExpense;
+                const reconciled = Math.abs((saldoInicial + totalIncome - totalExpense) - saldoFinal) < 100;
+
+                // Weekly breakdown
+                const weeks = {};
+                sorted.forEach(tx => {
+                    const d = tx.date;
+                    const weekStart = new Date(d);
+                    weekStart.setDate(d.getDate() - d.getDay() + 1);
+                    const key = formatDate(weekStart);
+                    if (!weeks[key]) weeks[key] = { income: 0, expense: 0, count: 0 };
+                    weeks[key].income += tx.income || 0;
+                    weeks[key].expense += tx.expense || 0;
+                    weeks[key].count++;
+                });
+
+                // Daily breakdown
+                const daily = {};
+                sorted.forEach(tx => {
+                    const key = formatDate(tx.date);
+                    if (!daily[key]) daily[key] = { income: 0, expense: 0, balance: tx.balance, date: tx.date };
+                    daily[key].income += tx.income || 0;
+                    daily[key].expense += tx.expense || 0;
+                    daily[key].balance = tx.balance;
+                });
+
+                // Category breakdown
+                const categories = {};
+                sorted.forEach(tx => {
+                    if (!categories[tx.category]) categories[tx.category] = { income: 0, expense: 0, count: 0 };
+                    categories[tx.category].income += tx.income || 0;
+                    categories[tx.category].expense += tx.expense || 0;
+                    categories[tx.category].count++;
+                });
+
+                // Vendor analysis
+                const vendorMap = {};
+                sorted.filter(t => t.vendor).forEach(tx => {
+                    const v = tx.vendor;
+                    if (!vendorMap[v]) vendorMap[v] = { name: v, total: 0, count: 0 };
+                    vendorMap[v].total += tx.expense || 0;
+                    vendorMap[v].count++;
+                });
+                const vendorList = Object.values(vendorMap).sort((a, b) => b.total - a.total);
+                const totalVendorSpend = vendorList.reduce((s, v) => s + v.total, 0);
+
+                // Recurring detection
+                const descCount = {};
+                sorted.forEach(tx => {
+                    const key = tx.description.substring(0, 40);
+                    if (!descCount[key]) descCount[key] = { desc: tx.description, amounts: [], count: 0 };
+                    descCount[key].amounts.push(tx.expense || tx.income || 0);
+                    descCount[key].count++;
+                });
+                const recurring = Object.values(descCount)
+                    .filter(d => d.count >= 2)
+                    .map(d => {
+                        const avg = d.amounts.reduce((s, a) => s + a, 0) / d.amounts.length;
+                        return { desc: d.desc, count: d.count, avgAmount: avg, annualEstimate: avg * 12 };
+                    })
+                    .sort((a, b) => b.annualEstimate - a.annualEstimate);
+
+                const minBalance = Math.min(...sorted.map(t => t.balance));
+                const maxBalance = Math.max(...sorted.map(t => t.balance));
+                const avgDailyExpense = totalExpense / Object.keys(daily).length;
+                const daysOfCoverage = Math.floor(saldoFinal / avgDailyExpense);
+
+                return {
+                    totalIncome, totalExpense, saldoInicial, saldoFinal, netFlow, reconciled,
+                    weeks, daily, categories, vendorList, totalVendorSpend, recurring,
+                    minBalance, maxBalance, avgDailyExpense, daysOfCoverage,
+                    period: sorted.length > 0 ? `${formatDate(sorted[0].date)} - ${formatDate(sorted[sorted.length - 1].date)}` : '',
+                    txCount: sorted.length,
+                };
+            }, [transactions]);
+
+            // ==================== UPLOAD SCREEN ====================
+            if (transactions.length === 0) {
+                return (
+                    <div className="min-h-screen bg-slate-100">
+                        <Header />
+                        <div className="max-w-3xl mx-auto px-4 py-16">
+                            <div className="card text-center">
+                                <div className="text-6xl mb-6">&#128200;</div>
+                                <h2 className="text-2xl font-bold text-slate-800 mb-2">Dashboard de Flujo de Caja</h2>
+                                <p className="text-slate-500 mb-8">Cargue su extracto bancario en formato Excel (.xlsx) para comenzar el analisis</p>
+                                <div
+                                    className="drop-zone mb-6"
+                                    onDrop={handleDrop}
+                                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('active'); }}
+                                    onDragLeave={(e) => e.currentTarget.classList.remove('active')}
+                                >
+                                    <div className="text-4xl mb-4">&#128194;</div>
+                                    <p className="text-lg text-slate-600 mb-2">Arrastre su archivo .xlsx aqui</p>
+                                    <p className="text-slate-400 mb-4">o</p>
+                                    <label className="inline-block bg-blue-800 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-blue-900 transition font-medium">
+                                        Seleccionar Archivo
+                                        <input type="file" accept=".xlsx,.xls" onChange={handleFileInput} className="hidden" />
+                                    </label>
+                                </div>
+                                {loading && <p className="text-blue-600 font-medium">Procesando archivo...</p>}
+                                {error && <p className="text-red-600 font-medium bg-red-50 p-3 rounded-lg">{error}</p>}
+                                <div className="border-t pt-6 mt-6">
+                                    <p className="text-slate-400 text-sm mb-3">O pruebe con datos de ejemplo:</p>
+                                    <button
+                                        onClick={loadDemoData}
+                                        className="bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition font-medium"
+                                    >
+                                        Cargar Datos Demo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-slate-100">
+                    <Header period={stats?.period} fileName={fileName} />
+                    <div className="max-w-7xl mx-auto px-4 py-4">
+                        {/* Reconciliation bar */}
+                        {stats && (
+                            <div className={`mb-4 p-3 rounded-lg flex items-center gap-2 text-sm font-medium ${stats.reconciled ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
+                                <span>{stats.reconciled ? '\u2705' : '\u26A0\uFE0F'}</span>
+                                <span>{stats.reconciled ? 'Conciliacion verificada: Saldo Inicial + Ingresos - Egresos = Saldo Final' : 'Advertencia: La conciliacion no cuadra exactamente. Revise las transacciones.'}</span>
+                                <div className="ml-auto flex gap-2">
+                                    <button onClick={exportToExcel} className="bg-blue-800 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-blue-900 transition">
+                                        Exportar Excel
+                                    </button>
+                                    <button onClick={loadDemoData} className="bg-slate-200 text-slate-700 px-4 py-1.5 rounded-lg text-sm hover:bg-slate-300 transition">
+                                        Datos Demo
+                                    </button>
+                                    <label className="bg-slate-200 text-slate-700 px-4 py-1.5 rounded-lg text-sm hover:bg-slate-300 transition cursor-pointer">
+                                        Cargar Otro Archivo
+                                        <input type="file" accept=".xlsx,.xls" onChange={handleFileInput} className="hidden" />
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Tabs */}
+                        <div className="bg-white rounded-xl shadow-sm mb-4 overflow-x-auto">
+                            <div className="flex">
+                                {tabs.map((tab, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => setActiveTab(i)}
+                                        className={`px-5 py-3.5 text-sm whitespace-nowrap transition ${activeTab === i ? 'tab-active' : 'tab-inactive'}`}
+                                    >
+                                        <span className="mr-1.5">{tab.icon}</span> {tab.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="fade-in" key={activeTab}>
+                            {activeTab === 0 && <TabResumen stats={stats} transactions={transactions} />}
+                            {activeTab === 1 && <TabProveedores stats={stats} transactions={transactions} setTransactions={setTransactions} />}
+                            {activeTab === 2 && <TabFlujoDiario stats={stats} transactions={transactions} />}
+                            {activeTab === 3 && <TabRecurrentes stats={stats} />}
+                            {activeTab === 4 && <TabProyecciones stats={stats} />}
+                            {activeTab === 5 && <TabTransacciones transactions={transactions} setTransactions={setTransactions} />}
+                            {activeTab === 6 && <TabFacturas invoices={invoices} setInvoices={setInvoices} transactions={transactions} />}
+                            {activeTab === 7 && <TabComparativo allMonthsData={allMonthsData} />}
+                        </div>
+                    </div>
+                    <Footer />
+                </div>
+            );
+        }
+
+        // ==================== HEADER COMPONENT ====================
+        function Header({ period, fileName }) {
+            return (
+                <header className="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-lg">
+                    <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl font-bold">IS</div>
+                            <div>
+                                <h1 className="text-xl font-bold tracking-tight">INDOOR SPORT SAS</h1>
+                                <p className="text-blue-200 text-sm">NIT 277.000.476-58 | Itagui, Antioquia</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="font-semibold text-lg">Dashboard de Flujo de Caja</p>
+                            {period && <p className="text-blue-200 text-sm">{period} {fileName && `| ${fileName}`}</p>}
+                        </div>
+                    </div>
+                </header>
+            );
+        }
+
+        // ==================== TAB 1: RESUMEN ====================
+        function TabResumen({ stats, transactions }) {
+            const weeklyChartRef = useRef(null);
+            const catChartRef = useRef(null);
+            const weekEntries = Object.entries(stats.weeks);
+
+            useChart(weeklyChartRef, () => ({
+                type: 'bar',
+                data: {
+                    labels: weekEntries.map(([k]) => k),
+                    datasets: [
+                        { label: 'Ingresos', data: weekEntries.map(([, v]) => v.income), backgroundColor: '#059669', borderRadius: 6 },
+                        { label: 'Egresos', data: weekEntries.map(([, v]) => v.expense), backgroundColor: '#DC2626', borderRadius: 6 },
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCOP(ctx.raw)}` } } },
+                    scales: { y: { ticks: { callback: (v) => formatCOP(v) } } }
+                }
+            }), [stats]);
+
+            useChart(catChartRef, () => {
+                const cats = Object.entries(stats.categories).filter(([k]) => k !== 'INGRESOS');
+                return {
+                    type: 'doughnut',
+                    data: {
+                        labels: cats.map(([k]) => k),
+                        datasets: [{ data: cats.map(([, v]) => v.expense), backgroundColor: ['#1E40AF', '#DC2626', '#F59E0B', '#8B5CF6', '#06B6D4', '#EC4899'] }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right', labels: { font: { size: 11 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${formatCOP(ctx.raw)}` } } }
+                    }
+                };
+            }, [stats]);
+
+            const freeCashFlow = stats.netFlow > 0 ? stats.netFlow : 0;
+            const healthScore = stats.daysOfCoverage >= 30 ? 'green' : stats.daysOfCoverage >= 15 ? 'yellow' : 'red';
+            const marginPct = ((stats.netFlow / stats.totalIncome) * 100).toFixed(1);
+
+            return (
+                <div className="space-y-4">
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <SummaryCard title="Saldo Inicial" value={formatCOP(stats.saldoInicial)} color="blue" />
+                        <SummaryCard title="Total Ingresos" value={formatCOP(stats.totalIncome)} color="green" sub={`${stats.txCount} transacciones`} />
+                        <SummaryCard title="Total Egresos" value={formatCOP(stats.totalExpense)} color="red" />
+                        <SummaryCard title="Flujo Neto" value={formatCOP(stats.netFlow)} color={stats.netFlow >= 0 ? 'green' : 'red'} sub={`Margen: ${marginPct}%`} />
+                        <SummaryCard title="Saldo Final" value={formatCOP(stats.saldoFinal)} color="blue" />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {/* Weekly Chart */}
+                        <div className="card lg:col-span-2">
+                            <h3 className="font-semibold text-slate-700 mb-3">Ingresos vs Egresos por Semana</h3>
+                            <div style={{ height: 300 }}><canvas ref={weeklyChartRef}></canvas></div>
+                        </div>
+                        {/* Category Breakdown */}
+                        <div className="card">
+                            <h3 className="font-semibold text-slate-700 mb-3">Distribucion de Gastos</h3>
+                            <div style={{ height: 300 }}><canvas ref={catChartRef}></canvas></div>
+                        </div>
+                    </div>
+
+                    {/* Weekly Summary Table */}
+                    <div className="card">
+                        <h3 className="font-semibold text-slate-700 mb-3">Resumen Semanal</h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-left text-slate-500 border-b">
+                                        <th className="py-2 px-3">Semana</th>
+                                        <th className="py-2 px-3 text-right">Ingresos</th>
+                                        <th className="py-2 px-3 text-right">Egresos</th>
+                                        <th className="py-2 px-3 text-right">Neto</th>
+                                        <th className="py-2 px-3 text-right">Transacciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {weekEntries.map(([k, v]) => (
+                                        <tr key={k} className="border-b border-slate-100 hover:bg-slate-50">
+                                            <td className="py-2 px-3 font-medium">{k}</td>
+                                            <td className="py-2 px-3 text-right text-green-600">{formatCOP(v.income)}</td>
+                                            <td className="py-2 px-3 text-right text-red-600">{formatCOP(v.expense)}</td>
+                                            <td className={`py-2 px-3 text-right font-medium ${v.income - v.expense >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCOP(v.income - v.expense)}</td>
+                                            <td className="py-2 px-3 text-right">{v.count}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Waterfall + Category Details */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="lg:col-span-2">
+                            <CashFlowWaterfall stats={stats} />
+                        </div>
+                        <CategoryDetailPanel stats={stats} />
+                    </div>
+
+                    {/* Top Transactions */}
+                    <TopTransactionsPanel transactions={transactions} />
+
+                    {/* Key Ratios */}
+                    <KeyRatiosPanel stats={stats} />
+
+                    {/* Expense Trends + Income Sources */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <ExpenseTrendPanel transactions={transactions} />
+                        <IncomeSourcesPanel transactions={transactions} />
+                    </div>
+
+                    {/* Health & Recommendations */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="card">
+                            <h3 className="font-semibold text-slate-700 mb-3">Indicadores de Salud Financiera</h3>
+                            <div className="space-y-3">
+                                <HealthRow label="Flujo de caja neto" status={stats.netFlow >= 0 ? 'green' : 'red'} detail={stats.netFlow >= 0 ? 'Positivo - La empresa genera efectivo' : 'Negativo - Se consume mas de lo que ingresa'} />
+                                <HealthRow label="Cobertura de gastos" status={healthScore} detail={`${stats.daysOfCoverage} dias de operacion cubiertos con saldo actual`} />
+                                <HealthRow label="Margen operativo" status={parseFloat(marginPct) >= 10 ? 'green' : parseFloat(marginPct) >= 0 ? 'yellow' : 'red'} detail={`Margen del ${marginPct}% sobre ingresos`} />
+                                <HealthRow label="Concentracion de proveedores" status={stats.vendorList.length > 0 && (stats.vendorList[0]?.total / stats.totalVendorSpend) > 0.4 ? 'yellow' : 'green'} detail={stats.vendorList[0] ? `Mayor proveedor: ${stats.vendorList[0].name} (${((stats.vendorList[0].total / stats.totalVendorSpend) * 100).toFixed(0)}%)` : 'Sin datos'} />
+                                <HealthRow label="Conciliacion bancaria" status={stats.reconciled ? 'green' : 'red'} detail={stats.reconciled ? 'Los saldos cuadran correctamente' : 'Diferencia en conciliacion detectada'} />
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <h3 className="font-semibold text-slate-700 mb-3">Recomendaciones Inteligentes</h3>
+                            <div className="space-y-3 text-sm">
+                                {stats.vendorList[0] && (
+                                    <RecommendationCard
+                                        icon="\u{1F3ED}"
+                                        title="Analisis de Proveedores"
+                                        text={`${stats.vendorList[0].name} representa el ${((stats.vendorList[0].total / stats.totalVendorSpend) * 100).toFixed(0)}% de compras. Considere negociar descuentos por volumen o diversificar proveedores.`}
+                                    />
+                                )}
+                                {freeCashFlow > 0 && (
+                                    <RecommendationCard
+                                        icon="\u{1F4B0}"
+                                        title="Oportunidad de Inversion"
+                                        text={`Flujo libre de ${formatCOP(freeCashFlow)}. Considere: CDTs a 90 dias (tasa ~12% EA), Fondos de Inversion Colectiva, o reinversion en maquinaria.`}
+                                    />
+                                )}
+                                <RecommendationCard
+                                    icon="\u{1F4B3}"
+                                    title="Optimizacion Financiera"
+                                    text={`Gastos financieros: ${formatCOP(stats.categories['GASTOS FINANCIEROS']?.expense || 0)}. Revise comisiones bancarias y negocie mejores tarifas con Bancolombia o Davivienda.`}
+                                />
+                                {stats.recurring.length > 0 && (
+                                    <RecommendationCard
+                                        icon="\u{1F504}"
+                                        title="Gastos Recurrentes"
+                                        text={`Se detectaron ${stats.recurring.length} gastos recurrentes. Los mayores: ${stats.recurring.slice(0, 2).map(r => r.desc.substring(0, 30)).join(', ')}. Revise si todos son necesarios.`}
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function SummaryCard({ title, value, color, sub }) {
+            const colors = { blue: 'border-blue-500 bg-blue-50', green: 'border-green-500 bg-green-50', red: 'border-red-500 bg-red-50', yellow: 'border-yellow-500 bg-yellow-50' };
+            const textColors = { blue: 'text-blue-800', green: 'text-green-700', red: 'text-red-700', yellow: 'text-yellow-700' };
+            return (
+                <div className={`card border-l-4 ${colors[color] || colors.blue}`}>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{title}</p>
+                    <p className={`text-lg font-bold mt-1 ${textColors[color]}`}>{value}</p>
+                    {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+                </div>
+            );
+        }
+
+        function HealthRow({ label, status, detail }) {
+            const colors = { green: 'bg-green-500', yellow: 'bg-yellow-400', red: 'bg-red-500' };
+            const icons = { green: '\u2705', yellow: '\u26A0\uFE0F', red: '\u274C' };
+            return (
+                <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-slate-50">
+                    <span className="text-lg">{icons[status]}</span>
+                    <div>
+                        <p className="font-medium text-slate-700 text-sm">{label}</p>
+                        <p className="text-xs text-slate-500">{detail}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        function RecommendationCard({ icon, title, text }) {
+            return (
+                <div className="p-3 bg-slate-50 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span>{icon}</span>
+                        <span className="font-semibold text-slate-700">{title}</span>
+                    </div>
+                    <p className="text-slate-600 text-xs leading-relaxed">{text}</p>
+                </div>
+            );
+        }
+
+        // ==================== TAB 2: PROVEEDORES ====================
+        function TabProveedores({ stats, transactions, setTransactions }) {
+            const [sortBy, setSortBy] = useState('total');
+            const [sortDir, setSortDir] = useState('desc');
+            const [filter, setFilter] = useState('');
+            const [editingVendor, setEditingVendor] = useState(null);
+            const [editValue, setEditValue] = useState('');
+            const pieRef = useRef(null);
+
+            const vendors = useMemo(() => {
+                let list = [...stats.vendorList];
+                if (filter) list = list.filter(v => v.name.toLowerCase().includes(filter.toLowerCase()));
+                list.sort((a, b) => {
+                    const mul = sortDir === 'desc' ? -1 : 1;
+                    if (sortBy === 'name') return mul * a.name.localeCompare(b.name);
+                    if (sortBy === 'total') return mul * (a.total - b.total);
+                    if (sortBy === 'count') return mul * (a.count - b.count);
+                    return 0;
+                });
+                return list;
+            }, [stats.vendorList, sortBy, sortDir, filter]);
+
+            useChart(pieRef, () => {
+                const top10 = stats.vendorList.slice(0, 10);
+                return {
+                    type: 'pie',
+                    data: {
+                        labels: top10.map(v => v.name.substring(0, 25)),
+                        datasets: [{ data: top10.map(v => v.total), backgroundColor: ['#1E40AF','#059669','#DC2626','#F59E0B','#8B5CF6','#06B6D4','#EC4899','#84CC16','#F97316','#6366F1'] }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right', labels: { font: { size: 10 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${formatCOP(ctx.raw)}` } } }
+                    }
+                };
+            }, [stats]);
+
+            const handleSort = (col) => {
+                if (sortBy === col) setSortDir(d => d === 'desc' ? 'asc' : 'desc');
+                else { setSortBy(col); setSortDir('desc'); }
+            };
+
+            const saveVendorEdit = (oldName, newName) => {
+                if (!newName.trim() || newName === oldName) { setEditingVendor(null); return; }
+                setTransactions(prev => prev.map(tx => tx.vendor === oldName ? { ...tx, vendor: newName.trim() } : tx));
+                setEditingVendor(null);
+            };
+
+            return (
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="card lg:col-span-2">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-semibold text-slate-700">Listado de Proveedores ({vendors.length})</h3>
+                                <input
+                                    type="text" placeholder="Buscar proveedor..."
+                                    className="border rounded-lg px-3 py-1.5 text-sm w-64" value={filter}
+                                    onChange={(e) => setFilter(e.target.value)}
+                                />
+                            </div>
+                            <div className="overflow-x-auto" style={{ maxHeight: 500 }}>
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="text-left text-slate-500 border-b">
+                                            <th className="py-2 px-3 cursor-pointer hover:text-blue-600" onClick={() => handleSort('name')}>Proveedor {sortBy === 'name' ? (sortDir === 'desc' ? '\u2193' : '\u2191') : ''}</th>
+                                            <th className="py-2 px-3 text-right cursor-pointer hover:text-blue-600" onClick={() => handleSort('total')}>Total Pagado {sortBy === 'total' ? (sortDir === 'desc' ? '\u2193' : '\u2191') : ''}</th>
+                                            <th className="py-2 px-3 text-right">% Compras</th>
+                                            <th className="py-2 px-3 text-right cursor-pointer hover:text-blue-600" onClick={() => handleSort('count')}>Transacciones {sortBy === 'count' ? (sortDir === 'desc' ? '\u2193' : '\u2191') : ''}</th>
+                                            <th className="py-2 px-3 text-right">Ticket Prom.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {vendors.map((v, i) => (
+                                            <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
+                                                <td className="py-2 px-3 editable-cell" onClick={() => { setEditingVendor(v.name); setEditValue(v.name); }}>
+                                                    {editingVendor === v.name ? (
+                                                        <input
+                                                            type="text" value={editValue} autoFocus
+                                                            className="border rounded px-2 py-1 text-sm w-full"
+                                                            onChange={(e) => setEditValue(e.target.value)}
+                                                            onBlur={() => saveVendorEdit(v.name, editValue)}
+                                                            onKeyDown={(e) => { if (e.key === 'Enter') saveVendorEdit(v.name, editValue); if (e.key === 'Escape') setEditingVendor(null); }}
+                                                        />
+                                                    ) : (
+                                                        <span className="font-medium text-slate-700">{v.name}</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-medium text-red-600">{formatCOP(v.total)}</td>
+                                                <td className="py-2 px-3 text-right">{((v.total / stats.totalVendorSpend) * 100).toFixed(1)}%</td>
+                                                <td className="py-2 px-3 text-right">{v.count}</td>
+                                                <td className="py-2 px-3 text-right">{formatCOP(v.total / v.count)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div className="card">
+                            <h3 className="font-semibold text-slate-700 mb-3">Top 10 Proveedores</h3>
+                            <div style={{ height: 400 }}><canvas ref={pieRef}></canvas></div>
+                        </div>
+                    </div>
+                    {/* Vendor Concentration Analysis */}
+                    <VendorConcentrationAnalysis stats={stats} />
+                </div>
+            );
+        }
+
+        // ==================== TAB 3: FLUJO DIARIO ====================
+        function TabFlujoDiario({ stats, transactions }) {
+            const lineRef = useRef(null);
+            const [dateFrom, setDateFrom] = useState('');
+            const [dateTo, setDateTo] = useState('');
+
+            const dailyEntries = useMemo(() => {
+                let entries = Object.entries(stats.daily).map(([k, v]) => ({ ...v, key: k }));
+                if (dateFrom) entries = entries.filter(e => e.date >= new Date(dateFrom));
+                if (dateTo) entries = entries.filter(e => e.date <= new Date(dateTo + 'T23:59:59'));
+                return entries;
+            }, [stats.daily, dateFrom, dateTo]);
+
+            useChart(lineRef, () => ({
+                type: 'line',
+                data: {
+                    labels: dailyEntries.map(e => e.key),
+                    datasets: [
+                        { label: 'Saldo', data: dailyEntries.map(e => e.balance), borderColor: '#1E40AF', backgroundColor: 'rgba(30,64,175,0.1)', fill: true, tension: 0.3, pointRadius: 3 },
+                        { label: 'Ingresos', data: dailyEntries.map(e => e.income), borderColor: '#059669', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, borderDash: [5, 5] },
+                        { label: 'Egresos', data: dailyEntries.map(e => e.expense), borderColor: '#DC2626', backgroundColor: 'transparent', tension: 0.3, pointRadius: 2, borderDash: [5, 5] },
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCOP(ctx.raw)}` } } },
+                    scales: { y: { ticks: { callback: (v) => formatCOP(v) } } },
+                    interaction: { intersect: false, mode: 'index' }
+                }
+            }), [dailyEntries]);
+
+            // Weekly summary from filtered daily
+            const weeklySummary = useMemo(() => {
+                const weeks = {};
+                dailyEntries.forEach(e => {
+                    const d = e.date;
+                    const ws = new Date(d);
+                    ws.setDate(d.getDate() - d.getDay() + 1);
+                    const key = formatDate(ws);
+                    if (!weeks[key]) weeks[key] = { income: 0, expense: 0 };
+                    weeks[key].income += e.income;
+                    weeks[key].expense += e.expense;
+                });
+                return Object.entries(weeks);
+            }, [dailyEntries]);
+
+            return (
+                <div className="space-y-4">
+                    {/* Mini Stats */}
+                    <DailyBalanceMiniStats stats={stats} />
+
+                    <div className="card">
+                        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                            <h3 className="font-semibold text-slate-700">Evolucion del Saldo Diario</h3>
+                            <div className="flex gap-3 items-center text-sm">
+                                <label className="text-slate-500">Desde:</label>
+                                <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="border rounded-lg px-3 py-1.5" />
+                                <label className="text-slate-500">Hasta:</label>
+                                <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="border rounded-lg px-3 py-1.5" />
+                                {(dateFrom || dateTo) && <button onClick={() => { setDateFrom(''); setDateTo(''); }} className="text-blue-600 hover:underline text-xs">Limpiar</button>}
+                            </div>
+                        </div>
+                        <div style={{ height: 350 }}><canvas ref={lineRef}></canvas></div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="card lg:col-span-2">
+                            <h3 className="font-semibold text-slate-700 mb-3">Detalle por Dia</h3>
+                            <div className="overflow-x-auto" style={{ maxHeight: 400 }}>
+                                <table className="w-full text-sm">
+                                    <thead>
+                                        <tr className="text-left text-slate-500 border-b">
+                                            <th className="py-2 px-3">Dia</th>
+                                            <th className="py-2 px-3 text-right">Ingresos</th>
+                                            <th className="py-2 px-3 text-right">Egresos</th>
+                                            <th className="py-2 px-3 text-right">Saldo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {dailyEntries.map((e, i) => (
+                                            <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
+                                                <td className="py-2 px-3 font-medium">{e.key}</td>
+                                                <td className="py-2 px-3 text-right text-green-600">{e.income > 0 ? formatCOP(e.income) : '-'}</td>
+                                                <td className="py-2 px-3 text-right text-red-600">{e.expense > 0 ? formatCOP(e.expense) : '-'}</td>
+                                                <td className="py-2 px-3 text-right font-medium">{formatCOP(e.balance)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div className="card">
+                            <h3 className="font-semibold text-slate-700 mb-3">Resumen Semanal</h3>
+                            <div className="space-y-3">
+                                {weeklySummary.map(([k, v], i) => (
+                                    <div key={i} className="p-3 bg-slate-50 rounded-lg">
+                                        <p className="text-xs text-slate-500 mb-1">Semana del {k}</p>
+                                        <div className="flex justify-between">
+                                            <span className="text-green-600 text-sm font-medium">{formatCOP(v.income)}</span>
+                                            <span className="text-red-600 text-sm font-medium">{formatCOP(v.expense)}</span>
+                                        </div>
+                                        <div className="mt-1 h-2 bg-slate-200 rounded-full overflow-hidden flex">
+                                            <div className="bg-green-500 h-full" style={{ width: `${(v.income / (v.income + v.expense)) * 100}%` }}></div>
+                                            <div className="bg-red-500 h-full" style={{ width: `${(v.expense / (v.income + v.expense)) * 100}%` }}></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== TAB 4: RECURRENTES ====================
+        function TabRecurrentes({ stats }) {
+            const [sortBy, setSortBy] = useState('annualEstimate');
+            const sorted = useMemo(() => {
+                return [...stats.recurring].sort((a, b) => {
+                    if (sortBy === 'annualEstimate') return b.annualEstimate - a.annualEstimate;
+                    if (sortBy === 'count') return b.count - a.count;
+                    if (sortBy === 'avgAmount') return b.avgAmount - a.avgAmount;
+                    return 0;
+                });
+            }, [stats.recurring, sortBy]);
+
+            const totalAnnual = sorted.reduce((s, r) => s + r.annualEstimate, 0);
+
+            return (
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <SummaryCard title="Gastos Recurrentes Detectados" value={sorted.length.toString()} color="blue" />
+                        <SummaryCard title="Total Mensual Estimado" value={formatCOP(totalAnnual / 12)} color="yellow" />
+                        <SummaryCard title="Total Anual Estimado" value={formatCOP(totalAnnual)} color="red" />
+                    </div>
+                    <div className="card">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-slate-700">Gastos Recurrentes</h3>
+                            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="border rounded-lg px-3 py-1.5 text-sm">
+                                <option value="annualEstimate">Mayor costo anual</option>
+                                <option value="count">Mayor frecuencia</option>
+                                <option value="avgAmount">Mayor monto promedio</option>
+                            </select>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-left text-slate-500 border-b">
+                                        <th className="py-2 px-3">Concepto</th>
+                                        <th className="py-2 px-3 text-right">Frecuencia (mes)</th>
+                                        <th className="py-2 px-3 text-right">Monto Promedio</th>
+                                        <th className="py-2 px-3 text-right">Estimado Anual</th>
+                                        <th className="py-2 px-3 text-right">% del Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {sorted.map((r, i) => (
+                                        <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
+                                            <td className="py-2 px-3 font-medium text-slate-700 max-w-xs truncate">{r.desc}</td>
+                                            <td className="py-2 px-3 text-right">
+                                                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium badge-blue">{r.count}x</span>
+                                            </td>
+                                            <td className="py-2 px-3 text-right">{formatCOP(r.avgAmount)}</td>
+                                            <td className="py-2 px-3 text-right font-medium text-red-600">{formatCOP(r.annualEstimate)}</td>
+                                            <td className="py-2 px-3 text-right">{((r.annualEstimate / totalAnnual) * 100).toFixed(1)}%</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== TAB 5: PROYECCIONES ====================
+        function TabProyecciones({ stats }) {
+            const [reductionPct, setReductionPct] = useState(10);
+            const projChartRef = useRef(null);
+
+            const monthlyIncome = stats.totalIncome;
+            const monthlyExpense = stats.totalExpense;
+            const months = ['Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic', 'Ene 27', 'Feb 27'];
+
+            const normalProjection = useMemo(() => {
+                let balance = stats.saldoFinal;
+                return months.map(() => {
+                    balance += monthlyIncome - monthlyExpense;
+                    return balance;
+                });
+            }, [stats]);
+
+            const reducedProjection = useMemo(() => {
+                let balance = stats.saldoFinal;
+                const reduced = monthlyExpense * (1 - reductionPct / 100);
+                return months.map(() => {
+                    balance += monthlyIncome - reduced;
+                    return balance;
+                });
+            }, [stats, reductionPct]);
+
+            useChart(projChartRef, () => ({
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [
+                        { label: 'Tendencia actual', data: normalProjection, borderColor: '#1E40AF', backgroundColor: 'rgba(30,64,175,0.1)', fill: true, tension: 0.4 },
+                        { label: `Reduccion ${reductionPct}%`, data: reducedProjection, borderColor: '#059669', backgroundColor: 'rgba(5,150,105,0.1)', fill: true, tension: 0.4, borderDash: [5, 5] },
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCOP(ctx.raw)}` } } },
+                    scales: { y: { ticks: { callback: (v) => formatCOP(v) } } }
+                }
+            }), [normalProjection, reducedProjection, reductionPct]);
+
+            const freeCash = stats.netFlow > 0 ? stats.netFlow : 0;
+            const annualFreeCash = freeCash * 12;
+            const cdtReturn = annualFreeCash * 0.12;
+            const fondoReturn = annualFreeCash * 0.08;
+            const savingsFromReduction = (monthlyExpense * reductionPct / 100);
+
+            return (
+                <div className="space-y-4">
+                    <div className="card">
+                        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                            <h3 className="font-semibold text-slate-700">Proyeccion a 12 Meses</h3>
+                            <div className="flex items-center gap-4">
+                                <span className="text-sm text-slate-500">Reduccion de gastos:</span>
+                                <input type="range" min="0" max="50" value={reductionPct} onChange={(e) => setReductionPct(parseInt(e.target.value))} className="w-40" />
+                                <span className="text-sm font-bold text-blue-800 bg-blue-50 px-3 py-1 rounded-lg">{reductionPct}%</span>
+                            </div>
+                        </div>
+                        <div style={{ height: 350 }}><canvas ref={projChartRef}></canvas></div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="card">
+                            <h3 className="font-semibold text-slate-700 mb-3">Escenarios</h3>
+                            <div className="space-y-4">
+                                <div className="p-4 bg-blue-50 rounded-lg">
+                                    <p className="font-medium text-blue-800 mb-2">Escenario 1: Continuar patron actual</p>
+                                    <p className="text-sm text-slate-600">Flujo neto mensual: <strong>{formatCOP(stats.netFlow)}</strong></p>
+                                    <p className="text-sm text-slate-600">Saldo proyectado a 12 meses: <strong>{formatCOP(normalProjection[11])}</strong></p>
+                                </div>
+                                <div className="p-4 bg-green-50 rounded-lg">
+                                    <p className="font-medium text-green-800 mb-2">Escenario 2: Reducir gastos {reductionPct}%</p>
+                                    <p className="text-sm text-slate-600">Ahorro mensual: <strong>{formatCOP(savingsFromReduction)}</strong></p>
+                                    <p className="text-sm text-slate-600">Saldo proyectado a 12 meses: <strong>{formatCOP(reducedProjection[11])}</strong></p>
+                                    <p className="text-sm text-slate-600">Diferencia: <strong className="text-green-700">{formatCOP(reducedProjection[11] - normalProjection[11])}</strong></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <h3 className="font-semibold text-slate-700 mb-3">Recomendaciones de Inversion</h3>
+                            <p className="text-sm text-slate-500 mb-3">Basado en flujo de caja libre mensual: <strong>{formatCOP(freeCash)}</strong></p>
+                            <div className="space-y-3">
+                                <InvestmentOption
+                                    name="CDT a 90 dias"
+                                    entity="Bancolombia / Davivienda"
+                                    rate="11-13% EA"
+                                    risk="Bajo"
+                                    projected={formatCOP(cdtReturn)}
+                                    desc="Inversion segura con rendimiento fijo. Ideal para reservas."
+                                />
+                                <InvestmentOption
+                                    name="Fondo de Inversion Colectiva"
+                                    entity="Valores Bancolombia / Credicorp"
+                                    rate="7-10% EA"
+                                    risk="Bajo-Medio"
+                                    projected={formatCOP(fondoReturn)}
+                                    desc="Liquidez inmediata. Bueno para capital de trabajo."
+                                />
+                                <InvestmentOption
+                                    name="Reinversion en Maquinaria"
+                                    entity="Equipos de produccion"
+                                    rate="Variable"
+                                    risk="Medio"
+                                    projected="Depende"
+                                    desc="Aumentar capacidad productiva. ROI a mediano plazo."
+                                />
+                                <InvestmentOption
+                                    name="Cuenta de Ahorro Empresarial"
+                                    entity="Banco de Bogota / BBVA"
+                                    rate="3-5% EA"
+                                    risk="Minimo"
+                                    projected={formatCOP(annualFreeCash * 0.04)}
+                                    desc="Fondo de emergencia. Minimo 3 meses de gastos operativos."
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Break-even and Extended Analysis */}
+                    <ExtendedProjectionsPanel stats={stats} />
+                </div>
+            );
+        }
+
+        function InvestmentOption({ name, entity, rate, risk, projected, desc }) {
+            const riskColors = { 'Bajo': 'badge-green', 'Bajo-Medio': 'badge-yellow', 'Medio': 'badge-yellow', 'Minimo': 'badge-green' };
+            return (
+                <div className="p-3 border rounded-lg hover:bg-slate-50">
+                    <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-slate-700 text-sm">{name}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${riskColors[risk] || 'badge-blue'}`}>{risk}</span>
+                    </div>
+                    <p className="text-xs text-slate-500">{entity} | Tasa: {rate}</p>
+                    <p className="text-xs text-slate-400 mt-1">{desc}</p>
+                    <p className="text-xs font-medium text-blue-700 mt-1">Rendimiento anual estimado: {projected}</p>
+                </div>
+            );
+        }
+
+        // ==================== TAB 6: TRANSACCIONES ====================
+        function TabTransacciones({ transactions, setTransactions }) {
+            const [page, setPage] = useState(1);
+            const [search, setSearch] = useState('');
+            const [catFilter, setCatFilter] = useState('');
+            const [vendorFilter, setVendorFilter] = useState('');
+            const [dateFrom, setDateFrom] = useState('');
+            const [dateTo, setDateTo] = useState('');
+            const [amountMin, setAmountMin] = useState('');
+            const [amountMax, setAmountMax] = useState('');
+            const [editingId, setEditingId] = useState(null);
+            const [editCat, setEditCat] = useState('');
+            const perPage = 50;
+
+            const categories = ['PROVEEDORES', 'INGRESOS', 'GASTOS OPERACIONALES', 'GASTOS FINANCIEROS', 'MOVIMIENTOS INTERNOS', 'OTROS'];
+
+            const filtered = useMemo(() => {
+                let data = [...transactions];
+                if (search) data = data.filter(t => t.description.toLowerCase().includes(search.toLowerCase()));
+                if (catFilter) data = data.filter(t => t.category === catFilter);
+                if (vendorFilter) data = data.filter(t => t.vendor && t.vendor.toLowerCase().includes(vendorFilter.toLowerCase()));
+                if (dateFrom) data = data.filter(t => t.date >= new Date(dateFrom));
+                if (dateTo) data = data.filter(t => t.date <= new Date(dateTo + 'T23:59:59'));
+                if (amountMin) data = data.filter(t => (t.income || t.expense) >= parseFloat(amountMin));
+                if (amountMax) data = data.filter(t => (t.income || t.expense) <= parseFloat(amountMax));
+                return data.sort((a, b) => a.date - b.date);
+            }, [transactions, search, catFilter, vendorFilter, dateFrom, dateTo, amountMin, amountMax]);
+
+            const totalPages = Math.ceil(filtered.length / perPage);
+            const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+
+            const saveCategoryEdit = (id, newCat) => {
+                setTransactions(prev => prev.map(t => t.id === id ? { ...t, category: newCat } : t));
+                setEditingId(null);
+            };
+
+            const clearFilters = () => {
+                setSearch(''); setCatFilter(''); setVendorFilter(''); setDateFrom(''); setDateTo(''); setAmountMin(''); setAmountMax(''); setPage(1);
+            };
+
+            const catColors = {
+                'PROVEEDORES': 'badge-blue', 'INGRESOS': 'badge-green', 'GASTOS OPERACIONALES': 'badge-red',
+                'GASTOS FINANCIEROS': 'badge-yellow', 'MOVIMIENTOS INTERNOS': 'bg-purple-100 text-purple-700', 'OTROS': 'bg-slate-100 text-slate-600'
+            };
+
+            return (
+                <div className="space-y-4">
+                    {/* Filters */}
+                    <div className="card">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold text-slate-700">Filtros</h3>
+                            <button onClick={clearFilters} className="text-sm text-blue-600 hover:underline">Limpiar filtros</button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                            <input type="text" placeholder="Buscar descripcion..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="border rounded-lg px-3 py-2 text-sm" />
+                            <select value={catFilter} onChange={(e) => { setCatFilter(e.target.value); setPage(1); }} className="border rounded-lg px-3 py-2 text-sm">
+                                <option value="">Todas las categorias</option>
+                                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <input type="text" placeholder="Proveedor..." value={vendorFilter} onChange={(e) => { setVendorFilter(e.target.value); setPage(1); }} className="border rounded-lg px-3 py-2 text-sm" />
+                            <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className="border rounded-lg px-3 py-2 text-sm" placeholder="Desde" />
+                            <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} className="border rounded-lg px-3 py-2 text-sm" placeholder="Hasta" />
+                            <input type="number" placeholder="Monto min" value={amountMin} onChange={(e) => { setAmountMin(e.target.value); setPage(1); }} className="border rounded-lg px-3 py-2 text-sm" />
+                            <input type="number" placeholder="Monto max" value={amountMax} onChange={(e) => { setAmountMax(e.target.value); setPage(1); }} className="border rounded-lg px-3 py-2 text-sm" />
+                        </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="card">
+                        <div className="flex items-center justify-between mb-3">
+                            <p className="text-sm text-slate-500">Mostrando {paginated.length} de {filtered.length} transacciones</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-left text-slate-500 border-b">
+                                        <th className="py-2 px-3">Fecha</th>
+                                        <th className="py-2 px-3">Descripcion</th>
+                                        <th className="py-2 px-3">Categoria</th>
+                                        <th className="py-2 px-3 text-right">Ingreso</th>
+                                        <th className="py-2 px-3 text-right">Egreso</th>
+                                        <th className="py-2 px-3 text-right">Saldo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {paginated.map(tx => (
+                                        <tr key={tx.id} className="border-b border-slate-100 hover:bg-slate-50">
+                                            <td className="py-2 px-3 whitespace-nowrap">{formatDate(tx.date)}</td>
+                                            <td className="py-2 px-3 max-w-xs truncate" title={tx.description}>{tx.description}</td>
+                                            <td className="py-2 px-3">
+                                                {editingId === tx.id ? (
+                                                    <select
+                                                        value={editCat} autoFocus
+                                                        onChange={(e) => { setEditCat(e.target.value); saveCategoryEdit(tx.id, e.target.value); }}
+                                                        onBlur={() => setEditingId(null)}
+                                                        className="border rounded px-2 py-1 text-xs"
+                                                    >
+                                                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                                                    </select>
+                                                ) : (
+                                                    <span
+                                                        className={`text-xs px-2 py-0.5 rounded-full cursor-pointer ${catColors[tx.category] || 'bg-slate-100'}`}
+                                                        onClick={() => { setEditingId(tx.id); setEditCat(tx.category); }}
+                                                    >
+                                                        {tx.category}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="py-2 px-3 text-right text-green-600 font-medium">{tx.income > 0 ? formatCOP(tx.income) : ''}</td>
+                                            <td className="py-2 px-3 text-right text-red-600 font-medium">{tx.expense > 0 ? formatCOP(tx.expense) : ''}</td>
+                                            <td className="py-2 px-3 text-right font-medium">{formatCOP(tx.balance)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-1 mt-4 pt-4 border-t">
+                                <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="pagination-btn text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-30">&laquo;</button>
+                                {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+                                    let p;
+                                    if (totalPages <= 10) p = i + 1;
+                                    else if (page <= 5) p = i + 1;
+                                    else if (page >= totalPages - 4) p = totalPages - 9 + i;
+                                    else p = page - 4 + i;
+                                    return (
+                                        <button key={p} onClick={() => setPage(p)} className={`pagination-btn text-sm ${page === p ? 'active' : 'text-slate-600'}`}>{p}</button>
+                                    );
+                                })}
+                                <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="pagination-btn text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-30">&raquo;</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== TAB 7: CARGAR FACTURAS ====================
+        function TabFacturas({ invoices, setInvoices, transactions }) {
+            const [vendor, setVendor] = useState('');
+            const [amount, setAmount] = useState('');
+            const [date, setDate] = useState('');
+            const [fileName, setFileName] = useState('');
+            const [files, setFiles] = useState([]);
+
+            const handleFileDrop = (e) => {
+                e.preventDefault();
+                const dropped = Array.from(e.dataTransfer?.files || []);
+                setFiles(prev => [...prev, ...dropped]);
+                if (dropped.length > 0) setFileName(dropped.map(f => f.name).join(', '));
+            };
+
+            const addInvoice = () => {
+                if (!vendor || !amount || !date) return;
+                const amt = cleanNumber(amount);
+                // Try to match with bank transaction
+                const match = transactions.find(tx =>
+                    Math.abs(tx.expense - amt) < amt * 0.05 &&
+                    Math.abs(tx.date - new Date(date)) < 3 * 86400000
+                );
+
+                const newInv = {
+                    id: Date.now(),
+                    vendor,
+                    amount: amt,
+                    date: new Date(date),
+                    files: files.map(f => f.name),
+                    matched: !!match,
+                    matchedTx: match ? `${formatDate(match.date)} - ${match.description}` : null,
+                    verified: !!match,
+                };
+                setInvoices(prev => [...prev, newInv]);
+                setVendor(''); setAmount(''); setDate(''); setFileName(''); setFiles([]);
+            };
+
+            const toggleVerified = (id) => {
+                setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, verified: !inv.verified } : inv));
+            };
+
+            return (
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="card">
+                            <h3 className="font-semibold text-slate-700 mb-4">Cargar Nueva Factura</h3>
+                            <div
+                                className="drop-zone mb-4"
+                                onDrop={handleFileDrop}
+                                onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('active'); }}
+                                onDragLeave={(e) => e.currentTarget.classList.remove('active')}
+                            >
+                                <div className="text-3xl mb-2">&#128196;</div>
+                                <p className="text-sm text-slate-600 mb-2">Arrastre PDF o imagenes de facturas aqui</p>
+                                <label className="inline-block bg-blue-100 text-blue-800 px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-200 transition text-sm font-medium">
+                                    Seleccionar Archivos
+                                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={(e) => { const f = Array.from(e.target.files); setFiles(prev => [...prev, ...f]); setFileName(f.map(x => x.name).join(', ')); }} className="hidden" />
+                                </label>
+                                {fileName && <p className="text-xs text-slate-500 mt-2">{fileName}</p>}
+                            </div>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="text-sm text-slate-600 block mb-1">Proveedor</label>
+                                    <input type="text" value={vendor} onChange={(e) => setVendor(e.target.value)} className="border rounded-lg px-3 py-2 text-sm w-full" placeholder="Nombre del proveedor" />
+                                </div>
+                                <div>
+                                    <label className="text-sm text-slate-600 block mb-1">Monto</label>
+                                    <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} className="border rounded-lg px-3 py-2 text-sm w-full" placeholder="Valor de la factura" />
+                                </div>
+                                <div>
+                                    <label className="text-sm text-slate-600 block mb-1">Fecha</label>
+                                    <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="border rounded-lg px-3 py-2 text-sm w-full" />
+                                </div>
+                                <button onClick={addInvoice} className="w-full bg-blue-800 text-white py-2.5 rounded-lg hover:bg-blue-900 transition font-medium text-sm">
+                                    Agregar Factura
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="card">
+                            <h3 className="font-semibold text-slate-700 mb-4">Facturas Registradas ({invoices.length})</h3>
+                            {invoices.length === 0 ? (
+                                <div className="text-center text-slate-400 py-12">
+                                    <div className="text-4xl mb-2">&#128203;</div>
+                                    <p>No hay facturas registradas</p>
+                                    <p className="text-xs mt-1">Cargue facturas para cruzarlas con el extracto bancario</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3 overflow-y-auto" style={{ maxHeight: 500 }}>
+                                    {invoices.map(inv => (
+                                        <div key={inv.id} className={`p-3 rounded-lg border ${inv.verified ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'}`}>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="font-medium text-sm">{inv.vendor}</span>
+                                                <button
+                                                    onClick={() => toggleVerified(inv.id)}
+                                                    className={`text-xs px-2 py-1 rounded-full font-medium ${inv.verified ? 'badge-green' : 'badge-yellow'}`}
+                                                >
+                                                    {inv.verified ? 'Verificada' : 'Sin verificar'}
+                                                </button>
+                                            </div>
+                                            <p className="text-sm text-slate-600">{formatCOP(inv.amount)} | {formatDate(inv.date)}</p>
+                                            {inv.files.length > 0 && <p className="text-xs text-slate-400 mt-1">Archivos: {inv.files.join(', ')}</p>}
+                                            {inv.matched && <p className="text-xs text-green-600 mt-1">Coincide con: {inv.matchedTx}</p>}
+                                            {!inv.matched && <p className="text-xs text-yellow-600 mt-1">Sin coincidencia en extracto bancario</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== TAB 8: COMPARATIVO ====================
+        function TabComparativo({ allMonthsData }) {
+            const compChartRef = useRef(null);
+
+            if (allMonthsData.length < 2) {
+                return (
+                    <div className="card text-center py-16">
+                        <div className="text-5xl mb-4">&#9878;&#65039;</div>
+                        <h3 className="text-xl font-bold text-slate-700 mb-2">Comparativo Entre Periodos</h3>
+                        <p className="text-slate-500 mb-6">Cargue al menos 2 meses de extractos bancarios para ver la comparacion.</p>
+                        <p className="text-sm text-slate-400">Actualmente tiene {allMonthsData.length} periodo(s) cargado(s).</p>
+                        <div className="mt-6">
+                            <label className="inline-block bg-blue-800 text-white px-6 py-3 rounded-lg cursor-pointer hover:bg-blue-900 transition font-medium">
+                                Cargar Otro Extracto
+                                <input type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => {/* handled by parent */ }} />
+                            </label>
+                        </div>
+                    </div>
+                );
+            }
+
+            const monthStats = allMonthsData.map(m => {
+                const totalIncome = m.data.reduce((s, t) => s + (t.income || 0), 0);
+                const totalExpense = m.data.reduce((s, t) => s + (t.expense || 0), 0);
+                return { month: m.month, totalIncome, totalExpense, net: totalIncome - totalExpense, txCount: m.data.length };
+            });
+
+            useChart(compChartRef, () => ({
+                type: 'bar',
+                data: {
+                    labels: monthStats.map(m => m.month),
+                    datasets: [
+                        { label: 'Ingresos', data: monthStats.map(m => m.totalIncome), backgroundColor: '#059669', borderRadius: 6 },
+                        { label: 'Egresos', data: monthStats.map(m => m.totalExpense), backgroundColor: '#DC2626', borderRadius: 6 },
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatCOP(ctx.raw)}` } } },
+                    scales: { y: { ticks: { callback: (v) => formatCOP(v) } } }
+                }
+            }), [monthStats]);
+
+            return (
+                <div className="space-y-4">
+                    <div className="card">
+                        <h3 className="font-semibold text-slate-700 mb-4">Comparativo de Periodos</h3>
+                        <div style={{ height: 350 }}><canvas ref={compChartRef}></canvas></div>
+                    </div>
+                    <ComparativoLineChart allMonthsData={allMonthsData} />
+                    <div className="card">
+                        <h3 className="font-semibold text-slate-700 mb-3">Tabla Comparativa</h3>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="text-left text-slate-500 border-b">
+                                        <th className="py-2 px-3">Periodo</th>
+                                        <th className="py-2 px-3 text-right">Ingresos</th>
+                                        <th className="py-2 px-3 text-right">Egresos</th>
+                                        <th className="py-2 px-3 text-right">Flujo Neto</th>
+                                        <th className="py-2 px-3 text-right">Transacciones</th>
+                                        <th className="py-2 px-3 text-right">% Cambio Ingresos</th>
+                                        <th className="py-2 px-3 text-right">% Cambio Egresos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {monthStats.map((m, i) => {
+                                        const prev = i > 0 ? monthStats[i - 1] : null;
+                                        const incChange = prev ? ((m.totalIncome - prev.totalIncome) / prev.totalIncome * 100).toFixed(1) : '-';
+                                        const expChange = prev ? ((m.totalExpense - prev.totalExpense) / prev.totalExpense * 100).toFixed(1) : '-';
+                                        return (
+                                            <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
+                                                <td className="py-2 px-3 font-medium">{m.month}</td>
+                                                <td className="py-2 px-3 text-right text-green-600">{formatCOP(m.totalIncome)}</td>
+                                                <td className="py-2 px-3 text-right text-red-600">{formatCOP(m.totalExpense)}</td>
+                                                <td className={`py-2 px-3 text-right font-medium ${m.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCOP(m.net)}</td>
+                                                <td className="py-2 px-3 text-right">{m.txCount}</td>
+                                                <td className="py-2 px-3 text-right">{typeof incChange === 'string' && incChange !== '-' ? `${incChange}%` : incChange}</td>
+                                                <td className="py-2 px-3 text-right">{typeof expChange === 'string' && expChange !== '-' ? `${expChange}%` : expChange}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== TAB 8 EXTENDED: COMPARATIVO LINE CHART ====================
+        function ComparativoLineChart({ allMonthsData }) {
+            const lineRef = useRef(null);
+            const monthStats = allMonthsData.map(m => {
+                const totalIncome = m.data.reduce((s, t) => s + (t.income || 0), 0);
+                const totalExpense = m.data.reduce((s, t) => s + (t.expense || 0), 0);
+                return { month: m.month, totalIncome, totalExpense, net: totalIncome - totalExpense };
+            });
+
+            useChart(lineRef, () => ({
+                type: 'line',
+                data: {
+                    labels: monthStats.map(m => m.month),
+                    datasets: [
+                        {
+                            label: 'Ingresos',
+                            data: monthStats.map(m => m.totalIncome),
+                            borderColor: '#059669',
+                            backgroundColor: 'rgba(5,150,105,0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#059669',
+                        },
+                        {
+                            label: 'Egresos',
+                            data: monthStats.map(m => m.totalExpense),
+                            borderColor: '#DC2626',
+                            backgroundColor: 'rgba(220,38,38,0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#DC2626',
+                        },
+                        {
+                            label: 'Flujo Neto',
+                            data: monthStats.map(m => m.net),
+                            borderColor: '#1E40AF',
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#1E40AF',
+                            borderDash: [5, 5],
+                        },
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.dataset.label}: ${formatCOP(ctx.raw)}`
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: (v) => formatCOP(v)
+                            }
+                        }
+                    }
+                }
+            }), [monthStats]);
+
+            return (
+                <div className="card">
+                    <h3 className="font-semibold text-slate-700 mb-4">Evolucion de Ingresos y Egresos</h3>
+                    <div style={{ height: 350 }}>
+                        <canvas ref={lineRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== CATEGORY DETAIL PANEL ====================
+        function CategoryDetailPanel({ stats }) {
+            const categories = Object.entries(stats.categories);
+            const total = stats.totalIncome + stats.totalExpense;
+
+            return (
+                <div className="card">
+                    <h3 className="font-semibold text-slate-700 mb-4">Detalle por Categoria</h3>
+                    <div className="space-y-3">
+                        {categories.map(([cat, data], i) => {
+                            const catTotal = data.income + data.expense;
+                            const pct = ((catTotal / total) * 100).toFixed(1);
+                            const colors = {
+                                'PROVEEDORES': { bar: 'bg-blue-500', bg: 'bg-blue-50', text: 'text-blue-700' },
+                                'INGRESOS': { bar: 'bg-green-500', bg: 'bg-green-50', text: 'text-green-700' },
+                                'GASTOS OPERACIONALES': { bar: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700' },
+                                'GASTOS FINANCIEROS': { bar: 'bg-yellow-500', bg: 'bg-yellow-50', text: 'text-yellow-700' },
+                                'MOVIMIENTOS INTERNOS': { bar: 'bg-purple-500', bg: 'bg-purple-50', text: 'text-purple-700' },
+                                'OTROS': { bar: 'bg-slate-400', bg: 'bg-slate-50', text: 'text-slate-600' },
+                            };
+                            const c = colors[cat] || colors['OTROS'];
+
+                            return (
+                                <div key={i} className={`p-3 rounded-lg ${c.bg}`}>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className={`font-medium text-sm ${c.text}`}>{cat}</span>
+                                        <span className="text-xs text-slate-500">{data.count} transacciones</span>
+                                    </div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        {data.income > 0 && (
+                                            <span className="text-xs text-green-600">
+                                                Ingresos: {formatCOP(data.income)}
+                                            </span>
+                                        )}
+                                        {data.expense > 0 && (
+                                            <span className="text-xs text-red-600">
+                                                Egresos: {formatCOP(data.expense)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="h-2 bg-white/60 rounded-full overflow-hidden">
+                                        <div className={`h-full ${c.bar} rounded-full transition-all`} style={{ width: `${pct}%` }}></div>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1">{pct}% del movimiento total</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== TOP TRANSACTIONS PANEL ====================
+        function TopTransactionsPanel({ transactions }) {
+            const topIncome = useMemo(() => {
+                return [...transactions]
+                    .filter(t => t.income > 0)
+                    .sort((a, b) => b.income - a.income)
+                    .slice(0, 5);
+            }, [transactions]);
+
+            const topExpense = useMemo(() => {
+                return [...transactions]
+                    .filter(t => t.expense > 0)
+                    .sort((a, b) => b.expense - a.expense)
+                    .slice(0, 5);
+            }, [transactions]);
+
+            return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="card">
+                        <h3 className="font-semibold text-slate-700 mb-3">Top 5 Ingresos</h3>
+                        <div className="space-y-2">
+                            {topIncome.map((tx, i) => (
+                                <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 transition">
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold">{i + 1}</span>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-700 truncate max-w-xs">{tx.description}</p>
+                                            <p className="text-xs text-slate-400">{formatDate(tx.date)}</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-sm font-bold text-green-600">{formatCOP(tx.income)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="card">
+                        <h3 className="font-semibold text-slate-700 mb-3">Top 5 Egresos</h3>
+                        <div className="space-y-2">
+                            {topExpense.map((tx, i) => (
+                                <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-red-50 transition">
+                                    <div className="flex items-center gap-3">
+                                        <span className="w-6 h-6 bg-red-100 text-red-700 rounded-full flex items-center justify-center text-xs font-bold">{i + 1}</span>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-700 truncate max-w-xs">{tx.description}</p>
+                                            <p className="text-xs text-slate-400">{formatDate(tx.date)}</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-sm font-bold text-red-600">{formatCOP(tx.expense)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== CASH FLOW WATERFALL CHART ====================
+        function CashFlowWaterfall({ stats }) {
+            const waterfallRef = useRef(null);
+            const categories = Object.entries(stats.categories);
+
+            useChart(waterfallRef, () => {
+                const labels = ['Saldo Inicial'];
+                const data = [stats.saldoInicial];
+                const colors = ['#1E40AF'];
+
+                categories.forEach(([cat, val]) => {
+                    if (val.income > 0) {
+                        labels.push(`${cat} (+)`);
+                        data.push(val.income);
+                        colors.push('#059669');
+                    }
+                    if (val.expense > 0) {
+                        labels.push(`${cat} (-)`);
+                        data.push(-val.expense);
+                        colors.push('#DC2626');
+                    }
+                });
+
+                labels.push('Saldo Final');
+                data.push(stats.saldoFinal);
+                colors.push('#1E40AF');
+
+                return {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderRadius: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => formatCOP(Math.abs(ctx.raw))
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    callback: (v) => formatCOP(v)
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    font: { size: 10 },
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            }
+                        }
+                    }
+                };
+            }, [stats]);
+
+            return (
+                <div className="card">
+                    <h3 className="font-semibold text-slate-700 mb-3">Cascada de Flujo de Caja</h3>
+                    <div style={{ height: 320 }}>
+                        <canvas ref={waterfallRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== DAILY BALANCE MINI STATS ====================
+        function DailyBalanceMiniStats({ stats }) {
+            const dailyEntries = Object.values(stats.daily);
+            const avgBalance = dailyEntries.reduce((s, e) => s + e.balance, 0) / dailyEntries.length;
+            const avgIncome = dailyEntries.reduce((s, e) => s + e.income, 0) / dailyEntries.length;
+            const avgExpense = dailyEntries.reduce((s, e) => s + e.expense, 0) / dailyEntries.length;
+            const maxIncomeDay = dailyEntries.reduce((max, e) => e.income > max.income ? e : max, dailyEntries[0]);
+            const maxExpenseDay = dailyEntries.reduce((max, e) => e.expense > max.expense ? e : max, dailyEntries[0]);
+
+            return (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="card text-center">
+                        <p className="text-xs text-slate-500 uppercase mb-1">Saldo Promedio</p>
+                        <p className="text-lg font-bold text-blue-800">{formatCOP(avgBalance)}</p>
+                    </div>
+                    <div className="card text-center">
+                        <p className="text-xs text-slate-500 uppercase mb-1">Ingreso Diario Prom.</p>
+                        <p className="text-lg font-bold text-green-600">{formatCOP(avgIncome)}</p>
+                    </div>
+                    <div className="card text-center">
+                        <p className="text-xs text-slate-500 uppercase mb-1">Egreso Diario Prom.</p>
+                        <p className="text-lg font-bold text-red-600">{formatCOP(avgExpense)}</p>
+                    </div>
+                    <div className="card text-center">
+                        <p className="text-xs text-slate-500 uppercase mb-1">Saldo Minimo</p>
+                        <p className="text-lg font-bold text-yellow-600">{formatCOP(stats.minBalance)}</p>
+                    </div>
+                    <div className="card text-center">
+                        <p className="text-xs text-slate-500 uppercase mb-1">Saldo Maximo</p>
+                        <p className="text-lg font-bold text-blue-600">{formatCOP(stats.maxBalance)}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== VENDOR CONCENTRATION ANALYSIS ====================
+        function VendorConcentrationAnalysis({ stats }) {
+            const herfRef = useRef(null);
+            const vendors = stats.vendorList;
+            const totalSpend = stats.totalVendorSpend;
+
+            // Calculate Herfindahl-Hirschman Index (HHI) for concentration
+            const hhi = vendors.reduce((sum, v) => {
+                const share = (v.total / totalSpend) * 100;
+                return sum + share * share;
+            }, 0);
+
+            const concentration = hhi > 2500 ? 'Alta' : hhi > 1500 ? 'Moderada' : 'Baja';
+            const concentrationColor = hhi > 2500 ? 'red' : hhi > 1500 ? 'yellow' : 'green';
+
+            // Cumulative spend chart
+            useChart(herfRef, () => {
+                const sorted = [...vendors].sort((a, b) => b.total - a.total);
+                let cumulative = 0;
+                const cumData = sorted.map(v => {
+                    cumulative += (v.total / totalSpend) * 100;
+                    return cumulative;
+                });
+
+                return {
+                    type: 'line',
+                    data: {
+                        labels: sorted.map((v, i) => `P${i + 1}`),
+                        datasets: [
+                            {
+                                label: '% Acumulado de Compras',
+                                data: cumData,
+                                borderColor: '#1E40AF',
+                                backgroundColor: 'rgba(30,64,175,0.1)',
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 4,
+                            },
+                            {
+                                label: 'Linea 80%',
+                                data: Array(sorted.length).fill(80),
+                                borderColor: '#F59E0B',
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => {
+                                        if (ctx.datasetIndex === 0) {
+                                            const v = sorted[ctx.dataIndex];
+                                            return `${v.name}: ${ctx.raw.toFixed(1)}% acumulado`;
+                                        }
+                                        return 'Umbral Pareto 80%';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 100,
+                                ticks: { callback: (v) => `${v}%` }
+                            }
+                        }
+                    }
+                };
+            }, [vendors, totalSpend]);
+
+            // Count vendors for 80% of spend
+            let cumPct = 0;
+            let vendorsFor80 = 0;
+            const sortedVendors = [...vendors].sort((a, b) => b.total - a.total);
+            for (const v of sortedVendors) {
+                cumPct += (v.total / totalSpend) * 100;
+                vendorsFor80++;
+                if (cumPct >= 80) break;
+            }
+
+            return (
+                <div className="card">
+                    <h3 className="font-semibold text-slate-700 mb-4">Analisis de Concentracion de Proveedores</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className={`p-3 rounded-lg ${concentrationColor === 'red' ? 'bg-red-50' : concentrationColor === 'yellow' ? 'bg-yellow-50' : 'bg-green-50'}`}>
+                            <p className="text-xs text-slate-500 mb-1">Indice de Concentracion (HHI)</p>
+                            <p className={`text-xl font-bold ${concentrationColor === 'red' ? 'text-red-700' : concentrationColor === 'yellow' ? 'text-yellow-700' : 'text-green-700'}`}>
+                                {Math.round(hhi)}
+                            </p>
+                            <p className="text-xs text-slate-500">Concentracion: {concentration}</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-blue-50">
+                            <p className="text-xs text-slate-500 mb-1">Proveedores Activos</p>
+                            <p className="text-xl font-bold text-blue-700">{vendors.length}</p>
+                            <p className="text-xs text-slate-500">Total: {formatCOP(totalSpend)}</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-purple-50">
+                            <p className="text-xs text-slate-500 mb-1">Regla Pareto</p>
+                            <p className="text-xl font-bold text-purple-700">{vendorsFor80} proveedores</p>
+                            <p className="text-xs text-slate-500">Representan el 80% de las compras</p>
+                        </div>
+                    </div>
+                    <div style={{ height: 250 }}>
+                        <canvas ref={herfRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== EXTENDED PROJECTIONS PANEL ====================
+        function ExtendedProjectionsPanel({ stats }) {
+            const breakEvenRef = useRef(null);
+            const monthlyIncome = stats.totalIncome;
+            const monthlyExpense = stats.totalExpense;
+            const fixedCosts = (stats.categories['GASTOS OPERACIONALES']?.expense || 0) +
+                              (stats.categories['GASTOS FINANCIEROS']?.expense || 0);
+            const variableCosts = stats.totalExpense - fixedCosts;
+            const variableCostRatio = variableCosts / monthlyIncome;
+
+            // Break-even analysis
+            const breakEvenSales = fixedCosts / (1 - variableCostRatio);
+            const currentMargin = ((monthlyIncome - monthlyExpense) / monthlyIncome * 100).toFixed(1);
+            const operatingLeverage = fixedCosts / stats.totalExpense;
+
+            useChart(breakEvenRef, () => {
+                const salesRange = Array.from({ length: 20 }, (_, i) => monthlyIncome * (0.3 + i * 0.05));
+                return {
+                    type: 'line',
+                    data: {
+                        labels: salesRange.map(s => formatCOP(s)),
+                        datasets: [
+                            {
+                                label: 'Ingresos',
+                                data: salesRange,
+                                borderColor: '#059669',
+                                tension: 0,
+                                pointRadius: 0,
+                            },
+                            {
+                                label: 'Costos Totales',
+                                data: salesRange.map(s => fixedCosts + s * variableCostRatio),
+                                borderColor: '#DC2626',
+                                tension: 0,
+                                pointRadius: 0,
+                            },
+                            {
+                                label: 'Costos Fijos',
+                                data: salesRange.map(() => fixedCosts),
+                                borderColor: '#F59E0B',
+                                borderDash: [5, 5],
+                                tension: 0,
+                                pointRadius: 0,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => `${ctx.dataset.label}: ${formatCOP(ctx.raw)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { ticks: { callback: (v) => formatCOP(v) } },
+                            x: {
+                                ticks: {
+                                    maxTicksLimit: 8,
+                                    font: { size: 9 },
+                                    maxRotation: 45,
+                                }
+                            }
+                        }
+                    }
+                };
+            }, [stats]);
+
+            return (
+                <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="card text-center">
+                            <p className="text-xs text-slate-500 uppercase mb-1">Punto de Equilibrio</p>
+                            <p className="text-lg font-bold text-blue-800">{formatCOP(breakEvenSales)}</p>
+                            <p className="text-xs text-slate-400">Ventas minimas mensuales</p>
+                        </div>
+                        <div className="card text-center">
+                            <p className="text-xs text-slate-500 uppercase mb-1">Costos Fijos</p>
+                            <p className="text-lg font-bold text-yellow-600">{formatCOP(fixedCosts)}</p>
+                            <p className="text-xs text-slate-400">{(operatingLeverage * 100).toFixed(0)}% del gasto total</p>
+                        </div>
+                        <div className="card text-center">
+                            <p className="text-xs text-slate-500 uppercase mb-1">Costos Variables</p>
+                            <p className="text-lg font-bold text-red-600">{formatCOP(variableCosts)}</p>
+                            <p className="text-xs text-slate-400">{(variableCostRatio * 100).toFixed(0)}% de ingresos</p>
+                        </div>
+                        <div className="card text-center">
+                            <p className="text-xs text-slate-500 uppercase mb-1">Margen de Seguridad</p>
+                            <p className="text-lg font-bold text-green-600">{((1 - breakEvenSales / monthlyIncome) * 100).toFixed(1)}%</p>
+                            <p className="text-xs text-slate-400">Holgura sobre punto de equilibrio</p>
+                        </div>
+                    </div>
+                    <div className="card">
+                        <h3 className="font-semibold text-slate-700 mb-3">Analisis de Punto de Equilibrio</h3>
+                        <div style={{ height: 300 }}>
+                            <canvas ref={breakEvenRef}></canvas>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== KEY RATIOS PANEL ====================
+        function KeyRatiosPanel({ stats }) {
+            const ratios = [
+                {
+                    name: 'Margen de Flujo Neto',
+                    value: ((stats.netFlow / stats.totalIncome) * 100).toFixed(1) + '%',
+                    description: 'Porcentaje de ingresos que se convierte en flujo libre',
+                    benchmark: '> 10% es saludable',
+                    status: (stats.netFlow / stats.totalIncome) > 0.10 ? 'green' : (stats.netFlow / stats.totalIncome) > 0 ? 'yellow' : 'red',
+                },
+                {
+                    name: 'Ratio de Gastos Operativos',
+                    value: (((stats.categories['GASTOS OPERACIONALES']?.expense || 0) / stats.totalIncome) * 100).toFixed(1) + '%',
+                    description: 'Gastos operativos como porcentaje de ingresos',
+                    benchmark: '< 30% es optimo',
+                    status: ((stats.categories['GASTOS OPERACIONALES']?.expense || 0) / stats.totalIncome) < 0.30 ? 'green' : ((stats.categories['GASTOS OPERACIONALES']?.expense || 0) / stats.totalIncome) < 0.50 ? 'yellow' : 'red',
+                },
+                {
+                    name: 'Ratio de Compras a Proveedores',
+                    value: ((stats.totalVendorSpend / stats.totalIncome) * 100).toFixed(1) + '%',
+                    description: 'Porcentaje de ingresos destinado a proveedores',
+                    benchmark: 'Variable segun industria',
+                    status: (stats.totalVendorSpend / stats.totalIncome) < 0.60 ? 'green' : (stats.totalVendorSpend / stats.totalIncome) < 0.75 ? 'yellow' : 'red',
+                },
+                {
+                    name: 'Cobertura de Gastos',
+                    value: `${stats.daysOfCoverage} dias`,
+                    description: 'Dias que el saldo actual cubre operaciones',
+                    benchmark: '> 30 dias recomendado',
+                    status: stats.daysOfCoverage > 30 ? 'green' : stats.daysOfCoverage > 15 ? 'yellow' : 'red',
+                },
+                {
+                    name: 'Costo Financiero / Ingresos',
+                    value: (((stats.categories['GASTOS FINANCIEROS']?.expense || 0) / stats.totalIncome) * 100).toFixed(2) + '%',
+                    description: 'Peso de los gastos financieros sobre ingresos',
+                    benchmark: '< 5% es aceptable',
+                    status: ((stats.categories['GASTOS FINANCIEROS']?.expense || 0) / stats.totalIncome) < 0.05 ? 'green' : ((stats.categories['GASTOS FINANCIEROS']?.expense || 0) / stats.totalIncome) < 0.10 ? 'yellow' : 'red',
+                },
+                {
+                    name: 'Indice de Liquidez',
+                    value: (stats.saldoFinal / (stats.totalExpense / 30)).toFixed(1),
+                    description: 'Capacidad de cubrir gastos diarios con saldo disponible',
+                    benchmark: '> 1.5 es saludable',
+                    status: (stats.saldoFinal / (stats.totalExpense / 30)) > 1.5 ? 'green' : (stats.saldoFinal / (stats.totalExpense / 30)) > 1 ? 'yellow' : 'red',
+                },
+            ];
+
+            const statusColors = {
+                green: 'bg-green-50 border-green-200 text-green-700',
+                yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700',
+                red: 'bg-red-50 border-red-200 text-red-700',
+            };
+            const statusIcons = { green: '\u2705', yellow: '\u26A0\uFE0F', red: '\u274C' };
+
+            return (
+                <div className="card">
+                    <h3 className="font-semibold text-slate-700 mb-4">Indicadores Financieros Clave</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {ratios.map((r, i) => (
+                            <div key={i} className={`p-4 rounded-lg border ${statusColors[r.status]}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="font-medium text-sm">{r.name}</span>
+                                    <span>{statusIcons[r.status]}</span>
+                                </div>
+                                <p className="text-2xl font-bold mb-1">{r.value}</p>
+                                <p className="text-xs opacity-75">{r.description}</p>
+                                <p className="text-xs opacity-60 mt-1">Referencia: {r.benchmark}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== EXPENSE TREND MICRO CHART ====================
+        function ExpenseTrendPanel({ transactions }) {
+            const trendRef = useRef(null);
+
+            const categoryTrends = useMemo(() => {
+                const byWeekCat = {};
+                transactions.forEach(tx => {
+                    if (tx.expense <= 0) return;
+                    const d = tx.date;
+                    const ws = new Date(d);
+                    ws.setDate(d.getDate() - d.getDay() + 1);
+                    const weekKey = formatDate(ws);
+                    if (!byWeekCat[weekKey]) byWeekCat[weekKey] = {};
+                    if (!byWeekCat[weekKey][tx.category]) byWeekCat[weekKey][tx.category] = 0;
+                    byWeekCat[weekKey][tx.category] += tx.expense;
+                });
+                return byWeekCat;
+            }, [transactions]);
+
+            const weeks = Object.keys(categoryTrends).sort();
+            const cats = ['PROVEEDORES', 'GASTOS OPERACIONALES', 'GASTOS FINANCIEROS', 'MOVIMIENTOS INTERNOS', 'OTROS'];
+            const catColors = ['#1E40AF', '#DC2626', '#F59E0B', '#8B5CF6', '#64748B'];
+
+            useChart(trendRef, () => ({
+                type: 'bar',
+                data: {
+                    labels: weeks,
+                    datasets: cats.map((cat, i) => ({
+                        label: cat,
+                        data: weeks.map(w => categoryTrends[w]?.[cat] || 0),
+                        backgroundColor: catColors[i],
+                        borderRadius: 2,
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.dataset.label}: ${formatCOP(ctx.raw)}`
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                            labels: { font: { size: 10 } }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: {
+                            stacked: true,
+                            ticks: { callback: (v) => formatCOP(v) }
+                        }
+                    }
+                }
+            }), [categoryTrends]);
+
+            return (
+                <div className="card">
+                    <h3 className="font-semibold text-slate-700 mb-3">Tendencia de Egresos por Categoria (Semanal)</h3>
+                    <div style={{ height: 300 }}>
+                        <canvas ref={trendRef}></canvas>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== INCOME SOURCES PANEL ====================
+        function IncomeSourcesPanel({ transactions }) {
+            const pieRef = useRef(null);
+            const sources = useMemo(() => {
+                const map = {};
+                transactions.filter(t => t.income > 0).forEach(tx => {
+                    const desc = tx.description.substring(0, 35);
+                    if (!map[desc]) map[desc] = { total: 0, count: 0 };
+                    map[desc].total += tx.income;
+                    map[desc].count++;
+                });
+                return Object.entries(map)
+                    .map(([k, v]) => ({ name: k, ...v }))
+                    .sort((a, b) => b.total - a.total);
+            }, [transactions]);
+
+            useChart(pieRef, () => {
+                const top8 = sources.slice(0, 8);
+                return {
+                    type: 'doughnut',
+                    data: {
+                        labels: top8.map(s => s.name),
+                        datasets: [{
+                            data: top8.map(s => s.total),
+                            backgroundColor: ['#059669', '#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#86EFAC', '#4ADE80', '#22C55E']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { font: { size: 9 } } },
+                            tooltip: { callbacks: { label: (ctx) => `${formatCOP(ctx.raw)}` } }
+                        }
+                    }
+                };
+            }, [sources]);
+
+            return (
+                <div className="card">
+                    <h3 className="font-semibold text-slate-700 mb-3">Fuentes de Ingreso</h3>
+                    <div style={{ height: 280 }}>
+                        <canvas ref={pieRef}></canvas>
+                    </div>
+                    <div className="mt-3 space-y-1">
+                        {sources.slice(0, 5).map((s, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs p-1">
+                                <span className="text-slate-600 truncate max-w-xs">{s.name}</span>
+                                <span className="font-medium text-green-600">{formatCOP(s.total)} ({s.count}x)</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // ==================== FOOTER COMPONENT ====================
+        function Footer() {
+            return (
+                <footer className="bg-slate-800 text-slate-400 text-center py-6 mt-8">
+                    <p className="text-sm">INDOOR SPORT SAS | NIT 277.000.476-58</p>
+                    <p className="text-xs mt-1">Dashboard de Analisis Financiero | Itagui, Antioquia, Colombia</p>
+                    <p className="text-xs mt-1">Generado el {new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </footer>
+            );
+        }
+
+        // ==================== RENDER APP ====================
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
