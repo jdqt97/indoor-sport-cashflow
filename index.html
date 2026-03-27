@@ -235,8 +235,8 @@ tr:hover td { background:rgba(59,130,246,.05); }
 
 <!-- TAB: Proveedores -->
 <div class="content tab-content hidden" id="tab-proveedores">
-  <div class="filters" id="provFilters">
-    <input type="text" id="provSearch" placeholder="🔍 Buscar proveedor...">
+  <div class="filters"><span id="provFilters"></span>
+    <input type="text" id="provSearch" placeholder="🔍 Buscar proveedor..." style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;" oninput="const q=this.value.toUpperCase();document.querySelectorAll('#provTable tbody tr').forEach(r=>{r.style.display=(!q||(r.cells[1]&&r.cells[1].textContent.includes(q)))?'':'none';});">
   </div>
   <div class="grid grid-2">
     <div class="card"><div class="card-header"><h3>Top 15 Proveedores</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartProveedores"></canvas></div></div></div>
@@ -457,31 +457,33 @@ function createMultiMonthSelector(containerId, onChange) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  let selected = new Set();
-  let mode = 'all'; // 'all', 'custom'
+  // Start with ALL months selected
+  let selected = new Set(keys);
 
   function getSelectedMonths() {
-    if (mode === 'all') return keys;
     return keys.filter(k => selected.has(k));
   }
 
   function render() {
     let h = '<div class="multi-select" id="ms_'+containerId+'">';
-    const label = mode === 'all' ? 'Todos los periodos ('+keys.length+')' : selected.size+' mes(es) seleccionado(s)';
+    const allSelected = selected.size === keys.length;
+    const label = allSelected ? 'Todos los periodos ('+keys.length+')' :
+      selected.size === 0 ? 'Ninguno seleccionado' :
+      selected.size === 1 ? ml([...selected][0]) :
+      selected.size+' meses seleccionados';
     h += '<button class="ms-btn" onclick="toggleMS(\'ms_'+containerId+'\')">'+label+' ▾</button>';
     h += '<div class="ms-drop" id="msd_'+containerId+'">';
-    h += '<div class="ms-quick"><button class="btn btn-sm" onclick="msSelectAll(\''+containerId+'\')">Todos</button><button class="btn btn-sm" onclick="msClear(\''+containerId+'\')">Limpiar</button></div>';
+    h += '<div class="ms-quick"><button class="btn btn-sm" onclick="msSelectAll(\''+containerId+'\')">Todos</button><button class="btn btn-sm" onclick="msClear(\''+containerId+'\')">Ninguno</button></div>';
     h += '<div class="ms-divider"></div>';
     keys.forEach(k => {
-      const chk = mode === 'all' || selected.has(k) ? 'checked' : '';
+      const chk = selected.has(k) ? 'checked' : '';
       h += '<label><input type="checkbox" '+chk+' onchange="msToggle(\''+containerId+'\',\''+k+'\',this.checked)"> '+ml(k)+' <small style="color:var(--text2)">('+allMonths[k].transactions.length+' tx)</small></label>';
     });
     h += '</div></div>';
     container.innerHTML = h;
   }
 
-  // Store callbacks globally
-  window['ms_data_'+containerId] = { selected, mode, keys, onChange, getSelectedMonths };
+  window['ms_data_'+containerId] = { selected, keys, onChange, getSelectedMonths, render };
   render();
   return getSelectedMonths;
 }
@@ -489,22 +491,28 @@ function createMultiMonthSelector(containerId, onChange) {
 window.toggleMS = function(id) { document.getElementById(id.replace('ms_','msd_')).classList.toggle('open'); };
 window.msToggle = function(cid, key, checked) {
   const d = window['ms_data_'+cid];
-  d.mode = 'custom';
   if (checked) d.selected.add(key); else d.selected.delete(key);
-  if (d.selected.size === d.keys.length) d.mode = 'all';
-  d.onChange(d.getSelectedMonths());
+  // Re-render the selector to update the button label and checkboxes
+  const wasOpen = document.getElementById('msd_'+cid)?.classList.contains('open');
+  d.render();
+  if (wasOpen) document.getElementById('msd_'+cid)?.classList.add('open');
+  // Update the data view
+  if (d.selected.size > 0) d.onChange(d.getSelectedMonths());
 };
 window.msSelectAll = function(cid) {
   const d = window['ms_data_'+cid];
-  d.mode = 'all'; d.selected.clear();
+  d.keys.forEach(k => d.selected.add(k));
+  const wasOpen = document.getElementById('msd_'+cid)?.classList.contains('open');
+  d.render();
+  if (wasOpen) document.getElementById('msd_'+cid)?.classList.add('open');
   d.onChange(d.getSelectedMonths());
-  createMultiMonthSelector(cid, d.onChange);
 };
 window.msClear = function(cid) {
   const d = window['ms_data_'+cid];
-  d.mode = 'custom'; d.selected.clear();
-  d.onChange([]);
-  createMultiMonthSelector(cid, d.onChange);
+  d.selected.clear();
+  const wasOpen = document.getElementById('msd_'+cid)?.classList.contains('open');
+  d.render();
+  if (wasOpen) document.getElementById('msd_'+cid)?.classList.add('open');
 };
 
 // Close dropdowns on outside click
@@ -583,16 +591,6 @@ function renderAll() {
   createMultiMonthSelector('flujoFilters', months => renderFlujo(months));
   createMultiMonthSelector('taxFilters', months => renderImpuestos(months));
   createMultiMonthSelector('compFilters', months => renderComparativo(months));
-
-  // Add search back after provFilters
-  const provC = document.getElementById('provFilters');
-  if (provC && !provC.querySelector('#provSearch')) {
-    const inp = document.createElement('input');
-    inp.type='text'; inp.id='provSearch'; inp.placeholder='🔍 Buscar proveedor...';
-    inp.style.cssText='background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;';
-    inp.oninput = function() { const q=this.value.toUpperCase(); document.querySelectorAll('#provTable tbody tr').forEach(r=>{r.style.display=(!q||r.cells[1]?.textContent.includes(q))?'':'none';}); };
-    provC.appendChild(inp);
-  }
 
   renderResumen(keys);
   renderCalendario(keys);
