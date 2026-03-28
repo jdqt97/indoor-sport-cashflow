@@ -1222,69 +1222,95 @@ function rebuildData() {
   }
 }
 
+function getTxForMonths(months) {
+  if (!months || months.length === 0) return [];
+  return allTransactions.filter(t => months.includes(t.monthKey));
+}
+
 function renderAll() {
-  if (allTransactions.length === 0) {
-    console.log('No transactions to render');
-    return;
-  }
-
-  console.log('renderAll() called with ' + allTransactions.length + ' transactions');
-
+  if (allTransactions.length === 0) return;
   const keys = Object.keys(allMonths).sort();
-  console.log('Months found:', keys);
+  console.log('renderAll() called with ' + allTransactions.length + ' transactions, ' + keys.length + ' months');
 
-  let totalIng = 0, totalEgr = 0;
-  allTransactions.forEach(t => {
-    if (isIngreso(t)) totalIng += t.valor;
-    else if (isEgreso(t)) totalEgr += Math.abs(t.valor);
-  });
+  renderResumen(keys);
 
-  const si = allMonths[keys[0]]?.summary?.saldoAnterior || 0;
-  const sf = allMonths[keys[keys.length-1]]?.summary?.saldoActual || 0;
+  // Auto switch to resumen tab
+  const resumenTab = document.querySelector('#module-contabilidad [data-tab="resumen"]');
+  if (resumenTab) {
+    resumenTab.click();
+  }
+}
+
+function renderResumen(months) {
+  if (!months) months = Object.keys(allMonths).sort();
+  const txs = getTxForMonths(months);
+  const keys = Object.keys(allMonths).sort();
+  const nm = months.length;
+  if (nm === 0) return;
+
+  let totalIng=0, totalEgr=0;
+  txs.forEach(t => { if(isIngreso(t)) totalIng+=t.valor; else if(isEgreso(t)) totalEgr+=Math.abs(t.valor); });
+
+  const sortedM = [...months].sort();
+  const si = allMonths[sortedM[0]]?.summary?.saldoAnterior || 0;
+  const sf = allMonths[sortedM[sortedM.length-1]]?.summary?.saldoActual || 0;
   const flujo = totalIng - totalEgr;
-  const days = new Set(allTransactions.map(t=>t.fecha)).size || 1;
-  const avgDailyExp = totalEgr / days;
-  const runwayDays = avgDailyExp > 0 ? Math.floor(sf / avgDailyExp) : 999;
+  const totalNom = txs.filter(t=>t.categoria==='Nomina'&&t.valor<0).reduce((s,t)=>s+Math.abs(t.valor),0);
+  const totalProv = txs.filter(t=>(t.categoria==='Proveedores'||t.categoria==='Compras')&&t.valor<0).reduce((s,t)=>s+Math.abs(t.valor),0);
+  const totalImp = txs.filter(t=>t.categoria==='Impuestos'&&t.valor<0).reduce((s,t)=>s+Math.abs(t.valor),0);
+  const days = new Set(txs.map(t=>t.fecha)).size || 1;
 
-  console.log('Summary data - SI:', si, 'SF:', sf, 'totalIng:', totalIng, 'totalEgr:', totalEgr);
+  const avgDailyExp = totalEgr / days;
+  const lastSaldo = sf;
+  const runwayDays = avgDailyExp > 0 ? Math.floor(lastSaldo / avgDailyExp) : 999;
+  const runwayColor = runwayDays >= 30 ? 'var(--green)' : runwayDays >= 15 ? 'var(--orange)' : 'var(--red)';
+  const runwayPct = Math.min(runwayDays / 60 * 100, 100);
 
   const metrics = [
     { l:'Saldo Inicial', v:fmt(si), c:'', cls:'' },
     { l:'Saldo Final', v:fmt(sf), c:'Dif: '+fmt(sf-si), cls:sf>=si?'pos':'neg' },
-    { l:'Total Ingresos', v:fmt(totalIng), c:allTransactions.length+' tx', cls:'pos' },
+    { l:'Total Ingresos', v:fmt(totalIng), c:txs.length+' tx ('+nm+' mes'+(nm>1?'es':'')+')', cls:'pos' },
     { l:'Total Egresos', v:fmt(totalEgr), c:'Flujo neto: '+fmt(flujo), cls:flujo>=0?'pos':'neg' },
-    { l:'Runway', v:runwayDays+' dias', c:'Con saldo actual', cls:runwayDays>=30?'pos':'' },
+    { l:'Runway', v:runwayDays+' dias', c:'Con saldo actual y gasto promedio', cls:runwayDays>=30?'pos':runwayDays>=15?'':'neg' },
+    { l:'Proveedores', v:fmt(totalProv), c:totalEgr?pct(totalProv/totalEgr)+' de egresos':'', cls:'' },
+    { l:'Nomina', v:fmt(totalNom), c:totalEgr?pct(totalNom/totalEgr)+' de egresos':'', cls:'' },
+    { l:'Impuestos', v:fmt(totalImp), c:totalEgr?pct(totalImp/totalEgr)+' de egresos':'', cls:'' },
+    { l:'Gasto Prom/Dia', v:fmt(avgDailyExp), c:days+' dias | Ing: '+fmt(totalIng/days)+'/dia', cls:'' },
+    { l:'Flujo Neto/Mes', v:fmt(flujo/nm), c:'Proy anual: '+fmt(flujo/nm*12), cls:flujo>=0?'pos':'neg' },
   ];
 
-  const metricsContainer = document.getElementById('metricCards');
-  if (metricsContainer) {
-    console.log('Found metricCards element, rendering metrics');
-    metricsContainer.innerHTML = metrics.map(m =>
-      '<div class="card"><div class="metric"><div class="label">'+m.l+'</div><div class="value">'+m.v+'</div><div class="change '+m.cls+'">'+m.c+'</div></div></div>'
-    ).join('');
-    console.log('Metrics rendered successfully');
-  } else {
-    console.error('ERROR: metricCards element not found!');
-  }
+  document.getElementById('metricCards').innerHTML = metrics.map(m =>
+    '<div class="card"><div class="metric"><div class="label">'+m.l+'</div><div class="value">'+m.v+'</div><div class="change '+m.cls+'">'+m.c+'</div></div></div>'
+  ).join('');
 
-  let h = '<div class="table-wrap"><table style="width:100%;"><thead><tr><th>Mes</th><th class="text-right">Ingresos</th><th class="text-right">Egresos</th><th class="text-right">Neto</th><th class="text-right">Saldo</th></tr></thead><tbody>';
-  keys.forEach(k => {
-    const m = allMonths[k];
-    const neto = (m.summary?.totalAbonos || 0) - (m.summary?.totalCargos || 0);
-    h += '<tr><td>'+ml(k)+'</td><td class="text-right pos">'+fmt(m.summary?.totalAbonos || 0)+'</td><td class="text-right neg">'+fmt(m.summary?.totalCargos || 0)+'</td><td class="text-right '+((neto>=0)?'pos':'neg')+'">'+fmt(neto)+'</td><td class="text-right">'+fmt(m.summary?.saldoActual || 0)+'</td></tr>';
+  // Runway section
+  document.getElementById('runwaySection').innerHTML = `
+    <div class="card"><div class="card-body"><div class="runway-gauge">
+      <div class="runway-num" style="color:${runwayColor}">${runwayDays}</div>
+      <div class="runway-label">Dias de operacion sin ingresos</div>
+      <div class="runway-bar"><div class="runway-fill" style="width:${runwayPct}%;background:${runwayColor}"></div></div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px;">Gasto diario: ${fmt(avgDailyExp)} | Saldo: ${fmt(lastSaldo)}</div>
+    </div></div></div>
+    <div class="card"><div class="card-header"><h3>Composición de Egresos</h3></div><div class="card-body">
+      <div style="font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>🏭 Proveedores</span><span>${pct(totalEgr?totalProv/totalEgr:0)} - ${fmt(totalProv)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>👷 Nomina</span><span>${pct(totalEgr?totalNom/totalEgr:0)} - ${fmt(totalNom)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>🏛️ Impuestos</span><span>${pct(totalEgr?totalImp/totalEgr:0)} - ${fmt(totalImp)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;"><span>📦 Otros</span><span>${pct(totalEgr?(totalEgr-totalProv-totalNom-totalImp)/totalEgr:0)} - ${fmt(totalEgr-totalProv-totalNom-totalImp)}</span></div>
+      </div>
+    </div></div>`;
+
+  // Weekly summary
+  let whtml = '<table><thead><tr><th>Periodo</th><th>Semana</th><th class="text-right">Ingresos</th><th class="text-right">Egresos</th><th class="text-right">Flujo</th></tr></thead><tbody>';
+  sortedM.forEach(mk => {
+    const wks = {};
+    allMonths[mk].transactions.forEach(t => { const w=Math.ceil(parseInt(t.fecha.split('-')[2])/7); if(!wks[w])wks[w]={i:0,e:0}; if(isIngreso(t))wks[w].i+=t.valor; else if(isEgreso(t))wks[w].e+=Math.abs(t.valor); });
+    Object.keys(wks).sort((a,b)=>a-b).forEach(w => { const n=wks[w].i-wks[w].e; whtml+='<tr><td>'+ml(mk)+'</td><td>S'+w+'</td><td class="text-right pos">'+fmt(wks[w].i)+'</td><td class="text-right neg">'+fmt(wks[w].e)+'</td><td class="text-right '+(n>=0?'pos':'neg')+'">'+fmt(n)+'</td></tr>'; });
   });
-  h += '</tbody></table></div>';
+  whtml += '</tbody></table>';
+  document.getElementById('weeklyTable').innerHTML = whtml;
 
-  const weeklyTable = document.getElementById('weeklyTable');
-  if (weeklyTable) {
-    console.log('Found weeklyTable element, rendering table with ' + keys.length + ' months');
-    weeklyTable.innerHTML = h;
-    console.log('Table rendered successfully');
-  } else {
-    console.error('ERROR: weeklyTable element not found!');
-  }
-
-  console.log('renderAll() completed. Rendered ' + keys.length + ' months');
+  console.log('renderResumen() completed');
 }
 
 function renderVentas() {
