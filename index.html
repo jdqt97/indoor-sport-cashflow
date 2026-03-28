@@ -883,8 +883,8 @@ function parseRemisiones(workbook) {
 
   data.forEach((row, idx) => {
     // Check vigencia if column exists, otherwise include all rows
-    const vigencia = row['Remisión vigente']?.trim() || row['Vigencia']?.trim() || row['vigencia']?.trim() || '';
-    if (vigencia && vigencia !== 'Vigente' && vigencia !== 'vigente' && vigencia !== 'SI' && vigencia !== 'Sí' && vigencia !== 'si') {
+    const vigencia = row['Vigencia']?.trim() || row['vigencia']?.trim() || '';
+    if (vigencia && vigencia !== 'Vigente' && vigencia !== 'vigente' && vigencia !== 'Remisión vigente' && vigencia !== 'SI' && vigencia !== 'Sí' && vigencia !== 'si') {
       if (idx < 3) console.log('Skipping row ' + idx + ': vigencia=' + vigencia);
       return;
     }
