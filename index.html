@@ -1232,12 +1232,22 @@ function renderAll() {
   const keys = Object.keys(allMonths).sort();
   console.log('renderAll() called with ' + allTransactions.length + ' transactions, ' + keys.length + ' months');
 
-  renderResumen(keys);
+  try {
+    renderResumen(keys);
+    console.log('renderResumen completed');
+  } catch(e) {
+    console.error('renderResumen error:', e);
+  }
 
   // Auto switch to resumen tab
-  const resumenTab = document.querySelector('#module-contabilidad [data-tab="resumen"]');
-  if (resumenTab) {
-    resumenTab.click();
+  try {
+    const resumenTab = document.querySelector('#module-contabilidad [data-tab="resumen"]');
+    if (resumenTab) {
+      resumenTab.click();
+      console.log('Switched to resumen tab');
+    }
+  } catch(e) {
+    console.error('Tab switch error:', e);
   }
 }
 
@@ -1279,12 +1289,16 @@ function renderResumen(months) {
     { l:'Flujo Neto/Mes', v:fmt(flujo/nm), c:'Proy anual: '+fmt(flujo/nm*12), cls:flujo>=0?'pos':'neg' },
   ];
 
-  document.getElementById('metricCards').innerHTML = metrics.map(m =>
-    '<div class="card"><div class="metric"><div class="label">'+m.l+'</div><div class="value">'+m.v+'</div><div class="change '+m.cls+'">'+m.c+'</div></div></div>'
-  ).join('');
+  const metricsEl = document.getElementById('metricCards');
+  if (metricsEl) {
+    metricsEl.innerHTML = metrics.map(m =>
+      '<div class="card"><div class="metric"><div class="label">'+m.l+'</div><div class="value">'+m.v+'</div><div class="change '+m.cls+'">'+m.c+'</div></div></div>'
+    ).join('');
+  }
 
   // Runway section
-  document.getElementById('runwaySection').innerHTML = `
+  if (runwayEl) {
+    runwayEl.innerHTML += `
     <div class="card"><div class="card-body"><div class="runway-gauge">
       <div class="runway-num" style="color:${runwayColor}">${runwayDays}</div>
       <div class="runway-label">Dias de operacion sin ingresos</div>
@@ -1299,6 +1313,7 @@ function renderResumen(months) {
         <div style="display:flex;justify-content:space-between;padding:6px 0;"><span>📦 Otros</span><span>${pct(totalEgr?(totalEgr-totalProv-totalNom-totalImp)/totalEgr:0)} - ${fmt(totalEgr-totalProv-totalNom-totalImp)}</span></div>
       </div>
     </div></div>`;
+  }
 
   // Weekly summary
   let whtml = '<table><thead><tr><th>Periodo</th><th>Semana</th><th class="text-right">Ingresos</th><th class="text-right">Egresos</th><th class="text-right">Flujo</th></tr></thead><tbody>';
@@ -1308,22 +1323,60 @@ function renderResumen(months) {
     Object.keys(wks).sort((a,b)=>a-b).forEach(w => { const n=wks[w].i-wks[w].e; whtml+='<tr><td>'+ml(mk)+'</td><td>S'+w+'</td><td class="text-right pos">'+fmt(wks[w].i)+'</td><td class="text-right neg">'+fmt(wks[w].e)+'</td><td class="text-right '+(n>=0?'pos':'neg')+'">'+fmt(n)+'</td></tr>'; });
   });
   whtml += '</tbody></table>';
-  document.getElementById('weeklyTable').innerHTML = whtml;
+
+  const weeklyEl = document.getElementById('weeklyTable');
+  if (weeklyEl) {
+    weeklyEl.innerHTML = whtml;
+  }
 
   console.log('renderResumen() completed');
 }
 
 // Placeholder functions for other Contabilidad tabs
-function renderCalendario(months) { document.getElementById('calendarContent').innerHTML = '<div style="padding:20px;"><p>📅 Vista de calendario - Próximamente</p></div>'; }
-function renderProveedores(months) { document.getElementById('provTable').innerHTML = '<div style="padding:20px;"><p>🏭 Detalle de proveedores - Próximamente</p></div>'; }
-function renderClientes(months) { document.getElementById('clientTable').innerHTML = '<div style="padding:20px;"><p>💰 Detalle de clientes - Próximamente</p></div>'; }
-function renderFlujo(months) { document.getElementById('flujoContent').innerHTML = '<div style="padding:20px;"><p>📈 Flujo diario - Próximamente</p></div>'; }
-function renderRecurrentes() { document.getElementById('recurrentesContent').innerHTML = '<div style="padding:20px;"><p>🔄 Transacciones recurrentes - Próximamente</p></div>'; }
-function renderImpuestos(months) { document.getElementById('impuestosContent').innerHTML = '<div style="padding:20px;"><p>🏛️ Análisis de impuestos - Próximamente</p></div>'; }
-function renderProyecciones() { document.getElementById('proyeccionesContent').innerHTML = '<div style="padding:20px;"><p>🔮 Proyecciones - Próximamente</p></div>'; }
-function renderTransacciones() { document.getElementById('txTable').innerHTML = '<div style="padding:20px;"><p>📋 Transacciones detalladas - Próximamente</p></div>'; }
-function renderComparativo(months) { document.getElementById('comparativoContent').innerHTML = '<div style="padding:20px;"><p>📊 Análisis comparativo - Próximamente</p></div>'; }
-function renderConciliacion() { document.getElementById('conciliacionContent').innerHTML = '<div style="padding:20px;"><p>✅ Conciliación bancaria - Próximamente</p></div>'; }
+function renderCalendario(months) {
+  const el = document.getElementById('calendarContent');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>📅 Vista de calendario - Próximamente</p></div>';
+}
+function renderProveedores(months) {
+  const el = document.getElementById('provTable');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>🏭 Detalle de proveedores - Próximamente</p></div>';
+}
+function renderClientes(months) {
+  const el = document.getElementById('clientTable');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>💰 Detalle de clientes - Próximamente</p></div>';
+}
+function renderFlujo(months) {
+  const el = document.getElementById('flujoContent');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>📈 Flujo diario - Próximamente</p></div>';
+}
+function renderRecurrentes() {
+  const el = document.getElementById('recurrentesContent');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>🔄 Transacciones recurrentes - Próximamente</p></div>';
+}
+function renderImpuestos(months) {
+  const el = document.getElementById('impuestosContent');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>🏛️ Análisis de impuestos - Próximamente</p></div>';
+}
+function renderProyecciones() {
+  const el = document.getElementById('proyeccionesContent');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>🔮 Proyecciones - Próximamente</p></div>';
+}
+function renderTransacciones() {
+  const el = document.getElementById('txTable');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>📋 Transacciones detalladas - Próximamente</p></div>';
+}
+function renderComparativo(months) {
+  const el = document.getElementById('comparativoContent');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>📊 Análisis comparativo - Próximamente</p></div>';
+}
+function renderConciliacion() {
+  const el = document.getElementById('conciliacionContent');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>✅ Conciliación bancaria - Próximamente</p></div>';
+}
+function renderNomina(months) {
+  const el = document.getElementById('nominaContent');
+  if (el) el.innerHTML = '<div style="padding:20px;"><p>📊 Análisis de nómina - Próximamente</p></div>';
+}
 
 function renderVentas() {
   if (ventasData.remisiones.length === 0) return;
