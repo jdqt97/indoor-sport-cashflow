@@ -492,6 +492,7 @@ input[type="number"]:focus {
       <div class="tab" data-tab="resumen">📊 Resumen</div>
       <div class="tab" data-tab="calendario">📅 Calendario</div>
       <div class="tab" data-tab="proveedores">🏭 Proveedores</div>
+      <div class="tab" data-tab="nomina">👷 Nómina</div>
       <div class="tab" data-tab="clientes">💰 Clientes</div>
       <div class="tab" data-tab="flujo">📈 Flujo Diario</div>
       <div class="tab" data-tab="recurrentes">🔄 Recurrentes</div>
@@ -554,6 +555,16 @@ input[type="number"]:focus {
           <div class="card"><div class="card-header"><h3>Distribucion</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartProvPie"></canvas></div></div></div>
         </div>
         <div class="card" style="margin-top:20px;"><div class="card-header"><h3>Detalle de Proveedores</h3></div><div class="card-body"><div class="table-wrap" id="provTable"></div></div></div>
+      </div>
+
+      <!-- TAB: Nómina -->
+      <div id="tab-nomina" class="tab-content hidden">
+        <div class="filters" id="nomFilters"></div>
+        <div class="grid grid-2">
+          <div class="card"><div class="card-header"><h3>Nómina por Mes</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartNomina"></canvas></div></div></div>
+          <div class="card"><div class="card-header"><h3>Distribucion de Nómina</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartNominaPie"></canvas></div></div></div>
+        </div>
+        <div class="card" style="margin-top:20px;"><div class="card-header"><h3>Detalle de Nómina</h3></div><div class="card-body"><div class="table-wrap" id="nominaTable"></div></div></div>
       </div>
 
       <!-- TAB: Clientes -->
@@ -1006,6 +1017,7 @@ function renderAll() {
   createMultiMonthSelector('resumenFilters', months => renderResumen(months));
   createMultiMonthSelector('calFilters', months => renderCalendario(months));
   createMultiMonthSelector('provFilters', months => renderProveedores(months));
+  createMultiMonthSelector('nomFilters', months => renderNomina(months));
   createMultiMonthSelector('clientFilters', months => renderClientes(months));
   createMultiMonthSelector('flujoFilters', months => renderFlujo(months));
   createMultiMonthSelector('taxFilters', months => renderImpuestos(months));
@@ -1014,6 +1026,7 @@ function renderAll() {
   renderResumen(keys);
   renderCalendario(keys);
   renderProveedores(keys);
+  renderNomina(keys);
   renderClientes(keys);
   renderFlujo(keys);
   renderRecurrentes();
