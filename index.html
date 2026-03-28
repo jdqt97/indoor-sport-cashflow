@@ -1020,16 +1020,36 @@ function handleFiles(files) {
         // After first successful upload, switch to resumen tab to show results
         if (uploadCount === 1) {
           console.log('handleFiles: Switching to resumen tab');
-          const resumenTab = document.querySelector('[data-tab="resumen"]');
-          const tabsContainer = resumenTab?.closest('.tabs');
-          if (resumenTab && tabsContainer) {
-            tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            resumenTab.classList.add('active');
 
-            const module = resumenTab.closest('.module');
-            module.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            document.getElementById('tab-resumen')?.classList.remove('hidden');
+          // Find the resumen tab in the Contabilidad module
+          const resumenTab = document.querySelector('#module-contabilidad [data-tab="resumen"]');
+          console.log('handleFiles: resumenTab found?', !!resumenTab);
+
+          if (resumenTab) {
+            // Get the tabs container
+            const tabsContainer = resumenTab.closest('.tabs');
+            console.log('handleFiles: tabsContainer found?', !!tabsContainer);
+
+            // Remove active from all tabs in this container
+            tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            // Add active to resumen tab
+            resumenTab.classList.add('active');
+            console.log('handleFiles: Tab marked as active');
+
+            // Hide all tab-content and show resumen
+            const tabResumenContent = document.getElementById('tab-resumen');
+            console.log('handleFiles: tab-resumen element found?', !!tabResumenContent);
+
+            if (tabResumenContent) {
+              // Hide all tab contents in Contabilidad module
+              document.querySelectorAll('#module-contabilidad .tab-content').forEach(c => c.classList.add('hidden'));
+              // Show resumen tab
+              tabResumenContent.classList.remove('hidden');
+              console.log('handleFiles: tab-resumen is now visible');
+            }
             console.log('handleFiles: Tab switched to resumen');
+          } else {
+            console.error('handleFiles: ERROR - Could not find resumen tab!');
           }
         }
       } catch (err) {
