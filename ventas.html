@@ -222,18 +222,52 @@ let ventasData = { remisiones: [], clientes: {}, vendedores: {} };
 let charts = {};
 
 // ============================================================
-// STORAGE
+// STORAGE - IndexedDB (more capacity than localStorage)
 // ============================================================
-function saveToStorage() {
-  localStorage.setItem(DB_KEY, JSON.stringify(ventasData));
-  updateStorageInfo();
+const DB_NAME = 'VentasDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'remisiones';
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => resolve(req.result);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+  });
 }
 
-function loadFromStorage() {
-  const data = localStorage.getItem(DB_KEY);
-  if (data) {
-    ventasData = JSON.parse(data);
+async function saveToStorage() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).put(JSON.stringify(ventasData), DB_KEY);
     updateStorageInfo();
+    console.log('✅ Datos guardados en IndexedDB');
+  } catch (e) {
+    console.error('❌ Error guardando:', e);
+  }
+}
+
+async function loadFromStorage() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).get(DB_KEY);
+    req.onsuccess = () => {
+      if (req.result) {
+        ventasData = JSON.parse(req.result);
+        updateStorageInfo();
+        console.log('✅ Datos cargados de IndexedDB');
+      }
+    };
+  } catch (e) {
+    console.error('❌ Error cargando:', e);
   }
 }
 
@@ -369,9 +403,24 @@ function parseRemisiones(workbook) {
 
       let monto = 0;
       try {
-        // Handle format: 207.000 or 207000 or $207.000
-        const cleaned = montoStr.replace(/\$/g, '').trim();
-        monto = parseFloat(cleaned.replace(/\./g, '').replace(/,/g, '.')) || 0;
+        // Parse Colombian format: 1.234.567,89 or 1234567
+        let cleaned = montoStr.replace(/\$/g, '').trim();
+
+        // If contains comma, it's decimal separator (1.234.567,89)
+        if (cleaned.includes(',')) {
+          // Remove dots (thousand separator) and replace comma with dot
+          cleaned = cleaned.replace(/\./g, '').replace(',', '.');
+        } else {
+          // If no comma, just remove dots if they're thousands separators
+          // But be careful: 1234567 should stay as is
+          if (cleaned.includes('.')) {
+            // If has dots, remove them (they're thousand separators)
+            cleaned = cleaned.replace(/\./g, '');
+          }
+        }
+
+        monto = parseFloat(cleaned) || 0;
+        console.log(`💰 Parsed ${montoStr} → ${monto}`);
       } catch (e) {
         console.warn('⚠️ Error parsing monto:', montoStr);
         continue;
@@ -672,8 +721,10 @@ document.getElementById('filterVendedor').addEventListener('change', () => {
 // ============================================================
 // INIT
 // ============================================================
-loadFromStorage();
-if (ventasData.remisiones.length > 0) renderAll();
+(async () => {
+  await loadFromStorage();
+  if (ventasData.remisiones.length > 0) renderAll();
+})();
 </script>
 
 </body>
