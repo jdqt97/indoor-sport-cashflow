@@ -325,40 +325,54 @@ function parseRemisiones(workbook) {
     const totalRows = range.e.r + 1;
     const getCell = (r, c) => { const cell = ws[XLSX.utils.encode_cell({ r, c })]; return cell ? String(cell.v).trim() : ''; };
 
-    let headerRow = -1;
-    for (let r = 0; r < Math.min(20, totalRows); r++) {
-      const row = [];
-      for (let c = 0; c < 10; c++) row.push(getCell(r, c).toUpperCase());
-      if (row.some(cell => cell.includes('FECHA') || cell.includes('REMISION'))) {
-        headerRow = r;
-        break;
+    // EFFI Report columns (0-indexed):
+    // D (3) = ID remisión
+    // E (4) = Nombre cliente
+    // I (8) = Vendedor
+    // N (13) = Fecha creación
+    // Y (24) = Precio neto total
+    // L (11) = Estado CxC
+
+    for (let r = 1; r < totalRows; r++) {
+      const idRemisional = getCell(r, 3);
+      if (!idRemisional || idRemisional.toLowerCase() === 'id remisión') continue;
+
+      const cliente = getCell(r, 4);
+      if (!cliente) continue;
+
+      const vendedor = getCell(r, 8) || 'Sin Vendedor';
+      const fecha = getCell(r, 13);
+      const estadoCxC = getCell(r, 11) || 'Por Cobrar';
+
+      let monto = 0;
+      const montoStr = getCell(r, 24);
+      if (montoStr) {
+        monto = parseFloat(montoStr.replace(/,/g, '').replace(/\$/g, '').replace(/\./g, '')) || 0;
       }
-    }
-    if (headerRow === -1) return;
 
-    const headers = [];
-    for (let c = 0; c < 10; c++) headers.push(getCell(headerRow, c).toUpperCase());
-
-    for (let r = headerRow + 1; r < totalRows; r++) {
-      const fecha = getCell(r, 0);
-      if (!fecha || fecha === 'FIN') break;
-
-      const desc = getCell(r, 1) || '';
-      if (!desc) continue;
-
-      const monto = parseFloat((getCell(r, 4) || getCell(r, 3) || '0').replace(/,/g, '').replace(/\$/g, '')) || 0;
       if (monto === 0) continue;
 
+      // Parse fecha (format: DD/MM/YYYY HH:MM)
+      let fechaISO = fecha;
+      if (fecha && fecha.includes('/')) {
+        const parts = fecha.split(' ')[0].split('/');
+        if (parts.length === 3) {
+          fechaISO = `2026-${parts[1]}-${parts[0]}`;
+        }
+      }
+
       results.push({
-        fecha: fecha,
-        cliente: (getCell(r, 2) || desc).substring(0, 50),
-        vendedor: getCell(r, 6) || 'Sin Vendedor',
-        descripcion: desc,
+        id_remisional: idRemisional,
+        fecha: fechaISO,
+        cliente: cliente.substring(0, 50),
+        vendedor: vendedor.substring(0, 40),
         monto_neto: monto,
-        estado_cxc: 'Por Cobrar'
+        estado_cxc: estadoCxC
       });
     }
   });
+
+  console.log('parseRemisiones: Found', results.length, 'remisiones');
   return results;
 }
 
