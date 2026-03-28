@@ -928,6 +928,25 @@ function rebuildData() {
   document.getElementById('periodoLabel').textContent = keys.length===0?'Sin datos':keys.length===1?'Periodo: '+ml(keys[0]):'Periodos: '+ml(keys[0])+' a '+ml(keys[keys.length-1])+' ('+keys.length+' meses)';
 }
 
+function handleVentasFiles(files) {
+  const log = document.getElementById('ventasUploadLog');
+  log.innerHTML = '<div class="alert alert-orange">⏳ Procesando archivo de ventas...</div>';
+
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        log.innerHTML = '<div class="alert alert-green">✅ Archivo de ventas cargado: ' + file.name + '</div>';
+        log.innerHTML += '<div class="alert alert-orange">⏳ Implementar en FASE 2: Procesamiento de remisiones y análisis de ventas</div>';
+      } catch(err) {
+        log.innerHTML += '<div class="alert alert-red">❌ Error: ' + err.message + '</div>';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 function updateLoadedFiles() {
   const keys = Object.keys(allMonths).sort();
   document.getElementById('loadedFiles').innerHTML = keys.map(k => '<div class="file-chip">📄 '+ml(k)+' ('+allMonths[k].transactions.length+') <span class="remove" onclick="removeMonth(\''+k+'\')">✕</span></div>').join('');
@@ -967,6 +986,25 @@ function switchModule(moduleName) {
   }
 
   console.log('switchModule: Switched to', moduleName);
+}
+
+// ============================================================
+// SETUP EVENT LISTENERS
+// ============================================================
+function setupEventListeners() {
+  // Ventas module file upload
+  const ventasDropZone = document.getElementById('ventasDropZone');
+  const ventasFileInput = document.getElementById('ventasFileInput');
+
+  if (ventasDropZone && ventasFileInput) {
+    ventasDropZone.addEventListener('click', () => ventasFileInput.click());
+    ventasDropZone.addEventListener('dragover', e => { e.preventDefault(); ventasDropZone.classList.add('drag'); });
+    ventasDropZone.addEventListener('dragleave', () => ventasDropZone.classList.remove('drag'));
+    ventasDropZone.addEventListener('drop', e => { e.preventDefault(); ventasDropZone.classList.remove('drag'); handleVentasFiles(e.dataTransfer.files); });
+    ventasFileInput.addEventListener('change', e => handleVentasFiles(e.target.files));
+  }
+
+  console.log('setupEventListeners: Event listeners configured');
 }
 
 // ============================================================
