@@ -1313,6 +1313,18 @@ function renderResumen(months) {
   console.log('renderResumen() completed');
 }
 
+// Placeholder functions for other Contabilidad tabs
+function renderCalendario(months) { document.getElementById('calendarContent').innerHTML = '<div style="padding:20px;"><p>📅 Vista de calendario - Próximamente</p></div>'; }
+function renderProveedores(months) { document.getElementById('provTable').innerHTML = '<div style="padding:20px;"><p>🏭 Detalle de proveedores - Próximamente</p></div>'; }
+function renderClientes(months) { document.getElementById('clientTable').innerHTML = '<div style="padding:20px;"><p>💰 Detalle de clientes - Próximamente</p></div>'; }
+function renderFlujo(months) { document.getElementById('flujoContent').innerHTML = '<div style="padding:20px;"><p>📈 Flujo diario - Próximamente</p></div>'; }
+function renderRecurrentes() { document.getElementById('recurrentesContent').innerHTML = '<div style="padding:20px;"><p>🔄 Transacciones recurrentes - Próximamente</p></div>'; }
+function renderImpuestos(months) { document.getElementById('impuestosContent').innerHTML = '<div style="padding:20px;"><p>🏛️ Análisis de impuestos - Próximamente</p></div>'; }
+function renderProyecciones() { document.getElementById('proyeccionesContent').innerHTML = '<div style="padding:20px;"><p>🔮 Proyecciones - Próximamente</p></div>'; }
+function renderTransacciones() { document.getElementById('txTable').innerHTML = '<div style="padding:20px;"><p>📋 Transacciones detalladas - Próximamente</p></div>'; }
+function renderComparativo(months) { document.getElementById('comparativoContent').innerHTML = '<div style="padding:20px;"><p>📊 Análisis comparativo - Próximamente</p></div>'; }
+function renderConciliacion() { document.getElementById('conciliacionContent').innerHTML = '<div style="padding:20px;"><p>✅ Conciliación bancaria - Próximamente</p></div>'; }
+
 function renderVentas() {
   if (ventasData.remisiones.length === 0) return;
 
@@ -1357,6 +1369,11 @@ function renderVentas() {
   `;
 
   document.getElementById('ventasContent').innerHTML = html;
+}
+
+// Placeholder functions for Ventas tabs
+function renderVentasAnalisisTab() {
+  renderVentas(); // Already implemented above
 }
 
 function renderNominaEditor() {
