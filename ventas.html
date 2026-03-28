@@ -318,24 +318,37 @@ function handleFiles(files) {
 
 function parseRemisiones(workbook) {
   const results = [];
+
   workbook.SheetNames.forEach(sheetName => {
+    console.log('📄 parseRemisiones: Processing sheet:', sheetName);
     const ws = workbook.Sheets[sheetName];
-    if (!ws['!ref']) return;
+    if (!ws['!ref']) {
+      console.warn('⚠️ Sheet has no ref');
+      return;
+    }
+
     const range = XLSX.utils.decode_range(ws['!ref']);
     const totalRows = range.e.r + 1;
+    const totalCols = range.e.c + 1;
+    console.log('📊 Total rows:', totalRows, 'Total cols:', totalCols);
+
     const getCell = (r, c) => { const cell = ws[XLSX.utils.encode_cell({ r, c })]; return cell ? String(cell.v).trim() : ''; };
 
-    // EFFI Report columns (0-indexed):
-    // D (3) = ID remisión
-    // E (4) = Nombre cliente
-    // I (8) = Vendedor
-    // N (13) = Fecha creación
-    // Y (24) = Precio neto total
-    // L (11) = Estado CxC
+    // Debug: Print first row (headers)
+    console.log('🔍 Header row (row 0):');
+    for (let c = 0; c < Math.min(26, totalCols); c++) {
+      const cellVal = getCell(0, c);
+      if (cellVal) console.log(`  Col ${c} (${String.fromCharCode(65+c)}): ${cellVal}`);
+    }
 
+    // EFFI Report columns (0-indexed):
+    // D (3) = ID remisión, E (4) = Nombre cliente, I (8) = Vendedor
+    // N (13) = Fecha creación, Y (24) = Precio neto total, L (11) = Estado CxC
+
+    let parsed = 0;
     for (let r = 1; r < totalRows; r++) {
       const idRemisional = getCell(r, 3);
-      if (!idRemisional || idRemisional.toLowerCase() === 'id remisión') continue;
+      if (!idRemisional || idRemisional.toLowerCase().includes('remisi')) continue;
 
       const cliente = getCell(r, 4);
       if (!cliente) continue;
@@ -343,11 +356,18 @@ function parseRemisiones(workbook) {
       const vendedor = getCell(r, 8) || 'Sin Vendedor';
       const fecha = getCell(r, 13);
       const estadoCxC = getCell(r, 11) || 'Por Cobrar';
+      const montoStr = getCell(r, 24);
+
+      if (!montoStr) continue;
 
       let monto = 0;
-      const montoStr = getCell(r, 24);
-      if (montoStr) {
-        monto = parseFloat(montoStr.replace(/,/g, '').replace(/\$/g, '').replace(/\./g, '')) || 0;
+      try {
+        // Handle format: 207.000 or 207000 or $207.000
+        const cleaned = montoStr.replace(/\$/g, '').trim();
+        monto = parseFloat(cleaned.replace(/\./g, '').replace(/,/g, '.')) || 0;
+      } catch (e) {
+        console.warn('⚠️ Error parsing monto:', montoStr);
+        continue;
       }
 
       if (monto === 0) continue;
@@ -357,7 +377,7 @@ function parseRemisiones(workbook) {
       if (fecha && fecha.includes('/')) {
         const parts = fecha.split(' ')[0].split('/');
         if (parts.length === 3) {
-          fechaISO = `2026-${parts[1]}-${parts[0]}`;
+          fechaISO = `2026-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
         }
       }
 
@@ -369,10 +389,14 @@ function parseRemisiones(workbook) {
         monto_neto: monto,
         estado_cxc: estadoCxC
       });
+
+      parsed++;
     }
+
+    console.log(`✅ Sheet "${sheetName}": Parsed ${parsed} remisiones`);
   });
 
-  console.log('parseRemisiones: Found', results.length, 'remisiones');
+  console.log('🎯 parseRemisiones: Total found:', results.length, 'remisiones');
   return results;
 }
 
