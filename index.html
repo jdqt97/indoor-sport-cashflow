@@ -790,6 +790,11 @@ function parseNum(str) {
   return isNaN(n) ? 0 : n;
 }
 
+function pct(val) {
+  if (!val || isNaN(val)) return '0%';
+  return (val * 100).toFixed(1) + '%';
+}
+
 function parseExtracto(workbook) {
   const results = [];
   workbook.SheetNames.forEach(sheetName => {
