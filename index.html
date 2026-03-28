@@ -1302,8 +1302,9 @@ function renderResumen(months) {
   }
 
   // Runway section
+  const runwayEl = document.getElementById('runwaySection');
   if (runwayEl) {
-    runwayEl.innerHTML += `
+    runwayEl.innerHTML = `
     <div class="card"><div class="card-body"><div class="runway-gauge">
       <div class="runway-num" style="color:${runwayColor}">${runwayDays}</div>
       <div class="runway-label">Dias de operacion sin ingresos</div>
