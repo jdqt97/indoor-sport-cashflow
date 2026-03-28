@@ -356,6 +356,13 @@ function parseRemisiones(workbook) {
       const vendedor = getCell(r, 8) || 'Sin Vendedor';
       const fecha = getCell(r, 13);
       const estadoCxC = getCell(r, 11) || 'Por Cobrar';
+
+      // SKIP remisiones anuladas
+      if (estadoCxC.toLowerCase().includes('anulad')) {
+        console.log('⏭️ Skipping anulada:', idRemisional);
+        continue;
+      }
+
       const montoStr = getCell(r, 24);
 
       if (!montoStr) continue;
