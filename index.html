@@ -1,10 +1,9 @@
-<!-- VERSION: 3.0 MULTI-MODULE - Sat Mar 28 15:27:19 HPS 2026 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INDOOR SPORT SAS - Plataforma Integral de Gestión</title>
+<title>INDOOR SPORT SAS - Análisis de Flujo de Caja</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -23,64 +22,47 @@
   --orange: #f59e0b;
   --pink: #ec4899;
   --cyan: #06b6d4;
-  --sidebar-width: 280px;
 }
-
 * { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; }
-
-/* Sidebar */
-.sidebar { width:var(--sidebar-width); background:linear-gradient(180deg,#1a1f35,#0f172a); border-right:1px solid var(--border); padding:20px 0; overflow-y:auto; position:fixed; height:100vh; z-index:1000; }
-.sidebar-header { padding:0 20px 20px; border-bottom:1px solid var(--border); }
-.sidebar-header h2 { font-size:14px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.5px; }
-.sidebar-header .sub { font-size:11px; color:var(--text2); margin-top:4px; }
-.nav-section { padding:20px 0; border-bottom:1px solid rgba(71,85,105,.3); }
-.nav-section-title { padding:0 20px 10px; font-size:11px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; }
-.nav-item { padding:10px 20px; cursor:pointer; font-size:13px; color:var(--text2); transition:all .2s; display:flex; align-items:center; gap:10px; }
-.nav-item:hover { color:var(--text); background:rgba(59,130,246,.1); }
-.nav-item.active { color:var(--accent); background:rgba(59,130,246,.15); border-left:3px solid var(--accent); padding-left:17px; }
-.nav-icon { font-size:18px; width:20px; }
-
-/* Main content */
-.main { flex:1; margin-left:var(--sidebar-width); overflow-y:auto; }
-.header { background:linear-gradient(135deg,#1e3a5f,#2d1b69); padding:20px 30px; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
-.header h1 { font-size:22px; font-weight:700; }
-.header .sub { color:var(--text2); font-size:13px; margin-top:4px; }
-
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+.header { background:linear-gradient(135deg,#1e3a5f,#2d1b69); padding:20px 30px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+.header-left h1 { font-size:22px; font-weight:700; }
+.header-left .sub { color:var(--text2); font-size:13px; margin-top:4px; }
+.header-left .periodo { color:var(--accent); font-size:14px; font-weight:600; margin-top:2px; }
+.header-right { display:flex; gap:8px; align-items:center; }
 .tabs { display:flex; gap:2px; background:var(--surface); padding:6px 20px; overflow-x:auto; border-bottom:1px solid var(--border); }
 .tab { padding:10px 18px; cursor:pointer; border-radius:8px 8px 0 0; font-size:12px; font-weight:500; color:var(--text2); transition:all .2s; white-space:nowrap; border:1px solid transparent; border-bottom:none; }
 .tab:hover { color:var(--text); background:var(--surface2); }
 .tab.active { color:var(--accent); background:var(--bg); border-color:var(--border); font-weight:600; }
-
+.upload-zone { border:2px dashed var(--border); border-radius:16px; padding:60px 40px; text-align:center; margin:30px; transition:all .3s; cursor:pointer; background:var(--surface); }
+.upload-zone:hover,.upload-zone.drag { border-color:var(--accent); background:rgba(59,130,246,.08); }
+.upload-zone h2 { font-size:20px; margin-bottom:8px; }
+.upload-zone p { color:var(--text2); font-size:14px; }
+.upload-zone .icon { font-size:48px; margin-bottom:16px; }
 .content { padding:20px 30px; }
 .grid { display:grid; gap:20px; }
 .grid-2 { grid-template-columns:1fr 1fr; }
 .grid-3 { grid-template-columns:1fr 1fr 1fr; }
 .grid-4 { grid-template-columns:1fr 1fr 1fr 1fr; }
 .grid-5 { grid-template-columns:repeat(5,1fr); }
-
 @media(max-width:1200px) { .grid-4,.grid-5 { grid-template-columns:1fr 1fr; } }
 @media(max-width:900px) { .grid-2,.grid-3,.grid-4,.grid-5 { grid-template-columns:1fr; } }
-
 .card { background:var(--surface); border-radius:12px; border:1px solid var(--border); overflow:hidden; }
 .card-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
 .card-header h3 { font-size:14px; font-weight:600; }
 .card-body { padding:20px; }
 .card-full { grid-column:1/-1; }
-
 .metric { padding:20px; }
 .metric .label { font-size:11px; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; font-weight:500; }
 .metric .value { font-size:22px; font-weight:700; margin-top:6px; }
 .metric .change { font-size:12px; margin-top:4px; font-weight:500; }
 .metric .change.pos { color:var(--green); }
 .metric .change.neg { color:var(--red); }
-
 .table-wrap { overflow-x:auto; max-height:600px; overflow-y:auto; }
 table { width:100%; border-collapse:collapse; font-size:13px; }
-th { position:sticky; top:0; background:var(--surface2); padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.3px; color:var(--text2); border-bottom:2px solid var(--border); }
+th { position:sticky; top:0; background:var(--surface2); padding:10px 12px; text-align:left; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.3px; color:var(--text2); border-bottom:2px solid var(--border); z-index:1; }
 td { padding:8px 12px; border-bottom:1px solid rgba(71,85,105,.3); }
 tr:hover td { background:rgba(59,130,246,.05); }
-
 .text-right { text-align:right; }
 .text-center { text-align:center; }
 .pos { color:var(--green); }
@@ -94,1338 +76,1541 @@ tr:hover td { background:rgba(59,130,246,.05); }
 .badge-pink { background:rgba(236,72,153,.15); color:var(--pink); }
 .badge-cyan { background:rgba(6,182,212,.15); color:var(--cyan); }
 .badge-gray { background:rgba(148,163,184,.15); color:var(--text2); }
-
-.upload-zone { border:2px dashed var(--border); border-radius:16px; padding:60px 40px; text-align:center; transition:all .3s; cursor:pointer; background:var(--surface); }
-.upload-zone:hover,.upload-zone.drag { border-color:var(--accent); background:rgba(59,130,246,.08); }
-.upload-zone h2 { font-size:20px; margin-bottom:8px; }
-.upload-zone p { color:var(--text2); font-size:14px; }
-.upload-zone .icon { font-size:48px; margin-bottom:16px; }
-
 .filters { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
 .filters input,.filters select { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; font-size:13px; font-family:inherit; }
 .filters input:focus,.filters select:focus { outline:none; border-color:var(--accent); }
-
 .chart-container { position:relative; height:300px; }
 .chart-container-lg { position:relative; height:400px; }
-
 .alert { padding:14px 18px; border-radius:10px; margin-bottom:12px; font-size:13px; display:flex; align-items:flex-start; gap:10px; }
 .alert-green { background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.3); }
 .alert-orange { background:rgba(245,158,11,.1); border:1px solid rgba(245,158,11,.3); }
 .alert-red { background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); }
 .alert-blue { background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.3); }
-
+.loaded-files { display:flex; gap:8px; flex-wrap:wrap; margin:10px 30px 0; }
+.file-chip { background:var(--surface2); padding:6px 12px; border-radius:20px; font-size:12px; display:flex; align-items:center; gap:6px; border:1px solid var(--border); }
+.file-chip .remove { cursor:pointer; color:var(--red); font-weight:bold; }
+.rec-card { background:rgba(59,130,246,.05); border:1px solid rgba(59,130,246,.2); border-radius:12px; padding:18px; margin-bottom:14px; }
+.rec-card h4 { font-size:14px; font-weight:600; margin-bottom:8px; color:var(--accent); }
+.rec-card p { font-size:13px; color:var(--text2); line-height:1.6; }
+.rec-card ul { margin-top:8px; padding-left:20px; }
+.rec-card li { font-size:13px; color:var(--text2); margin-bottom:4px; line-height:1.5; }
+.nomina-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:20px; }
+.hidden { display:none !important; }
 .btn { padding:8px 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:13px; cursor:pointer; font-family:inherit; transition:all .2s; }
 .btn:hover { background:var(--accent); border-color:var(--accent); }
 .btn-sm { padding:5px 10px; font-size:11px; }
 .btn-primary { background:var(--accent); border-color:var(--accent); }
 .btn-red { background:var(--red); border-color:var(--red); }
+.check-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid rgba(71,85,105,.3); font-size:14px; }
+.storage-info { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin:0 30px 10px; font-size:13px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+.storage-info .count { color:var(--green); font-weight:600; }
 
-.hidden { display:none !important; }
-
-/* Module content */
-.module-content { display:none; }
-.module-content.active { display:block; }
-
-/* Multi-select */
+/* Multi-month selector */
 .multi-select { position:relative; display:inline-block; }
 .multi-select .ms-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; font-size:13px; cursor:pointer; font-family:inherit; min-width:200px; text-align:left; display:flex; justify-content:space-between; align-items:center; }
 .multi-select .ms-btn:hover { border-color:var(--accent); }
 .multi-select .ms-drop { display:none; position:absolute; top:100%; left:0; background:var(--surface); border:1px solid var(--border); border-radius:8px; z-index:100; min-width:220px; max-height:300px; overflow-y:auto; margin-top:4px; box-shadow:0 8px 24px rgba(0,0,0,.4); }
 .multi-select .ms-drop.open { display:block; }
-.multi-select .ms-drop label { display:flex; align-items:center; gap:8px; padding:8px 14px; cursor:pointer; font-size:13px; }
+.multi-select .ms-drop label { display:flex; align-items:center; gap:8px; padding:8px 14px; cursor:pointer; font-size:13px; transition:background .15s; }
 .multi-select .ms-drop label:hover { background:var(--surface2); }
 .multi-select .ms-drop input[type="checkbox"] { accent-color:var(--accent); }
 .ms-divider { border-top:1px solid var(--border); margin:4px 0; }
 .ms-quick { display:flex; gap:4px; padding:8px 14px; }
 
+/* Calendar */
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cal-header { font-size:11px; font-weight:600; color:var(--text2); text-align:center; padding:8px 0; }
+.cal-day { border-radius:8px; padding:8px; min-height:80px; font-size:11px; border:1px solid var(--border); position:relative; transition:all .2s; cursor:default; }
+.cal-day:hover { border-color:var(--accent); }
+.cal-day.empty { background:transparent; border-color:transparent; }
+.cal-day .day-num { font-weight:700; font-size:13px; margin-bottom:4px; }
+.cal-day .day-in { color:var(--green); font-size:10px; }
+.cal-day .day-out { color:var(--red); font-size:10px; }
+.cal-day .day-net { font-weight:600; font-size:11px; margin-top:2px; }
+.cal-day.positive { background:rgba(16,185,129,.08); }
+.cal-day.negative { background:rgba(239,68,68,.08); }
+.cal-day.zero { background:rgba(148,163,184,.05); }
+
+/* Runway gauge */
+.runway-gauge { text-align:center; padding:20px; }
+.runway-num { font-size:48px; font-weight:800; }
+.runway-label { font-size:14px; color:var(--text2); margin-top:4px; }
+.runway-bar { height:12px; border-radius:6px; background:var(--surface2); margin-top:12px; overflow:hidden; }
+.runway-fill { height:100%; border-radius:6px; transition:width .5s; }
+
+/* Seasonality */
+.season-bar { display:flex; align-items:flex-end; gap:4px; height:100px; }
+.season-col { flex:1; border-radius:4px 4px 0 0; transition:height .3s; min-width:20px; position:relative; }
+.season-col:hover { opacity:.8; }
+.season-label { text-align:center; font-size:10px; color:var(--text2); margin-top:4px; }
+
+/* Print styles */
 @media print {
-  .sidebar { display:none !important; }
-  .main { margin-left:0 !important; }
-  body { flex-direction:column; }
-  .tabs, .filters, .btn, .hidden { display:none !important; }
-  .module-content { display:block !important; }
-  .card { break-inside:avoid; }
+  body { background:#fff !important; color:#000 !important; }
+  .tabs, .storage-info, .loaded-files, .upload-zone, .filters, .btn, .file-chip, .header-right { display:none !important; }
+  .hidden { display:block !important; }
+  .tab-content { display:block !important; page-break-inside:avoid; }
+  .card { border:1px solid #ccc !important; break-inside:avoid; }
+  .header { background:#fff !important; border:none !important; }
+  .header-left h1 { color:#000 !important; }
   canvas { max-height:300px !important; }
 }
 </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-  <div class="sidebar-header">
-    <h2>INDOOR SPORT</h2>
-    <div class="sub">Plataforma Integral</div>
+<div class="header">
+  <div class="header-left">
+    <h1>INDOOR SPORT SAS - Flujo de Caja</h1>
+    <div class="sub">NIT: 27700047658 | Itagui, Antioquia | Cuenta de Ahorros Banco de Bogota</div>
+    <div class="periodo" id="periodoLabel">Sin datos cargados</div>
   </div>
-
-  <div class="nav-section">
-    <div class="nav-section-title">Módulos Principales</div>
-    <div class="nav-item active" data-module="resumen" onclick="switchModule('resumen')">
-      <span class="nav-icon">📊</span>
-      <span>Resumen General</span>
-    </div>
-    <div class="nav-item" data-module="contabilidad" onclick="switchModule('contabilidad')">
-      <span class="nav-icon">💰</span>
-      <span>Contabilidad</span>
-    </div>
-    <div class="nav-item" data-module="ventas" onclick="switchModule('ventas')">
-      <span class="nav-icon">📈</span>
-      <span>Ventas</span>
-    </div>
-    <div class="nav-item" data-module="nomina" onclick="switchModule('nomina')">
-      <span class="nav-icon">👷</span>
-      <span>Nómina & Provisiones</span>
-    </div>
+  <div class="header-right">
+    <button class="btn btn-sm" onclick="window.print()">🖨️ PDF</button>
   </div>
-
-  <div class="nav-section">
-    <div class="nav-section-title">Datos</div>
-    <div class="nav-item" onclick="document.getElementById('importFileInput').click()">
-      <span class="nav-icon">📥</span>
-      <span>Importar</span>
-    </div>
-    <div class="nav-item" onclick="exportData()">
-      <span class="nav-icon">📤</span>
-      <span>Exportar</span>
-    </div>
-  </div>
-
-  <input type="file" id="importFileInput" accept=".xlsx,.xls,.json" style="display:none" onchange="handleImport(event)">
 </div>
 
-<!-- MAIN CONTENT -->
-<div class="main">
+<div class="tabs" id="tabsContainer">
+  <div class="tab active" data-tab="upload">📁 Cargar</div>
+  <div class="tab" data-tab="resumen">📊 Resumen</div>
+  <div class="tab" data-tab="calendario">📅 Calendario</div>
+  <div class="tab" data-tab="proveedores">🏭 Proveedores</div>
+  <div class="tab" data-tab="nomina">👷 Nomina</div>
+  <div class="tab" data-tab="clientes">💰 Clientes</div>
+  <div class="tab" data-tab="flujo">📈 Flujo Diario</div>
+  <div class="tab" data-tab="recurrentes">🔄 Recurrentes</div>
+  <div class="tab" data-tab="impuestos">🏛️ Impuestos</div>
+  <div class="tab" data-tab="proyecciones">🔮 Proyecciones</div>
+  <div class="tab" data-tab="transacciones">📋 Transacciones</div>
+  <div class="tab" data-tab="comparativo">📊 Comparativo</div>
+  <div class="tab" data-tab="conciliacion">✅ Conciliacion</div>
+  <div class="tab" data-tab="ventas">📈 Ventas (Remisiones)</div>
+  <div class="tab" data-tab="ventasanalisis">💳 Análisis Ventas</div>
+</div>
 
-  <div class="header">
-    <h1 id="moduleTitle">INDOOR SPORT SAS</h1>
-    <div class="sub">NIT: 27700047658 | Itagui, Antioquia | Plataforma de Gestión Integral</div>
+<div class="storage-info" id="storageInfo" style="display:none;">
+  <div>💾 Datos: <span class="count" id="storedMonthsCount">0</span> meses | <span class="count" id="storedTxCount">0</span> transacciones</div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-sm" onclick="exportAllJSON()">📥 Backup</button>
+    <button class="btn btn-sm" onclick="document.getElementById('importJSON').click()">📤 Importar</button>
+    <button class="btn btn-sm" onclick="exportCSV()">📥 CSV</button>
+    <button class="btn btn-sm btn-red" onclick="clearStorage()">🗑️ Borrar</button>
+    <input type="file" id="importJSON" accept=".json" style="display:none" onchange="importJSON(event)">
   </div>
+</div>
 
-  <!-- MÓDULO: RESUMEN GENERAL -->
-  <div class="module-content active" id="module-resumen">
-    <div class="content">
-      <h2 style="margin-bottom:20px;">Resumen General</h2>
-      <div class="grid grid-4" id="generalMetrics"></div>
+<div class="loaded-files" id="loadedFiles"></div>
 
-      <div class="grid grid-2" style="margin-top:20px;">
-        <div class="card">
-          <div class="card-header"><h3>Ingresos vs Egresos (Últimos 6 Meses)</h3></div>
-          <div class="card-body"><div class="chart-container-lg"><canvas id="chartGeneralFlow"></canvas></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3>Margen Operativo</h3></div>
-          <div class="card-body"><div class="chart-container-lg"><canvas id="chartMargin"></canvas></div></div>
-        </div>
-      </div>
-
-      <div class="grid grid-3" style="margin-top:20px;">
-        <div class="card">
-          <div class="card-header"><h3>Ventas vs CxC</h3></div>
-          <div class="card-body"><div class="chart-container"><canvas id="chartSalesVsCxC"></canvas></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3>Flujo de Caja Proyectado</h3></div>
-          <div class="card-body"><div class="chart-container"><canvas id="chartCashProjection"></canvas></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3>Estado General</h3></div>
-          <div class="card-body">
-            <div id="generalStatus" style="font-size:13px; line-height:1.8;">
-              <p>Esperando datos...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+<!-- TAB: Upload -->
+<div class="content tab-content" id="tab-upload">
+  <div class="upload-zone" id="dropZone">
+    <div class="icon">📂</div>
+    <h2>Arrastra tus extractos bancarios aqui</h2>
+    <p>Acepta archivos .xlsx del Banco de Bogota (multiples archivos)</p>
+    <p style="margin-top:8px;color:var(--accent);font-size:13px;">O haz clic para seleccionar</p>
+    <p style="margin-top:12px;color:var(--text2);font-size:12px;">💾 Los datos se guardan automaticamente en tu navegador.</p>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" multiple style="display:none">
   </div>
+  <div id="uploadLog" style="margin-top:20px;"></div>
+</div>
 
-  <!-- MÓDULO: CONTABILIDAD (banco) -->
-  <div class="module-content" id="module-contabilidad">
-    <div class="tabs" id="contabilidadTabs">
-      <div class="tab active" data-tab="cont-upload">📁 Cargar Extractos</div>
-      <div class="tab" data-tab="cont-flujo">💰 Flujo Mensual</div>
-      <div class="tab" data-tab="cont-proveedores">🏭 Proveedores</div>
-      <div class="tab" data-tab="cont-transacciones">📋 Transacciones</div>
-    </div>
-
-    <div class="content tab-content" id="tab-cont-upload">
-      <div class="upload-zone" id="bankDropZone">
-        <div class="icon">📂</div>
-        <h2>Arrastra extractos bancarios aqui</h2>
-        <p>Archivos .xlsx del Banco de Bogota</p>
-        <input type="file" id="bankFileInput" accept=".xlsx,.xls" multiple style="display:none">
-      </div>
-      <div id="bankUploadLog" style="margin-top:20px;"></div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-cont-flujo">
-      <div class="filters" id="contFilters"></div>
-      <div class="grid grid-3" id="contMetrics"></div>
-      <div class="card" style="margin-top:20px;">
-        <div class="card-header"><h3>Resumen Mensual</h3></div>
-        <div class="card-body"><div class="table-wrap" id="contSummaryTable"></div></div>
-      </div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-cont-proveedores">
-      <div class="filters"></div>
-      <div class="grid grid-2">
-        <div class="card">
-          <div class="card-header"><h3>Top Proveedores</h3></div>
-          <div class="card-body"><div class="chart-container-lg"><canvas id="chartTopProveedores"></canvas></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3>Distribución</h3></div>
-          <div class="card-body"><div class="chart-container-lg"><canvas id="chartProvDistribucion"></canvas></div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-cont-transacciones">
-      <div class="filters">
-        <select id="contTxFilter"><option value="">Todas las categorías</option></select>
-        <input type="text" id="contTxSearch" placeholder="🔍 Buscar...">
-      </div>
-      <div class="card">
-        <div class="card-body"><div class="table-wrap" id="contTxTable"></div></div>
-      </div>
-    </div>
+<!-- TAB: Resumen -->
+<div class="content tab-content hidden" id="tab-resumen">
+  <div class="filters" id="resumenFilters"></div>
+  <div class="grid grid-5" id="metricCards"></div>
+  <div class="grid grid-3" style="margin-top:20px;" id="runwaySection"></div>
+  <div class="grid grid-2" style="margin-top:20px;">
+    <div class="card"><div class="card-header"><h3>Ingresos vs Egresos por Categoria</h3></div><div class="card-body"><div class="chart-container"><canvas id="chartCategories"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Distribucion de Egresos</h3></div><div class="card-body"><div class="chart-container"><canvas id="chartEgresosPie"></canvas></div></div></div>
   </div>
-
-  <!-- MÓDULO: VENTAS -->
-  <div class="module-content" id="module-ventas">
-    <div class="tabs" id="ventasTabs">
-      <div class="tab active" data-tab="vent-upload">📁 Cargar Remisiones</div>
-      <div class="tab" data-tab="vent-dashboard">📊 Dashboard</div>
-      <div class="tab" data-tab="vent-clientes">💼 Clientes</div>
-      <div class="tab" data-tab="vent-cxc">💳 CxC</div>
-      <div class="tab" data-tab="vent-margen">📈 Margen & Rentabilidad</div>
-    </div>
-
-    <div class="content tab-content" id="tab-vent-upload">
-      <div class="upload-zone" id="ventasDropZone">
-        <div class="icon">📦</div>
-        <h2>Arrastra archivo de remisiones aqui</h2>
-        <p>Reporte de conceptos de remisiones de venta (.xlsx)</p>
-        <input type="file" id="ventasFileInput" accept=".xlsx,.xls" style="display:none">
-      </div>
-      <div id="ventasUploadLog" style="margin-top:20px;"></div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-vent-dashboard">
-      <div class="filters" id="ventasFilters"></div>
-      <div class="grid grid-4" id="ventasMetrics"></div>
-      <div class="grid grid-2" style="margin-top:20px;">
-        <div class="card">
-          <div class="card-header"><h3>Ventas por Vendedor</h3></div>
-          <div class="card-body"><div class="chart-container-lg"><canvas id="chartVendedores"></canvas></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3>Estados CxC</h3></div>
-          <div class="card-body"><div class="chart-container-lg"><canvas id="chartEstadoCxC"></canvas></div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-vent-clientes">
-      <div class="filters">
-        <input type="text" id="ventasClientSearch" placeholder="🔍 Buscar cliente...">
-      </div>
-      <div class="card">
-        <div class="card-header"><h3>Clientes - Ingresos Acumulados</h3></div>
-        <div class="card-body"><div class="table-wrap" id="ventasClientesTable"></div></div>
-      </div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-vent-cxc">
-      <div class="filters">
-        <select id="cxcStatusFilter"><option value="">Todos los estados</option></select>
-      </div>
-      <div class="grid grid-3" style="margin-bottom:20px;">
-        <div class="card">
-          <div class="card-body">
-            <div class="metric">
-              <div class="label">CxC Total Vigente</div>
-              <div class="value" id="cxcTotal">$0</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-body">
-            <div class="metric">
-              <div class="label">% Pago Total</div>
-              <div class="value" id="cxcPagado">0%</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-body">
-            <div class="metric">
-              <div class="label">Remisiones Vigentes</div>
-              <div class="value" id="cxcRemisiones">0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><h3>Detalle de CxC</h3></div>
-        <div class="card-body"><div class="table-wrap" id="ventasCxCTable"></div></div>
-      </div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-vent-margen">
-      <div class="grid grid-3" style="margin-bottom:20px;">
-        <div class="card">
-          <div class="card-body">
-            <div class="metric">
-              <div class="label">Venta Bruta Total</div>
-              <div class="value" id="ventaBruta">$0</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-body">
-            <div class="metric">
-              <div class="label">Margen Contribución (50%)</div>
-              <div class="value" id="margenContrib">$0</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-body">
-            <div class="metric">
-              <div class="label">Después de Costos Fijos</div>
-              <div class="value" id="margenFinal">$0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="alert alert-blue">
-        <span style="font-weight:600;">Supuestos:</span> Margen de contribución 50% | Costos fijos mensuales: $131.825.518
-      </div>
-      <div class="card" style="margin-top:20px;">
-        <div class="card-header"><h3>Break-even Analysis</h3></div>
-        <div class="card-body">
-          <div id="breakEvenAnalysis" style="font-size:13px; line-height:1.8;"></div>
-        </div>
-      </div>
-    </div>
+  <div class="grid" style="margin-top:20px;">
+    <div class="card card-full"><div class="card-header"><h3>Resumen Semanal</h3></div><div class="card-body"><div class="table-wrap" id="weeklyTable"></div></div></div>
   </div>
+  <div style="margin-top:20px;" id="alertsContainer"></div>
+</div>
 
-  <!-- MÓDULO: NÓMINA & PROVISIONES -->
-  <div class="module-content" id="module-nomina">
-    <div class="tabs" id="nominaTabs">
-      <div class="tab active" data-tab="nom-upload">📁 Cargar Nómina</div>
-      <div class="tab" data-tab="nom-dashboard">📊 Dashboard</div>
-      <div class="tab" data-tab="nom-empleados">👥 Empleados</div>
-      <div class="tab" data-tab="nom-provisiones">💼 Provisiones</div>
-      <div class="tab" data-tab="nom-proyecciones">🔮 Proyecciones</div>
-    </div>
+<!-- TAB: Calendario -->
+<div class="content tab-content hidden" id="tab-calendario">
+  <div class="filters" id="calFilters"></div>
+  <div id="calendarContent"></div>
+</div>
 
-    <div class="content tab-content" id="tab-nom-upload">
-      <div class="upload-zone" id="nominaDropZone">
-        <div class="icon">📋</div>
-        <h2>Arrastra archivo de nómina aqui</h2>
-        <p>Archivo nomina.xlsx con detalles de empleados</p>
-        <input type="file" id="nominaFileInput" accept=".xlsx,.xls" style="display:none">
-      </div>
-      <div id="nominaUploadLog" style="margin-top:20px;"></div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-nom-dashboard">
-      <div class="grid grid-4" id="nominaMetrics"></div>
-      <div class="grid grid-2" style="margin-top:20px;">
-        <div class="card">
-          <div class="card-header"><h3>Nómina por Empleado</h3></div>
-          <div class="card-body"><div class="chart-container-lg"><canvas id="chartNominaEmpleados"></canvas></div></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><h3>Desglose de Conceptos</h3></div>
-          <div class="card-body"><div class="chart-container-lg"><canvas id="chartNominaConceptos"></canvas></div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-nom-empleados">
-      <div class="card">
-        <div class="card-header"><h3>Detalle de Empleados</h3></div>
-        <div class="card-body"><div class="table-wrap" id="nominaEmpleadosTable"></div></div>
-      </div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-nom-provisiones">
-      <div class="grid grid-3" style="margin-bottom:20px;">
-        <div class="card">
-          <div class="card-body">
-            <div class="metric">
-              <div class="label">Prima Acumulada</div>
-              <div class="value" id="provPrima">$0</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-body">
-            <div class="metric">
-              <div class="label">Cesantías Acumuladas</div>
-              <div class="value" id="provCesantias">$0</div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-body">
-            <div class="metric">
-              <div class="label">Vacaciones Acumuladas</div>
-              <div class="value" id="provVacaciones">$0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><h3>Provisiones por Empleado</h3></div>
-        <div class="card-body"><div class="table-wrap" id="nominaProvisionesTable"></div></div>
-      </div>
-    </div>
-
-    <div class="content tab-content hidden" id="tab-nom-proyecciones">
-      <div class="alert alert-blue">
-        <span style="font-weight:600;">Proyección:</span> Costos de nómina y provisiones para los próximos 12 meses
-      </div>
-      <div class="card">
-        <div class="card-header"><h3>Proyección de Obligaciones</h3></div>
-        <div class="card-body"><div class="chart-container-lg"><canvas id="chartNominaProjection"></canvas></div></div>
-      </div>
-    </div>
+<!-- TAB: Proveedores -->
+<div class="content tab-content hidden" id="tab-proveedores">
+  <div class="filters"><span id="provFilters"></span>
+    <input type="text" id="provSearch" placeholder="🔍 Buscar proveedor..." style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;" oninput="const q=this.value.toUpperCase();document.querySelectorAll('#provTable tbody tr').forEach(r=>{r.style.display=(!q||(r.cells[1]&&r.cells[1].textContent.includes(q)))?'':'none';});">
   </div>
+  <div class="grid grid-2">
+    <div class="card"><div class="card-header"><h3>Top 15 Proveedores</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartProveedores"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Distribucion</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartProvPie"></canvas></div></div></div>
+  </div>
+  <div class="card" style="margin-top:20px;"><div class="card-header"><h3>Detalle de Proveedores</h3></div><div class="card-body"><div class="table-wrap" id="provTable"></div></div></div>
+</div>
 
+<!-- TAB: Nomina -->
+<div class="content tab-content hidden" id="tab-nomina">
+  <div class="filters" id="nomFilters"></div>
+  <div id="nominaSummary"></div>
+  <div class="grid grid-2" style="margin-top:20px;">
+    <div class="card"><div class="card-header"><h3>Nomina por Empleado</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartNomina"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Distribucion</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartNominaPie"></canvas></div></div></div>
+  </div>
+  <div class="card" style="margin-top:20px;"><div class="card-header"><h3>Detalle</h3></div><div class="card-body"><div class="table-wrap" id="nominaTable"></div></div></div>
+</div>
+
+<!-- TAB: Clientes -->
+<div class="content tab-content hidden" id="tab-clientes">
+  <div class="filters" id="clientFilters"></div>
+  <div id="clientContent"></div>
+</div>
+
+<!-- TAB: Flujo Diario -->
+<div class="content tab-content hidden" id="tab-flujo">
+  <div class="filters" id="flujoFilters"></div>
+  <div class="card"><div class="card-header"><h3>Evolucion del Saldo Diario</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartFlujo"></canvas></div></div></div>
+  <div class="grid grid-2" style="margin-top:20px;">
+    <div class="card"><div class="card-header"><h3>Ingresos vs Egresos Diarios</h3></div><div class="card-body"><div class="chart-container"><canvas id="chartDailyBars"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Flujo Neto Diario</h3></div><div class="card-body"><div class="chart-container"><canvas id="chartDailyNet"></canvas></div></div></div>
+  </div>
+  <div class="card" style="margin-top:20px;"><div class="card-header"><h3>Resumen Diario</h3></div><div class="card-body"><div class="table-wrap" id="dailyTable"></div></div></div>
+</div>
+
+<!-- TAB: Recurrentes -->
+<div class="content tab-content hidden" id="tab-recurrentes">
+  <div class="card"><div class="card-header"><h3>Gastos Recurrentes Identificados</h3></div><div class="card-body"><div class="table-wrap" id="recurrentTable"></div></div></div>
+  <div class="card" style="margin-top:20px;"><div class="card-header"><h3>Impacto Anual Estimado</h3></div><div class="card-body"><div class="chart-container"><canvas id="chartRecurrent"></canvas></div></div></div>
+</div>
+
+<!-- TAB: Impuestos -->
+<div class="content tab-content hidden" id="tab-impuestos">
+  <div class="filters" id="taxFilters"></div>
+  <div id="taxContent"></div>
+</div>
+
+<!-- TAB: Proyecciones -->
+<div class="content tab-content hidden" id="tab-proyecciones"><div id="projectionContent"></div></div>
+
+<!-- TAB: Transacciones -->
+<div class="content tab-content hidden" id="tab-transacciones">
+  <div class="card"><div class="card-header"><h3>Todas las Transacciones</h3></div><div class="card-body">
+    <div class="filters">
+      <select id="filterMonth"><option value="">Todos los meses</option></select>
+      <select id="filterCat"><option value="">Todas las categorias</option></select>
+      <input type="text" id="filterDesc" placeholder="🔍 Buscar...">
+      <input type="number" id="filterMinAmt" placeholder="Min">
+      <input type="number" id="filterMaxAmt" placeholder="Max">
+      <select id="filterDir"><option value="">Todos</option><option value="in">Solo Ingresos</option><option value="out">Solo Egresos</option></select>
+    </div>
+    <div class="table-wrap" id="txTable" style="max-height:700px;"></div>
+  </div></div>
+</div>
+
+<!-- TAB: Comparativo -->
+<div class="content tab-content hidden" id="tab-comparativo">
+  <div class="filters" id="compFilters"></div>
+  <div id="comparativoContent"></div>
+</div>
+
+<!-- TAB: Conciliacion -->
+<div class="content tab-content hidden" id="tab-conciliacion"><div id="conciliacionContent"></div></div>
+
+<!-- TAB: Ventas (Remisiones) -->
+<div class="content tab-content hidden" id="tab-ventas">
+  <div style="margin:20px 30px;">
+    <h2>📈 Análisis de Remisiones de Venta</h2>
+    <div class="upload-zone" id="ventasDropZone" style="margin:20px 0;">
+      <div class="icon">📦</div>
+      <h3>Arrastra archivo de remisiones aqui</h3>
+      <p>Reporte de conceptos de remisiones de venta (.xlsx)</p>
+      <input type="file" id="ventasFileInput" accept=".xlsx,.xls" style="display:none">
+    </div>
+    <div id="ventasUploadLog" style="margin:20px 0;"></div>
+    <div id="ventasContent"></div>
+  </div>
+</div>
+
+<!-- TAB: Análisis Ventas -->
+<div class="content tab-content hidden" id="tab-ventasanalisis">
+  <div style="margin:20px 30px;">
+    <h2>💳 Análisis de CxC y Margen</h2>
+    <div id="ventasAnalisisContent"></div>
+  </div>
 </div>
 
 <script>
 // ============================================================
 // GLOBAL STATE
 // ============================================================
-const STATE = {
-  currentModule: 'resumen',
-  contabilidad: { months: {}, transactions: [] },
-  ventas: { remisiones: [], clientes: {} },
-  nomina: { empleados: [], data: null }
-};
-
-const COSTOS_FIJOS = {
-  nomina: 87867363,
-  credito: 14970873,
-  suscripciones: 939951,
-  seguros: 935331,
-  cif: 14349000,
-  varios: 3413000,
-  honorarios: 9350000
-};
-
-const COSTOS_FIJOS_TOTAL = Object.values(COSTOS_FIJOS).reduce((a,b) => a+b, 0);
-const MARGEN_CONTRIBUCION = 0.50;
+const DB_KEY = 'indoor_sport_cashflow_data';
+let allMonths = {};
+let allTransactions = [];
+let charts = {};
+let budgets = JSON.parse(localStorage.getItem('indoor_budgets') || '{}');
 
 // ============================================================
-// MODULE SWITCHING
+// PERSISTENCE
 // ============================================================
-function switchModule(moduleName) {
-  // Update sidebar
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.classList.remove('active');
-    if (item.dataset.module === moduleName) item.classList.add('active');
-  });
-
-  // Update content
-  document.querySelectorAll('.module-content').forEach(mod => {
-    mod.classList.remove('active');
-  });
-  document.getElementById('module-' + moduleName).classList.add('active');
-
-  STATE.currentModule = moduleName;
-
-  // Update title
-  const titles = {
-    resumen: 'Resumen General - Todos los Módulos',
-    contabilidad: 'Contabilidad - Flujo Bancario',
-    ventas: 'Ventas - Análisis de Ingresos',
-    nomina: 'Nómina & Provisiones'
-  };
-  document.querySelector('.header h1').textContent = titles[moduleName] || 'INDOOR SPORT SAS';
-
-  // Render module content
-  renderModule(moduleName);
+function saveToStorage() {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(allMonths)); updateStorageInfo(); }
+  catch(e) { saveToIndexedDB(); }
 }
-
-function renderModule(moduleName) {
-  if (moduleName === 'resumen') renderResumenGeneral();
-  else if (moduleName === 'contabilidad') renderContabilidad();
-  else if (moduleName === 'ventas') renderVentas();
-  else if (moduleName === 'nomina') renderNomina();
+function loadFromStorage() {
+  try {
+    const data = localStorage.getItem(DB_KEY);
+    if (data) {
+      allMonths = JSON.parse(data);
+      rebuildData();
+      if (allTransactions.length > 0) { renderAll(); updateLoadedFiles(); updateStorageInfo();
+        document.getElementById('uploadLog').innerHTML = '<div class="alert alert-green">✅ Datos restaurados: '+Object.keys(allMonths).length+' meses, '+allTransactions.length+' transacciones</div>';
+      }
+    }
+  } catch(e) { loadFromIndexedDB(); }
 }
+function openDB() { return new Promise((res,rej) => { const r=indexedDB.open('IndoorSportCashflow',1); r.onupgradeneeded=()=>r.result.createObjectStore('data'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function saveToIndexedDB() { try { const db=await openDB(); db.transaction('data','readwrite').objectStore('data').put(JSON.stringify(allMonths),'allMonths'); } catch(e){} }
+async function loadFromIndexedDB() { try { const db=await openDB(); const r=db.transaction('data','readonly').objectStore('data').get('allMonths'); r.onsuccess=()=>{ if(r.result){allMonths=JSON.parse(r.result);rebuildData();if(allTransactions.length>0){renderAll();updateLoadedFiles();updateStorageInfo();}} }; } catch(e){} }
+function updateStorageInfo() { const k=Object.keys(allMonths); const el=document.getElementById('storageInfo'); if(k.length>0){el.style.display='flex';document.getElementById('storedMonthsCount').textContent=k.length;document.getElementById('storedTxCount').textContent=allTransactions.length;} else el.style.display='none'; }
+function clearStorage() { if(!confirm('Borrar TODOS los datos?'))return; localStorage.removeItem(DB_KEY); indexedDB.deleteDatabase('IndoorSportCashflow'); allMonths={}; allTransactions=[]; updateStorageInfo(); updateLoadedFiles(); document.getElementById('periodoLabel').textContent='Sin datos cargados'; document.getElementById('uploadLog').innerHTML='<div class="alert alert-orange">⚠️ Datos eliminados.</div>'; document.querySelector('.tab[data-tab="upload"]').click(); }
+function exportAllJSON() { const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(allMonths,null,2)],{type:'application/json'})); a.download='indoor_sport_backup_'+new Date().toISOString().slice(0,10)+'.json'; a.click(); }
+function importJSON(event) { const f=event.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{ try{Object.assign(allMonths,JSON.parse(e.target.result));rebuildData();saveToStorage();renderAll();updateLoadedFiles(); document.getElementById('uploadLog').innerHTML='<div class="alert alert-green">✅ Backup importado.</div>';} catch(err){alert('Error: '+err.message);} }; r.readAsText(f); event.target.value=''; }
 
 // ============================================================
-// UTILITIES
-// ============================================================
-function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
-function fmtM(n) { const a = Math.abs(n); if (a >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B'; if (a >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M'; if (a >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K'; return '$' + Math.round(n).toLocaleString('es-CO'); }
-function parseNum(str) { if (!str) return 0; const n = parseFloat(String(str).replace(/,/g, '').replace(/\s/g, '').replace(/\$/g, '')); return isNaN(n) ? 0 : n; }
-
-// ============================================================
-// CONTABILIDAD - PARSE BANK STATEMENTS
+// PARSING
 // ============================================================
 function parseExtracto(workbook) {
   const results = [];
   workbook.SheetNames.forEach(sheetName => {
     const ws = workbook.Sheets[sheetName];
     if (!ws['!ref']) return;
-
     const range = XLSX.utils.decode_range(ws['!ref']);
     const totalRows = range.e.r + 1;
-    const getCell = (r, c) => {
-      const cell = ws[XLSX.utils.encode_cell({r, c})];
-      return cell ? String(cell.v).trim() : '';
-    };
+    const getCell = (r, c) => { const cell = ws[XLSX.utils.encode_cell({r, c})]; return cell ? String(cell.v).trim() : ''; };
 
     let summaryData = {};
     for (let r = 0; r < Math.min(20, totalRows); r++) {
       if (getCell(r, 0) === 'SALDO ANTERIOR') {
         const dr = r + 1;
-        summaryData = {
-          saldoAnterior: parseNum(getCell(dr, 0)),
-          totalAbonos: parseNum(getCell(dr, 1)),
-          totalCargos: parseNum(getCell(dr, 2)),
-          saldoActual: parseNum(getCell(dr, 3))
-        };
+        summaryData = { saldoAnterior:parseNum(getCell(dr,0)), totalAbonos:parseNum(getCell(dr,1)), totalCargos:parseNum(getCell(dr,2)), saldoActual:parseNum(getCell(dr,3)) };
         break;
       }
     }
 
     let hasta = '';
-    for (let r = 0; r < Math.min(15, totalRows); r++) {
-      if (getCell(r, 0) === 'DESDE') {
-        hasta = getCell(r + 1, 1);
-        break;
-      }
-    }
+    for (let r = 0; r < Math.min(15, totalRows); r++) { if (getCell(r, 0) === 'DESDE') { hasta = getCell(r+1, 1); break; } }
     let year = hasta ? hasta.split('/')[0] : '';
 
     const transactions = [];
     let r = 0;
     while (r < totalRows) {
-      if (getCell(r, 0) === 'FECHA' && getCell(r, 1).includes('DESCRIPCI')) {
+      if (getCell(r, 0) === 'FECHA' && (getCell(r, 1).includes('DESCRIPCI'))) {
         r++;
         while (r < totalRows) {
-          const fecha = getCell(r, 0);
-          const desc = getCell(r, 1);
+          const fecha = getCell(r, 0), desc = getCell(r, 1);
           if (desc === 'FIN ESTADO DE CUENTA') { r++; break; }
-          if (fecha === 'FECHA' || desc === 'Movimientos:') break;
+          if (fecha === 'FECHA' || fecha === 'Movimientos:' || desc === 'Movimientos:') break;
           if (fecha && fecha.includes('/') && desc) {
             const parts = fecha.split('/');
             if (parts.length === 2 && year) {
-              const fullDate = `${year}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-              const valor = parseNum(getCell(r, 4));
-              transactions.push({
-                fecha: fullDate,
-                descripcion: desc,
-                valor: valor,
-                saldo: parseNum(getCell(r, 5)),
-                tipo: valor > 0 ? 'ingreso' : 'egreso'
-              });
+              const fullDate = `${year}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+              transactions.push({ fecha:fullDate, descripcion:desc, sucursal:getCell(r,2), dcto:getCell(r,3), valor:parseNum(getCell(r,4)), saldo:parseNum(getCell(r,5)), categoria:categorize(desc,parseNum(getCell(r,4))), proveedor:extractProveedor(desc), empleado:extractEmpleado(desc) });
             }
           }
           r++;
         }
       } else r++;
     }
-
     if (transactions.length > 0) {
-      let monthKey = hasta ? hasta.split('/')[0] + '-' + hasta.split('/')[1] : transactions[0].fecha.substring(0, 7);
+      let monthKey = hasta ? hasta.split('/')[0]+'-'+hasta.split('/')[1] : transactions[0].fecha.substring(0,7);
       results.push({ monthKey, transactions, summary: summaryData });
     }
   });
   return results;
 }
+function parseNum(str) { if(!str)return 0; const n=parseFloat(str.replace(/,/g,'').replace(/\s/g,'').replace(/\$/g,'')); return isNaN(n)?0:n; }
 
 // ============================================================
-// VENTAS - PARSE REMISIONES
+// CATEGORIZATION
 // ============================================================
+function categorize(desc, valor) {
+  const d = desc.toUpperCase();
+  if (d.includes('PAGO A NOMIN') || d.includes('PAGO DE NOMIN') || d.includes('NOMINA')) return 'Nomina';
+  if (d.includes('PAGO A PROVE') || d.includes('PAGO DE PROV')) return 'Proveedores';
+  if (d.includes('COMPRA EN')) return 'Compras';
+  if (d.includes('TRASLADO') || d.includes('FONDO DE INVERSION') || d.includes('FONDO INVERSION')) return 'Movimiento Interno';
+  if (d.includes('ABONO INTERES')) return 'Intereses Bancarios';
+  if (d.includes('IMPTO') || d.includes('4X1000') || d.includes('RETEFUENTE') || d.includes('RETEICA') || d.includes('RETENCION') || /\bICA\b/.test(d) || d.includes('COBRO IVA')) return 'Impuestos';
+  if (d.includes('CUOTA MANEJO') || d.includes('IVA CUOTA') || d.includes('COMISION') || d.includes('COBRO PAGOS AUTO') || d.includes('PAGO INTERES')) return 'Gastos Bancarios';
+  if (d.includes('PAGO PSE')) return 'Servicios/PSE';
+  if (d.includes('RETIRO CAJERO') || d.includes('RETIRO ATM')) return 'Retiros';
+  if (d.includes('CONSIG') || d.includes('CONSIGNACION')) return 'Consignaciones';
+  if (d.includes('TRANSFERENCIA')) return 'Transferencias';
+  if (d.includes('PAGO QR')) return 'Pagos QR';
+  if (d.includes('PAGO INTERBANC')) return 'Interbancario';
+  return 'Otros';
+}
+function extractProveedor(desc) { const d=desc.toUpperCase(); const pats=['PAGO A PROVE ','PAGO A PROV ','PAGO DE PROV ','PAGO DE PROVE ']; for(const p of pats){const i=d.indexOf(p);if(i>=0)return desc.substring(i+p.length).trim();} if(d.includes('COMPRA EN')){const i=d.indexOf('COMPRA EN');return desc.substring(i+10).trim();} return ''; }
+function extractEmpleado(desc) { const d=desc.toUpperCase(); const pats=['PAGO A NOMIN ','PAGO A NOMINA ','PAGO DE NOMIN ','PAGO DE NOMINA ']; for(const p of pats){const i=d.indexOf(p);if(i>=0)return desc.substring(i+p.length).trim();} return ''; }
+
+function isIngreso(t) { return t.valor > 0; }
+function isEgreso(t) { return t.valor < 0; }
+function getCatBadge(cat) {
+  if(['Consignaciones','Transferencias','Pagos QR','Interbancario','Intereses Bancarios'].includes(cat)) return 'badge-green';
+  if(cat==='Proveedores'||cat==='Compras') return 'badge-blue';
+  if(cat==='Nomina') return 'badge-pink';
+  if(cat==='Impuestos') return 'badge-orange';
+  if(cat==='Gastos Bancarios') return 'badge-purple';
+  if(cat==='Servicios/PSE') return 'badge-cyan';
+  if(cat==='Movimiento Interno') return 'badge-gray';
+  return 'badge-red';
+}
+
+// ============================================================
+// FORMAT HELPERS
+// ============================================================
+function fmt(n) { return '$'+Math.round(n).toLocaleString('es-CO'); }
+function fmtS(n) { const a=Math.abs(n); if(a>=1e9)return '$'+(n/1e9).toFixed(1)+'B'; if(a>=1e6)return '$'+(n/1e6).toFixed(1)+'M'; if(a>=1e3)return '$'+(n/1e3).toFixed(0)+'K'; return '$'+Math.round(n).toLocaleString('es-CO'); }
+function pct(n) { return isFinite(n)?(n*100).toFixed(1)+'%':'0%'; }
+const MN=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const MNF=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function ml(key) { const[y,m]=key.split('-'); return MNF[parseInt(m)]+' '+y; }
+
+// ============================================================
+// MULTI-MONTH SELECTOR COMPONENT
+// ============================================================
+function createMultiMonthSelector(containerId, onChange) {
+  const keys = Object.keys(allMonths).sort();
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  // Start with ALL months selected
+  let selected = new Set(keys);
+
+  function getSelectedMonths() {
+    return keys.filter(k => selected.has(k));
+  }
+
+  function render() {
+    let h = '<div class="multi-select" id="ms_'+containerId+'">';
+    const allSelected = selected.size === keys.length;
+    const label = allSelected ? 'Todos los periodos ('+keys.length+')' :
+      selected.size === 0 ? 'Ninguno seleccionado' :
+      selected.size === 1 ? ml([...selected][0]) :
+      selected.size+' meses seleccionados';
+    h += '<button class="ms-btn" onclick="toggleMS(\'ms_'+containerId+'\')">'+label+' ▾</button>';
+    h += '<div class="ms-drop" id="msd_'+containerId+'">';
+    h += '<div class="ms-quick"><button class="btn btn-sm" onclick="msSelectAll(\''+containerId+'\')">Todos</button><button class="btn btn-sm" onclick="msClear(\''+containerId+'\')">Ninguno</button></div>';
+    h += '<div class="ms-divider"></div>';
+    keys.forEach(k => {
+      const chk = selected.has(k) ? 'checked' : '';
+      h += '<label><input type="checkbox" '+chk+' onchange="msToggle(\''+containerId+'\',\''+k+'\',this.checked)"> '+ml(k)+' <small style="color:var(--text2)">('+allMonths[k].transactions.length+' tx)</small></label>';
+    });
+    h += '</div></div>';
+    container.innerHTML = h;
+  }
+
+  window['ms_data_'+containerId] = { selected, keys, onChange, getSelectedMonths, render };
+  render();
+  return getSelectedMonths;
+}
+
+window.toggleMS = function(id) { document.getElementById(id.replace('ms_','msd_')).classList.toggle('open'); };
+window.msToggle = function(cid, key, checked) {
+  const d = window['ms_data_'+cid];
+  if (checked) d.selected.add(key); else d.selected.delete(key);
+  // Re-render the selector to update the button label and checkboxes
+  const wasOpen = document.getElementById('msd_'+cid)?.classList.contains('open');
+  d.render();
+  if (wasOpen) document.getElementById('msd_'+cid)?.classList.add('open');
+  // Update the data view
+  if (d.selected.size > 0) d.onChange(d.getSelectedMonths());
+};
+window.msSelectAll = function(cid) {
+  const d = window['ms_data_'+cid];
+  d.keys.forEach(k => d.selected.add(k));
+  const wasOpen = document.getElementById('msd_'+cid)?.classList.contains('open');
+  d.render();
+  if (wasOpen) document.getElementById('msd_'+cid)?.classList.add('open');
+  d.onChange(d.getSelectedMonths());
+};
+window.msClear = function(cid) {
+  const d = window['ms_data_'+cid];
+  d.selected.clear();
+  const wasOpen = document.getElementById('msd_'+cid)?.classList.contains('open');
+  d.render();
+  if (wasOpen) document.getElementById('msd_'+cid)?.classList.add('open');
+};
+
+// Close dropdowns on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.multi-select')) {
+    document.querySelectorAll('.ms-drop').forEach(d => d.classList.remove('open'));
+  }
+});
+
+// ============================================================
+// FILE HANDLING
+// ============================================================
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag'); handleFiles(e.dataTransfer.files); });
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+function handleFiles(files) {
+  const log = document.getElementById('uploadLog');
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const parsed = parseExtracto(wb);
+        if (parsed.length === 0) { log.innerHTML += '<div class="alert alert-red">❌ No se encontraron transacciones en '+file.name+'</div>'; return; }
+        parsed.forEach(p => { const isNew=!allMonths[p.monthKey]; allMonths[p.monthKey]=p; log.innerHTML+='<div class="alert alert-green">✅ '+file.name+': '+p.transactions.length+' tx '+(isNew?'cargadas':'actualizadas')+' - '+ml(p.monthKey)+'</div>'; });
+        rebuildData(); saveToStorage(); renderAll(); updateLoadedFiles();
+      } catch(err) { log.innerHTML+='<div class="alert alert-red">❌ Error: '+err.message+'</div>'; }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function rebuildData() {
+  allTransactions = [];
+  Object.keys(allMonths).sort().forEach(key => { allMonths[key].transactions.forEach(t => { t.monthKey=key; allTransactions.push(t); }); });
+  const keys = Object.keys(allMonths).sort();
+  document.getElementById('periodoLabel').textContent = keys.length===0?'Sin datos':keys.length===1?'Periodo: '+ml(keys[0]):'Periodos: '+ml(keys[0])+' a '+ml(keys[keys.length-1])+' ('+keys.length+' meses)';
+}
+
+function updateLoadedFiles() {
+  const keys = Object.keys(allMonths).sort();
+  document.getElementById('loadedFiles').innerHTML = keys.map(k => '<div class="file-chip">📄 '+ml(k)+' ('+allMonths[k].transactions.length+') <span class="remove" onclick="removeMonth(\''+k+'\')">✕</span></div>').join('');
+}
+function removeMonth(key) { if(!confirm('Eliminar '+ml(key)+'?'))return; delete allMonths[key]; rebuildData(); saveToStorage(); renderAll(); updateLoadedFiles(); }
+
+// ============================================================
+// TABS
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+    tab.classList.add('active');
+    document.getElementById('tab-'+tab.dataset.tab).classList.remove('hidden');
+  });
+});
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+function renderAll() {
+  if (allTransactions.length === 0) return;
+  const keys = Object.keys(allMonths).sort();
+
+  // Create multi-selectors for all filterable tabs
+  createMultiMonthSelector('resumenFilters', months => renderResumen(months));
+  createMultiMonthSelector('calFilters', months => renderCalendario(months));
+  createMultiMonthSelector('provFilters', months => renderProveedores(months));
+  createMultiMonthSelector('nomFilters', months => renderNomina(months));
+  createMultiMonthSelector('clientFilters', months => renderClientes(months));
+  createMultiMonthSelector('flujoFilters', months => renderFlujo(months));
+  createMultiMonthSelector('taxFilters', months => renderImpuestos(months));
+  createMultiMonthSelector('compFilters', months => renderComparativo(months));
+
+  renderResumen(keys);
+  renderCalendario(keys);
+  renderProveedores(keys);
+  renderNomina(keys);
+  renderClientes(keys);
+  renderFlujo(keys);
+  renderRecurrentes();
+  renderImpuestos(keys);
+  renderProyecciones();
+  renderTransacciones();
+  renderComparativo(keys);
+  renderConciliacion();
+  document.querySelector('.tab[data-tab="resumen"]').click();
+}
+
+function getTxForMonths(months) {
+  if (!months || months.length === 0) return [];
+  return allTransactions.filter(t => months.includes(t.monthKey));
+}
+
+// ============================================================
+// RENDER: RESUMEN
+// ============================================================
+function renderResumen(months) {
+  if (!months) months = Object.keys(allMonths).sort();
+  const txs = getTxForMonths(months);
+  const keys = Object.keys(allMonths).sort();
+  const nm = months.length;
+  if (nm === 0) return;
+
+  let totalIng=0, totalEgr=0;
+  txs.forEach(t => { if(isIngreso(t)) totalIng+=t.valor; else if(isEgreso(t)) totalEgr+=Math.abs(t.valor); });
+
+  const sortedM = [...months].sort();
+  const si = allMonths[sortedM[0]]?.summary.saldoAnterior || 0;
+  const sf = allMonths[sortedM[sortedM.length-1]]?.summary.saldoActual || 0;
+  const flujo = totalIng - totalEgr;
+  const totalNom = txs.filter(t=>t.categoria==='Nomina'&&t.valor<0).reduce((s,t)=>s+Math.abs(t.valor),0);
+  const totalProv = txs.filter(t=>(t.categoria==='Proveedores'||t.categoria==='Compras')&&t.valor<0).reduce((s,t)=>s+Math.abs(t.valor),0);
+  const totalImp = txs.filter(t=>t.categoria==='Impuestos'&&t.valor<0).reduce((s,t)=>s+Math.abs(t.valor),0);
+  const days = new Set(txs.map(t=>t.fecha)).size || 1;
+
+  // Runway calculation
+  const avgDailyExp = totalEgr / days;
+  const lastSaldo = sf;
+  const runwayDays = avgDailyExp > 0 ? Math.floor(lastSaldo / avgDailyExp) : 999;
+  const runwayColor = runwayDays >= 30 ? 'var(--green)' : runwayDays >= 15 ? 'var(--orange)' : 'var(--red)';
+  const runwayPct = Math.min(runwayDays / 60 * 100, 100);
+
+  const metrics = [
+    { l:'Saldo Inicial', v:fmt(si), c:'', cls:'' },
+    { l:'Saldo Final', v:fmt(sf), c:'Dif: '+fmt(sf-si), cls:sf>=si?'pos':'neg' },
+    { l:'Total Ingresos', v:fmt(totalIng), c:txs.length+' tx ('+nm+' mes'+(nm>1?'es':'')+')', cls:'pos' },
+    { l:'Total Egresos', v:fmt(totalEgr), c:'Flujo neto: '+fmt(flujo), cls:flujo>=0?'pos':'neg' },
+    { l:'Runway', v:runwayDays+' dias', c:'Con saldo actual y gasto promedio', cls:runwayDays>=30?'pos':runwayDays>=15?'':'neg' },
+    { l:'Proveedores', v:fmt(totalProv), c:totalEgr?pct(totalProv/totalEgr)+' de egresos':'', cls:'' },
+    { l:'Nomina', v:fmt(totalNom), c:totalEgr?pct(totalNom/totalEgr)+' de egresos':'', cls:'' },
+    { l:'Impuestos', v:fmt(totalImp), c:totalEgr?pct(totalImp/totalEgr)+' de egresos':'', cls:'' },
+    { l:'Gasto Prom/Dia', v:fmt(avgDailyExp), c:days+' dias | Ing: '+fmt(totalIng/days)+'/dia', cls:'' },
+    { l:'Flujo Neto/Mes', v:fmt(flujo/nm), c:'Proy anual: '+fmt(flujo/nm*12), cls:flujo>=0?'pos':'neg' },
+  ];
+
+  document.getElementById('metricCards').innerHTML = metrics.map(m =>
+    '<div class="card"><div class="metric"><div class="label">'+m.l+'</div><div class="value">'+m.v+'</div><div class="change '+m.cls+'">'+m.c+'</div></div></div>'
+  ).join('');
+
+  // Runway visual
+  document.getElementById('runwaySection').innerHTML = `
+    <div class="card"><div class="card-body"><div class="runway-gauge">
+      <div class="runway-num" style="color:${runwayColor}">${runwayDays}</div>
+      <div class="runway-label">Dias de operacion sin ingresos</div>
+      <div class="runway-bar"><div class="runway-fill" style="width:${runwayPct}%;background:${runwayColor}"></div></div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px;">Gasto diario: ${fmt(avgDailyExp)} | Saldo: ${fmt(lastSaldo)}</div>
+    </div></div></div>
+    <div class="card"><div class="card-header"><h3>Composicion de Egresos</h3></div><div class="card-body">
+      <div style="font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>🏭 Proveedores</span><span>${pct(totalEgr?totalProv/totalEgr:0)} - ${fmt(totalProv)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>👷 Nomina</span><span>${pct(totalEgr?totalNom/totalEgr:0)} - ${fmt(totalNom)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>🏛️ Impuestos</span><span>${pct(totalEgr?totalImp/totalEgr:0)} - ${fmt(totalImp)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;"><span>📦 Otros</span><span>${pct(totalEgr?(totalEgr-totalProv-totalNom-totalImp)/totalEgr:0)} - ${fmt(totalEgr-totalProv-totalNom-totalImp)}</span></div>
+      </div>
+    </div></div>
+    <div class="card"><div class="card-header"><h3>Estacionalidad</h3></div><div class="card-body"><div class="chart-container" style="height:200px;"><canvas id="chartSeason"></canvas></div></div></div>`;
+
+  // Seasonality mini chart
+  if (keys.length >= 2) {
+    const mData = keys.map(k => {
+      let i=0; allMonths[k].transactions.forEach(t => { if(t.valor>0) i+=t.valor; });
+      return { l:MN[parseInt(k.split('-')[1])]+' '+k.split('-')[0].slice(2), v:i };
+    });
+    destroyChart('chartSeason');
+    charts.chartSeason = new Chart(document.getElementById('chartSeason'), {
+      type:'bar', data:{ labels:mData.map(d=>d.l), datasets:[{ data:mData.map(d=>d.v), backgroundColor:mData.map(d=>d.v>=mData.reduce((s,x)=>s+x.v,0)/mData.length?'#10b981':'#ef4444') }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#94a3b8',font:{size:10}}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+    });
+  }
+
+  // Category bar chart
+  const catTotals = {};
+  txs.forEach(t => { if(t.categoria==='Movimiento Interno')return; if(!catTotals[t.categoria])catTotals[t.categoria]={i:0,e:0}; if(t.valor>0)catTotals[t.categoria].i+=t.valor; else catTotals[t.categoria].e+=Math.abs(t.valor); });
+  const cLabels = Object.keys(catTotals);
+  destroyChart('chartCategories');
+  charts.chartCategories = new Chart(document.getElementById('chartCategories'), {
+    type:'bar', data:{ labels:cLabels, datasets:[{label:'Ingresos',data:cLabels.map(c=>catTotals[c].i),backgroundColor:'#10b981'},{label:'Egresos',data:cLabels.map(c=>catTotals[c].e),backgroundColor:'#ef4444'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8',maxRotation:45}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+  });
+
+  // Egresos pie
+  const eCat = {};
+  txs.forEach(t => { if(isEgreso(t)){eCat[t.categoria]=(eCat[t.categoria]||0)+Math.abs(t.valor);} });
+  const eL = Object.keys(eCat).sort((a,b)=>eCat[b]-eCat[a]);
+  const eC = ['#3b82f6','#ec4899','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#10b981','#f97316','#6366f1','#14b8a6','#84cc16','#a855f7'];
+  destroyChart('chartEgresosPie');
+  charts.chartEgresosPie = new Chart(document.getElementById('chartEgresosPie'), {
+    type:'doughnut', data:{labels:eL,datasets:[{data:eL.map(l=>eCat[l]),backgroundColor:eC}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11}}}}}
+  });
+
+  // Weekly
+  let whtml = '<table><thead><tr><th>Periodo</th><th>Semana</th><th class="text-right">Ingresos</th><th class="text-right">Egresos</th><th class="text-right">Flujo</th></tr></thead><tbody>';
+  sortedM.forEach(mk => {
+    const wks = {};
+    allMonths[mk].transactions.forEach(t => { const w=Math.ceil(parseInt(t.fecha.split('-')[2])/7); if(!wks[w])wks[w]={i:0,e:0}; if(isIngreso(t))wks[w].i+=t.valor; else if(isEgreso(t))wks[w].e+=Math.abs(t.valor); });
+    Object.keys(wks).sort((a,b)=>a-b).forEach(w => { const n=wks[w].i-wks[w].e; whtml+='<tr><td>'+ml(mk)+'</td><td>S'+w+'</td><td class="text-right pos">'+fmt(wks[w].i)+'</td><td class="text-right neg">'+fmt(wks[w].e)+'</td><td class="text-right '+(n>=0?'pos':'neg')+'">'+fmt(n)+'</td></tr>'; });
+  });
+  whtml += '</tbody></table>';
+  document.getElementById('weeklyTable').innerHTML = whtml;
+
+  // Alerts
+  let ahtml = '<h3 style="margin-bottom:12px;font-size:16px;">🔔 Alertas de Salud Financiera</h3>';
+  if (flujo>=0) ahtml+='<div class="alert alert-green">✅ Flujo positivo: +'+fmt(flujo)+' en el periodo seleccionado.</div>';
+  else ahtml+='<div class="alert alert-red">❌ Flujo negativo: '+fmt(flujo)+'. Egresos superan ingresos.</div>';
+  if (runwayDays<15) ahtml+='<div class="alert alert-red">❌ ALERTA CRITICA: Solo '+runwayDays+' dias de runway. Necesitas reducir gastos o aumentar ingresos urgentemente.</div>';
+  else if (runwayDays<30) ahtml+='<div class="alert alert-orange">⚠️ Runway bajo: '+runwayDays+' dias. Recomendable mantener minimo 30 dias.</div>';
+  else ahtml+='<div class="alert alert-green">✅ Runway saludable: '+runwayDays+' dias de operacion cubiertos.</div>';
+  const np = totalEgr?totalNom/totalEgr:0;
+  if (np>0.4) ahtml+='<div class="alert alert-orange">⚠️ Nomina: '+pct(np)+' de egresos. Revisar productividad.</div>';
+  else ahtml+='<div class="alert alert-green">✅ Nomina controlada: '+pct(np)+' de egresos.</div>';
+  // Top provider concentration
+  const provTxs = txs.filter(t=>(t.categoria==='Proveedores')&&t.valor<0);
+  if (provTxs.length > 0) {
+    const pd = {}; provTxs.forEach(t=>{const n=(t.proveedor||'').toUpperCase().substring(0,30); pd[n]=(pd[n]||0)+Math.abs(t.valor);});
+    const topProv = Object.entries(pd).sort((a,b)=>b[1]-a[1])[0];
+    if (topProv) ahtml+='<div class="alert alert-blue">ℹ️ Proveedor #1: '+topProv[0]+' ('+fmt(topProv[1])+', '+pct(totalProv?topProv[1]/totalProv:0)+'). Negocia descuentos por volumen.</div>';
+  }
+  document.getElementById('alertsContainer').innerHTML = ahtml;
+}
+
+// ============================================================
+// RENDER: CALENDARIO
+// ============================================================
+function renderCalendario(months) {
+  if (!months || months.length === 0) return;
+  const sortedM = [...months].sort();
+  let h = '';
+
+  sortedM.forEach(mk => {
+    const [yr, mo] = mk.split('-').map(Number);
+    const daysInMonth = new Date(yr, mo, 0).getDate();
+    const firstDay = (new Date(yr, mo-1, 1).getDay() + 6) % 7; // Mon=0
+
+    // Aggregate by day
+    const dd = {};
+    allMonths[mk].transactions.forEach(t => {
+      const day = parseInt(t.fecha.split('-')[2]);
+      if(!dd[day]) dd[day] = {i:0,e:0,s:0};
+      if(t.valor>0) dd[day].i+=t.valor; else dd[day].e+=Math.abs(t.valor);
+      dd[day].s = t.saldo;
+    });
+
+    h += '<div class="card" style="margin-bottom:20px;"><div class="card-header"><h3>📅 '+ml(mk)+'</h3></div><div class="card-body">';
+    h += '<div class="cal-grid">';
+    ['Lun','Mar','Mie','Jue','Vie','Sab','Dom'].forEach(d => h+='<div class="cal-header">'+d+'</div>');
+
+    for (let i=0; i<firstDay; i++) h+='<div class="cal-day empty"></div>';
+    for (let d=1; d<=daysInMonth; d++) {
+      const data = dd[d];
+      const net = data ? data.i - data.e : 0;
+      const cls = !data ? 'zero' : net >= 0 ? 'positive' : 'negative';
+      h += '<div class="cal-day '+cls+'">';
+      h += '<div class="day-num">'+d+'</div>';
+      if (data) {
+        if (data.i > 0) h += '<div class="day-in">+'+fmtS(data.i)+'</div>';
+        if (data.e > 0) h += '<div class="day-out">-'+fmtS(data.e)+'</div>';
+        h += '<div class="day-net" style="color:'+(net>=0?'var(--green)':'var(--red)')+'">'+fmtS(net)+'</div>';
+      }
+      h += '</div>';
+    }
+    h += '</div></div></div>';
+  });
+
+  document.getElementById('calendarContent').innerHTML = h;
+}
+
+// ============================================================
+// RENDER: PROVEEDORES
+// ============================================================
+function renderProveedores(months) {
+  if (!months) months = Object.keys(allMonths).sort();
+  const txs = getTxForMonths(months);
+  const nm = months.length;
+  const pd = {};
+  txs.forEach(t => {
+    if ((t.categoria==='Proveedores'||t.categoria==='Compras') && t.valor<0) {
+      const name = (t.proveedor||t.descripcion).toUpperCase().substring(0,35);
+      if(!pd[name]) pd[name]={total:0,count:0,months:{}};
+      pd[name].total+=Math.abs(t.valor); pd[name].count++;
+      pd[name].months[t.monthKey] = (pd[name].months[t.monthKey]||0)+Math.abs(t.valor);
+    }
+  });
+
+  const sorted = Object.entries(pd).sort((a,b)=>b[1].total-a[1].total);
+  const totalP = sorted.reduce((s,[,v])=>s+v.total,0);
+  const top15 = sorted.slice(0,15);
+
+  destroyChart('chartProveedores');
+  charts.chartProveedores = new Chart(document.getElementById('chartProveedores'), {
+    type:'bar', data:{labels:top15.map(([n])=>n.substring(0,22)),datasets:[{label:'Total',data:top15.map(([,v])=>v.total),backgroundColor:'#3b82f6'}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}},y:{ticks:{color:'#94a3b8',font:{size:10}}}}}
+  });
+
+  const top10 = sorted.slice(0,10);
+  const pc=['#3b82f6','#ec4899','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#10b981','#f97316','#6366f1','#14b8a6'];
+  destroyChart('chartProvPie');
+  charts.chartProvPie = new Chart(document.getElementById('chartProvPie'), {
+    type:'doughnut', data:{labels:top10.map(([n])=>n.substring(0,25)),datasets:[{data:top10.map(([,v])=>v.total),backgroundColor:pc}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11}}}}}
+  });
+
+  // Table with monthly breakdown
+  const sortedMo = [...months].sort();
+  let h = '<table><thead><tr><th>#</th><th>Proveedor</th>';
+  if (nm>1) sortedMo.forEach(mk => h+='<th class="text-right">'+MN[parseInt(mk.split('-')[1])]+'</th>');
+  h += '<th class="text-right">Total</th><th class="text-right">%</th><th class="text-center">Tx</th><th class="text-right">Prom</th></tr></thead><tbody>';
+  sorted.forEach(([name,data],i) => {
+    h+='<tr><td>'+(i+1)+'</td><td>'+name+'</td>';
+    if(nm>1) sortedMo.forEach(mk => h+='<td class="text-right">'+(data.months[mk]?fmt(data.months[mk]):'-')+'</td>');
+    h+='<td class="text-right" style="font-weight:600">'+fmt(data.total)+'</td><td class="text-right">'+(totalP?pct(data.total/totalP):'')+'</td><td class="text-center">'+data.count+'</td><td class="text-right">'+fmt(data.total/data.count)+'</td></tr>';
+  });
+  h += '</tbody></table>';
+  document.getElementById('provTable').innerHTML = h;
+}
+
+// ============================================================
+// RENDER: NOMINA
+// ============================================================
+function renderNomina(months) {
+  if (!months) months = Object.keys(allMonths).sort();
+  const txs = getTxForMonths(months);
+  const nm = months.length;
+  const empData = {}, monthlyNom = {};
+  txs.forEach(t => {
+    if (t.categoria==='Nomina' && t.valor<0) {
+      const name=(t.empleado||'SIN NOMBRE').toUpperCase().substring(0,30);
+      if(!empData[name]) empData[name]={total:0,count:0,months:{}};
+      empData[name].total+=Math.abs(t.valor); empData[name].count++;
+      empData[name].months[t.monthKey]=(empData[name].months[t.monthKey]||0)+Math.abs(t.valor);
+      monthlyNom[t.monthKey]=(monthlyNom[t.monthKey]||0)+Math.abs(t.valor);
+    }
+  });
+
+  const sorted = Object.entries(empData).sort((a,b)=>b[1].total-a[1].total);
+  const totalNom = sorted.reduce((s,[,v])=>s+v.total,0);
+  const numEmp = sorted.length;
+  const promMensual = nm>0?totalNom/nm:0;
+  const totalEgr = txs.filter(t=>isEgreso(t)).reduce((s,t)=>s+Math.abs(t.valor),0);
+
+  document.getElementById('nominaSummary').innerHTML = `
+    <div class="nomina-summary">
+      <div class="card"><div class="metric"><div class="label">Total Nomina</div><div class="value">${fmt(totalNom)}</div><div class="change">${nm} mes(es)</div></div></div>
+      <div class="card"><div class="metric"><div class="label">Promedio Mensual</div><div class="value">${fmt(promMensual)}</div><div class="change">Proy anual: ${fmt(promMensual*12)}</div></div></div>
+      <div class="card"><div class="metric"><div class="label">Empleados</div><div class="value">${numEmp}</div><div class="change">Prom/emp: ${fmt(numEmp?totalNom/numEmp/nm:0)}/mes</div></div></div>
+      <div class="card"><div class="metric"><div class="label">% de Egresos</div><div class="value">${pct(totalEgr?totalNom/totalEgr:0)}</div><div class="change">del total</div></div></div>
+    </div>`;
+
+  const top20=sorted.slice(0,20);
+  destroyChart('chartNomina');
+  charts.chartNomina = new Chart(document.getElementById('chartNomina'), {
+    type:'bar', data:{labels:top20.map(([n])=>n.substring(0,20)),datasets:[{label:'Total',data:top20.map(([,v])=>v.total),backgroundColor:'#ec4899'}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}},y:{ticks:{color:'#94a3b8',font:{size:10}}}}}
+  });
+
+  const top10=sorted.slice(0,10);
+  const pc2=['#ec4899','#3b82f6','#f59e0b','#8b5cf6','#06b6d4','#ef4444','#10b981','#f97316','#6366f1','#14b8a6'];
+  destroyChart('chartNominaPie');
+  charts.chartNominaPie = new Chart(document.getElementById('chartNominaPie'), {
+    type:'doughnut', data:{labels:top10.map(([n])=>n.substring(0,25)),datasets:[{data:top10.map(([,v])=>v.total),backgroundColor:pc2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11}}}}}
+  });
+
+  const sortedMo=[...months].sort();
+  let h='<table><thead><tr><th>#</th><th>Empleado</th>';
+  if(nm>1) sortedMo.forEach(mk=>h+='<th class="text-right">'+MN[parseInt(mk.split('-')[1])]+'</th>');
+  h+='<th class="text-right">Total</th><th class="text-center">Pagos</th><th class="text-right">Prom</th></tr></thead><tbody>';
+  sorted.forEach(([name,data],i) => {
+    h+='<tr><td>'+(i+1)+'</td><td>'+name+'</td>';
+    if(nm>1) sortedMo.forEach(mk=>h+='<td class="text-right">'+(data.months[mk]?fmt(data.months[mk]):'-')+'</td>');
+    h+='<td class="text-right" style="font-weight:600">'+fmt(data.total)+'</td><td class="text-center">'+data.count+'</td><td class="text-right">'+fmt(data.total/data.count)+'</td></tr>';
+  });
+  h+='<tr style="font-weight:bold;border-top:2px solid var(--border)"><td></td><td>TOTAL</td>';
+  if(nm>1) sortedMo.forEach(mk=>h+='<td class="text-right">'+fmt(monthlyNom[mk]||0)+'</td>');
+  h+='<td class="text-right">'+fmt(totalNom)+'</td><td></td><td></td></tr></tbody></table>';
+  document.getElementById('nominaTable').innerHTML=h;
+}
+
+// ============================================================
+// RENDER: CLIENTES (Income Concentration)
+// ============================================================
+function renderClientes(months) {
+  if (!months) months = Object.keys(allMonths).sort();
+  const txs = getTxForMonths(months);
+  const nm = months.length;
+  const c = document.getElementById('clientContent');
+
+  // Extract client names from income transactions
+  const clients = {};
+  let totalIng = 0;
+  txs.forEach(t => {
+    if (t.valor <= 0) return;
+    totalIng += t.valor;
+    let name = 'OTROS INGRESOS';
+    const d = t.descripcion.toUpperCase();
+    // Try to extract name from various patterns
+    const patterns = [
+      /TRANSFERENCIA (?:CTA )?(?:SUC )?(?:VIRTUAL )?(?:DESDE )?(.+)/i,
+      /CONSIG(?:NACION)? (?:NACIONAL )?(NAL )?(.+)/i,
+      /PAGO QR (.+)/i,
+      /PAGO INTERBANC(?:ARIO)? (.+)/i,
+      /PAGO DE PROV (.+)/i,
+      /ABONO (.+)/i,
+    ];
+    for (const p of patterns) {
+      const m = t.descripcion.match(p);
+      if (m) { name = (m[2] || m[1]).trim().substring(0,35).toUpperCase(); break; }
+    }
+    if (name.length < 3) name = 'OTROS INGRESOS';
+    if (!clients[name]) clients[name] = {total:0,count:0,months:{}};
+    clients[name].total += t.valor;
+    clients[name].count++;
+    clients[name].months[t.monthKey] = (clients[name].months[t.monthKey]||0)+t.valor;
+  });
+
+  const sorted = Object.entries(clients).sort((a,b)=>b[1].total-a[1].total);
+  const top10 = sorted.slice(0,10);
+
+  // Concentration risk
+  const top1Pct = sorted.length>0 ? sorted[0][1].total/totalIng : 0;
+  const top3Pct = sorted.slice(0,3).reduce((s,[,v])=>s+v.total,0)/totalIng;
+  const top5Pct = sorted.slice(0,5).reduce((s,[,v])=>s+v.total,0)/totalIng;
+  const concRisk = top1Pct > 0.3 ? 'red' : top3Pct > 0.6 ? 'orange' : 'green';
+
+  let h = '<div class="grid grid-4">';
+  h += '<div class="card"><div class="metric"><div class="label">Total Ingresos</div><div class="value pos">'+fmt(totalIng)+'</div><div class="change">'+sorted.length+' fuentes identificadas</div></div></div>';
+  h += '<div class="card"><div class="metric"><div class="label">Cliente #1</div><div class="value">'+(sorted[0]?sorted[0][0]:'N/A')+'</div><div class="change">'+(sorted[0]?pct(top1Pct)+' del total':'')+'</div></div></div>';
+  h += '<div class="card"><div class="metric"><div class="label">Top 3 Clientes</div><div class="value">'+pct(top3Pct)+'</div><div class="change">Concentracion</div></div></div>';
+  h += '<div class="card"><div class="metric"><div class="label">Riesgo Concentracion</div><div class="value" style="color:var(--'+concRisk+')">'+(concRisk==='red'?'ALTO':concRisk==='orange'?'MEDIO':'BAJO')+'</div><div class="change">'+(concRisk==='red'?'Top1 > 30%':concRisk==='orange'?'Top3 > 60%':'Diversificado')+'</div></div></div>';
+  h += '</div>';
+
+  // Alert
+  if (concRisk==='red') h+='<div class="alert alert-red" style="margin-top:16px;">❌ ALERTA: '+sorted[0][0]+' representa '+pct(top1Pct)+' de tus ingresos. Si este cliente se va, perderas '+fmt(sorted[0][1].total/nm)+'/mes.</div>';
+  else if (concRisk==='orange') h+='<div class="alert alert-orange" style="margin-top:16px;">⚠️ Tus 3 principales clientes representan '+pct(top3Pct)+' de ingresos. Diversifica tu cartera.</div>';
+
+  h += '<div class="grid grid-2" style="margin-top:20px;">';
+  h += '<div class="card"><div class="card-header"><h3>Top 10 Fuentes de Ingreso</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartClientes"></canvas></div></div></div>';
+  h += '<div class="card"><div class="card-header"><h3>Distribucion</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartClientPie"></canvas></div></div></div>';
+  h += '</div>';
+
+  // Table
+  const sortedMo=[...months].sort();
+  h += '<div class="card" style="margin-top:20px;"><div class="card-header"><h3>Detalle de Ingresos por Origen</h3></div><div class="card-body"><div class="table-wrap"><table><thead><tr><th>#</th><th>Origen</th>';
+  if(nm>1) sortedMo.forEach(mk=>h+='<th class="text-right">'+MN[parseInt(mk.split('-')[1])]+'</th>');
+  h += '<th class="text-right">Total</th><th class="text-right">%</th><th class="text-center">Tx</th></tr></thead><tbody>';
+  sorted.forEach(([name,data],i) => {
+    h+='<tr><td>'+(i+1)+'</td><td>'+name+'</td>';
+    if(nm>1) sortedMo.forEach(mk=>h+='<td class="text-right">'+(data.months[mk]?fmt(data.months[mk]):'-')+'</td>');
+    h+='<td class="text-right pos" style="font-weight:600">'+fmt(data.total)+'</td><td class="text-right">'+pct(data.total/totalIng)+'</td><td class="text-center">'+data.count+'</td></tr>';
+  });
+  h += '</tbody></table></div></div></div>';
+  c.innerHTML = h;
+
+  // Charts
+  const pc3=['#10b981','#3b82f6','#f59e0b','#ec4899','#8b5cf6','#06b6d4','#ef4444','#f97316','#6366f1','#14b8a6'];
+  destroyChart('chartClientes');
+  charts.chartClientes = new Chart(document.getElementById('chartClientes'), {
+    type:'bar', data:{labels:top10.map(([n])=>n.substring(0,22)),datasets:[{label:'Total',data:top10.map(([,v])=>v.total),backgroundColor:'#10b981'}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}},y:{ticks:{color:'#94a3b8',font:{size:10}}}}}
+  });
+  destroyChart('chartClientPie');
+  charts.chartClientPie = new Chart(document.getElementById('chartClientPie'), {
+    type:'doughnut', data:{labels:top10.map(([n])=>n.substring(0,25)),datasets:[{data:top10.map(([,v])=>v.total),backgroundColor:pc3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11}}}}}
+  });
+}
+
+// ============================================================
+// RENDER: FLUJO DIARIO
+// ============================================================
+function renderFlujo(months) {
+  if (!months) months = Object.keys(allMonths).sort();
+  const txs = getTxForMonths(months);
+  const dd = {};
+  txs.forEach(t => { if(!dd[t.fecha])dd[t.fecha]={i:0,e:0,s:0,n:0}; if(isIngreso(t))dd[t.fecha].i+=t.valor; else if(isEgreso(t))dd[t.fecha].e+=Math.abs(t.valor); dd[t.fecha].s=t.saldo; dd[t.fecha].n++; });
+
+  const days = Object.keys(dd).sort();
+  destroyChart('chartFlujo');
+  charts.chartFlujo = new Chart(document.getElementById('chartFlujo'), {
+    type:'line', data:{labels:days.map(d=>d.substring(5)),datasets:[{label:'Saldo',data:days.map(d=>dd[d].s),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',fill:true,tension:.3,pointRadius:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8',maxRotation:45,maxTicksLimit:30}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+  });
+
+  destroyChart('chartDailyBars');
+  charts.chartDailyBars = new Chart(document.getElementById('chartDailyBars'), {
+    type:'bar', data:{labels:days.map(d=>d.substring(5)),datasets:[{label:'Ingresos',data:days.map(d=>dd[d].i),backgroundColor:'#10b981'},{label:'Egresos',data:days.map(d=>dd[d].e),backgroundColor:'#ef4444'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8',maxRotation:45,maxTicksLimit:20}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+  });
+
+  const netos=days.map(d=>dd[d].i-dd[d].e);
+  destroyChart('chartDailyNet');
+  charts.chartDailyNet = new Chart(document.getElementById('chartDailyNet'), {
+    type:'bar', data:{labels:days.map(d=>d.substring(5)),datasets:[{label:'Neto',data:netos,backgroundColor:netos.map(n=>n>=0?'#10b981':'#ef4444')}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8',maxRotation:45,maxTicksLimit:20}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+  });
+
+  let h='<table><thead><tr><th>Fecha</th><th class="text-right">Ingresos</th><th class="text-right">Egresos</th><th class="text-right">Neto</th><th class="text-right">Saldo</th><th class="text-center">Tx</th></tr></thead><tbody>';
+  days.forEach(d=>{const n=dd[d].i-dd[d].e; h+='<tr><td>'+d+'</td><td class="text-right pos">'+fmt(dd[d].i)+'</td><td class="text-right neg">'+fmt(dd[d].e)+'</td><td class="text-right '+(n>=0?'pos':'neg')+'">'+fmt(n)+'</td><td class="text-right">'+fmt(dd[d].s)+'</td><td class="text-center">'+dd[d].n+'</td></tr>';});
+  h+='</tbody></table>';
+  document.getElementById('dailyTable').innerHTML=h;
+}
+
+// ============================================================
+// RENDER: RECURRENTES
+// ============================================================
+function renderRecurrentes() {
+  const patterns = {};
+  allTransactions.forEach(t => {
+    if(isEgreso(t)){
+      const key=t.descripcion.toUpperCase().replace(/\d+/g,'#').substring(0,40);
+      if(!patterns[key]) patterns[key]={desc:t.descripcion,total:0,count:0};
+      patterns[key].total+=Math.abs(t.valor); patterns[key].count++;
+    }
+  });
+  const nm=Object.keys(allMonths).length;
+  const rec=Object.entries(patterns).filter(([,v])=>v.count>=2).sort((a,b)=>b[1].total-a[1].total);
+
+  let h='<table><thead><tr><th>Concepto</th><th class="text-center">Frecuencia</th><th class="text-right">Prom</th><th class="text-right">Total</th><th class="text-right">Est. Anual</th></tr></thead><tbody>';
+  rec.forEach(([,d])=>{
+    const avg=d.total/d.count; const annual=(d.total/nm)*12;
+    const freq=d.count>=nm*20?'Diario':d.count>=nm*4?'Semanal':'Mensual';
+    h+='<tr><td>'+d.desc.substring(0,50)+'</td><td class="text-center"><span class="badge badge-blue">'+freq+' ('+d.count+'x)</span></td><td class="text-right">'+fmt(avg)+'</td><td class="text-right">'+fmt(d.total)+'</td><td class="text-right neg">'+fmt(annual)+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  document.getElementById('recurrentTable').innerHTML=h;
+
+  const top10=rec.slice(0,10);
+  destroyChart('chartRecurrent');
+  charts.chartRecurrent = new Chart(document.getElementById('chartRecurrent'), {
+    type:'bar', data:{labels:top10.map(([,v])=>v.desc.substring(0,25)),datasets:[{label:'Est. Anual',data:top10.map(([,v])=>(v.total/nm)*12),backgroundColor:'#f59e0b'}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}},y:{ticks:{color:'#94a3b8',font:{size:11}}}}}
+  });
+}
+
+// ============================================================
+// RENDER: IMPUESTOS
+// ============================================================
+function renderImpuestos(months) {
+  if (!months) months = Object.keys(allMonths).sort();
+  const txs = getTxForMonths(months);
+  const nm = months.length;
+  const c = document.getElementById('taxContent');
+
+  const taxTypes = {};
+  let totalTax = 0;
+  txs.forEach(t => {
+    if (t.categoria !== 'Impuestos' || t.valor >= 0) return;
+    const amt = Math.abs(t.valor);
+    totalTax += amt;
+    const d = t.descripcion.toUpperCase();
+    let type = 'Otros Impuestos';
+    if (d.includes('4X1000') || d.includes('4 X 1000')) type = 'GMF (4x1000)';
+    else if (d.includes('RETEFUENTE')) type = 'Retefuente';
+    else if (d.includes('RETEICA')) type = 'ReteICA';
+    else if (/\bICA\b/.test(d)) type = 'ICA';
+    else if (d.includes('IVA') || d.includes('COBRO IVA')) type = 'IVA';
+    else if (d.includes('RETENCION')) type = 'Retenciones';
+    else if (d.includes('IMPTO')) type = 'Impuesto Varios';
+
+    if (!taxTypes[type]) taxTypes[type] = { total:0, count:0, months:{} };
+    taxTypes[type].total += amt;
+    taxTypes[type].count++;
+    taxTypes[type].months[t.monthKey] = (taxTypes[type].months[t.monthKey]||0)+amt;
+  });
+
+  const sorted = Object.entries(taxTypes).sort((a,b)=>b[1].total-a[1].total);
+  const promMensual = totalTax/nm;
+
+  let h = '<div class="grid grid-4">';
+  h += '<div class="card"><div class="metric"><div class="label">Total Impuestos</div><div class="value neg">'+fmt(totalTax)+'</div><div class="change">'+nm+' mes(es)</div></div></div>';
+  h += '<div class="card"><div class="metric"><div class="label">Promedio Mensual</div><div class="value">'+fmt(promMensual)+'</div><div class="change">Proy anual: '+fmt(promMensual*12)+'</div></div></div>';
+  h += '<div class="card"><div class="metric"><div class="label">Mayor Concepto</div><div class="value">'+(sorted[0]?sorted[0][0]:'N/A')+'</div><div class="change">'+(sorted[0]?fmt(sorted[0][1].total)+' ('+pct(sorted[0][1].total/totalTax)+')':'')+'</div></div></div>';
+  h += '<div class="card"><div class="metric"><div class="label">Transacciones</div><div class="value">'+sorted.reduce((s,[,v])=>s+v.count,0)+'</div><div class="change">'+sorted.length+' tipos identificados</div></div></div>';
+  h += '</div>';
+
+  h += '<div class="grid grid-2" style="margin-top:20px;">';
+  h += '<div class="card"><div class="card-header"><h3>Impuestos por Tipo</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartTaxBar"></canvas></div></div></div>';
+  h += '<div class="card"><div class="card-header"><h3>Distribucion</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartTaxPie"></canvas></div></div></div>';
+  h += '</div>';
+
+  // Monthly evolution
+  if (nm>1) {
+    h += '<div class="card" style="margin-top:20px;"><div class="card-header"><h3>Evolucion Mensual de Impuestos</h3></div><div class="card-body"><div class="chart-container"><canvas id="chartTaxEvol"></canvas></div></div></div>';
+  }
+
+  // Table
+  const sortedMo=[...months].sort();
+  h += '<div class="card" style="margin-top:20px;"><div class="card-header"><h3>Detalle</h3></div><div class="card-body"><div class="table-wrap"><table><thead><tr><th>Tipo</th>';
+  if(nm>1) sortedMo.forEach(mk=>h+='<th class="text-right">'+MN[parseInt(mk.split('-')[1])]+'</th>');
+  h += '<th class="text-right">Total</th><th class="text-right">%</th><th class="text-right">Prom/Mes</th><th class="text-right">Proy Anual</th></tr></thead><tbody>';
+  sorted.forEach(([type,data]) => {
+    h+='<tr><td style="font-weight:600">'+type+'</td>';
+    if(nm>1) sortedMo.forEach(mk=>h+='<td class="text-right">'+(data.months[mk]?fmt(data.months[mk]):'-')+'</td>');
+    h+='<td class="text-right neg" style="font-weight:600">'+fmt(data.total)+'</td><td class="text-right">'+pct(data.total/totalTax)+'</td><td class="text-right">'+fmt(data.total/nm)+'</td><td class="text-right neg">'+fmt(data.total/nm*12)+'</td></tr>';
+  });
+  h+='<tr style="font-weight:bold;border-top:2px solid var(--border)"><td>TOTAL</td>';
+  if(nm>1) sortedMo.forEach(mk=>{let t=0;sorted.forEach(([,d])=>t+=(d.months[mk]||0)); h+='<td class="text-right">'+fmt(t)+'</td>';});
+  h+='<td class="text-right neg">'+fmt(totalTax)+'</td><td></td><td class="text-right">'+fmt(promMensual)+'</td><td class="text-right neg">'+fmt(promMensual*12)+'</td></tr>';
+  h+='</tbody></table></div></div></div>';
+
+  c.innerHTML = h;
+
+  // Charts
+  const txColors=['#f59e0b','#ef4444','#3b82f6','#ec4899','#8b5cf6','#06b6d4','#10b981','#f97316'];
+  destroyChart('chartTaxBar');
+  charts.chartTaxBar = new Chart(document.getElementById('chartTaxBar'), {
+    type:'bar', data:{labels:sorted.map(([t])=>t),datasets:[{label:'Total',data:sorted.map(([,v])=>v.total),backgroundColor:txColors}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+  });
+  destroyChart('chartTaxPie');
+  charts.chartTaxPie = new Chart(document.getElementById('chartTaxPie'), {
+    type:'doughnut', data:{labels:sorted.map(([t])=>t),datasets:[{data:sorted.map(([,v])=>v.total),backgroundColor:txColors}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11}}}}}
+  });
+  if (nm>1) {
+    const sortedMo2=[...months].sort();
+    const datasets = sorted.map(([type,data],i) => ({
+      label:type, data:sortedMo2.map(mk=>data.months[mk]||0), borderColor:txColors[i%txColors.length], backgroundColor:txColors[i%txColors.length]+'33', fill:false, tension:.3
+    }));
+    destroyChart('chartTaxEvol');
+    charts.chartTaxEvol = new Chart(document.getElementById('chartTaxEvol'), {
+      type:'line', data:{labels:sortedMo2.map(ml),datasets},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+    });
+  }
+}
+
+// ============================================================
+// RENDER: PROYECCIONES (Enhanced)
+// ============================================================
+function renderProyecciones() {
+  const c = document.getElementById('projectionContent');
+  const keys = Object.keys(allMonths).sort();
+  const nm = keys.length;
+  if (nm < 1) { c.innerHTML='<div class="alert alert-blue">Carga al menos 1 mes.</div>'; return; }
+
+  // Monthly data for detailed analysis
+  const mData = keys.map(k => {
+    const txs = allMonths[k].transactions;
+    let i=0,e=0,nom=0,prov=0,imp=0,bank=0;
+    txs.forEach(t => {
+      if(t.valor>0) i+=t.valor; else e+=Math.abs(t.valor);
+      if(t.categoria==='Nomina'&&t.valor<0) nom+=Math.abs(t.valor);
+      if((t.categoria==='Proveedores'||t.categoria==='Compras')&&t.valor<0) prov+=Math.abs(t.valor);
+      if(t.categoria==='Impuestos'&&t.valor<0) imp+=Math.abs(t.valor);
+      if(t.categoria==='Gastos Bancarios'&&t.valor<0) bank+=Math.abs(t.valor);
+    });
+    return {k,i,e,nom,prov,imp,bank,neto:i-e,otros:e-nom-prov-imp-bank, si:allMonths[k].summary.saldoAnterior, sf:allMonths[k].summary.saldoActual};
+  });
+
+  const avgI=mData.reduce((s,d)=>s+d.i,0)/nm;
+  const avgE=mData.reduce((s,d)=>s+d.e,0)/nm;
+  const avgNom=mData.reduce((s,d)=>s+d.nom,0)/nm;
+  const avgProv=mData.reduce((s,d)=>s+d.prov,0)/nm;
+  const avgImp=mData.reduce((s,d)=>s+d.imp,0)/nm;
+  const avgBank=mData.reduce((s,d)=>s+d.bank,0)/nm;
+  const avgOtros=mData.reduce((s,d)=>s+d.otros,0)/nm;
+  const flujo=avgI-avgE;
+  const sf=mData[mData.length-1].sf;
+
+  // Variance (for confidence)
+  const stdI = nm>1?Math.sqrt(mData.reduce((s,d)=>s+Math.pow(d.i-avgI,2),0)/nm):0;
+  const stdE = nm>1?Math.sqrt(mData.reduce((s,d)=>s+Math.pow(d.e-avgE,2),0)/nm):0;
+
+  // Trend (simple linear regression on net flow)
+  let trend = 0;
+  if (nm >= 3) {
+    const xMean = (nm-1)/2;
+    const yMean = mData.reduce((s,d)=>s+d.neto,0)/nm;
+    let num=0,den=0;
+    mData.forEach((d,idx)=>{num+=(idx-xMean)*(d.neto-yMean);den+=(idx-xMean)*(idx-xMean);});
+    trend = den>0?num/den:0;
+  }
+
+  // 5 scenarios
+  const labels=[]; const s1=[],s2=[],s3=[],s4=[],s5=[];
+  let a=sf,b=sf,cc=sf,dd2=sf,ee=sf;
+  for(let m=1;m<=12;m++){
+    labels.push('Mes '+m);
+    a+=flujo+trend*m; // With trend
+    b+=flujo*1.15; // Optimistic +15%
+    cc+=flujo*0.85; // Pessimistic -15%
+    dd2+=(avgI*0.9)-(avgE); // -10% ingresos
+    ee+=avgI-(avgE*0.9); // -10% gastos
+    s1.push(a);s2.push(b);s3.push(cc);s4.push(dd2);s5.push(ee);
+  }
+
+  c.innerHTML = `
+    <div class="grid grid-5">
+      <div class="card"><div class="metric"><div class="label">Ingreso Prom/Mes</div><div class="value pos">${fmt(avgI)}</div><div class="change">±${fmt(stdI)} desv</div></div></div>
+      <div class="card"><div class="metric"><div class="label">Egreso Prom/Mes</div><div class="value neg">${fmt(avgE)}</div><div class="change">±${fmt(stdE)} desv</div></div></div>
+      <div class="card"><div class="metric"><div class="label">Flujo Neto/Mes</div><div class="value" style="color:${flujo>=0?'var(--green)':'var(--red)'}">${fmt(flujo)}</div><div class="change">Tendencia: ${trend>=0?'+':''}${fmt(trend)}/mes</div></div></div>
+      <div class="card"><div class="metric"><div class="label">Nomina/Mes</div><div class="value">${fmt(avgNom)}</div><div class="change">${pct(avgE?avgNom/avgE:0)} de egresos</div></div></div>
+      <div class="card"><div class="metric"><div class="label">Proveedores/Mes</div><div class="value">${fmt(avgProv)}</div><div class="change">${pct(avgE?avgProv/avgE:0)} de egresos</div></div></div>
+    </div>
+
+    <div class="card" style="margin-top:20px;"><div class="card-header"><h3>Proyeccion de Saldo - 5 Escenarios (12 Meses)</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartProjection"></canvas></div></div></div>
+
+    <div class="grid grid-2" style="margin-top:20px;">
+      <div class="card"><div class="card-header"><h3>Desglose Proyectado Anual</h3></div><div class="card-body">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Concepto</th><th class="text-right">Prom/Mes</th><th class="text-right">Proy 12 Meses</th><th class="text-right">% Egresos</th></tr></thead>
+          <tbody>
+            <tr><td class="pos" style="font-weight:600">Total Ingresos</td><td class="text-right pos">${fmt(avgI)}</td><td class="text-right pos">${fmt(avgI*12)}</td><td></td></tr>
+            <tr><td style="font-weight:600">Total Egresos</td><td class="text-right neg">${fmt(avgE)}</td><td class="text-right neg">${fmt(avgE*12)}</td><td>100%</td></tr>
+            <tr><td>  🏭 Proveedores</td><td class="text-right">${fmt(avgProv)}</td><td class="text-right">${fmt(avgProv*12)}</td><td class="text-right">${pct(avgProv/avgE)}</td></tr>
+            <tr><td>  👷 Nomina</td><td class="text-right">${fmt(avgNom)}</td><td class="text-right">${fmt(avgNom*12)}</td><td class="text-right">${pct(avgNom/avgE)}</td></tr>
+            <tr><td>  🏛️ Impuestos</td><td class="text-right">${fmt(avgImp)}</td><td class="text-right">${fmt(avgImp*12)}</td><td class="text-right">${pct(avgImp/avgE)}</td></tr>
+            <tr><td>  🏦 Gastos Bancarios</td><td class="text-right">${fmt(avgBank)}</td><td class="text-right">${fmt(avgBank*12)}</td><td class="text-right">${pct(avgBank/avgE)}</td></tr>
+            <tr><td>  📦 Otros</td><td class="text-right">${fmt(avgOtros)}</td><td class="text-right">${fmt(avgOtros*12)}</td><td class="text-right">${pct(avgOtros/avgE)}</td></tr>
+            <tr style="border-top:2px solid var(--border);font-weight:700"><td style="color:${flujo>=0?'var(--green)':'var(--red)'}">Flujo Neto</td><td class="text-right" style="color:${flujo>=0?'var(--green)':'var(--red)'}">${fmt(flujo)}</td><td class="text-right" style="color:${flujo>=0?'var(--green)':'var(--red)'}">${fmt(flujo*12)}</td><td></td></tr>
+          </tbody>
+        </table></div>
+      </div></div>
+
+      <div class="card"><div class="card-header"><h3>Escenarios y Oportunidades</h3></div><div class="card-body">
+        <div class="rec-card"><h4>📊 Tendencia Detectada</h4>
+          <p>${trend>0?'Tu flujo neto MEJORA '+fmt(Math.abs(trend))+'/mes. Si continua, en 12 meses tendras '+fmt(s1[11]):trend<0?'Tu flujo neto EMPEORA '+fmt(Math.abs(trend))+'/mes. Proyeccion 12m: '+fmt(s1[11]):'Tu flujo neto se mantiene estable. Proyeccion 12m: '+fmt(s1[11])}</p>
+        </div>
+        <div class="rec-card"><h4>💰 Ahorro en Proveedores (-5%)</h4>
+          <p>Si negocias 5% menos: <strong>${fmt(avgProv*0.05)}/mes = ${fmt(avgProv*0.05*12)}/ano</strong></p>
+          <ul><li>Top proveedor: Pide descuento por volumen</li><li>Busca 2-3 cotizaciones alternativas</li></ul>
+        </div>
+        <div class="rec-card"><h4>👷 Optimizacion de Nomina</h4>
+          <p>Nomina actual: <strong>${fmt(avgNom)}/mes (${pct(avgE?avgNom/avgE:0)} de egresos)</strong></p>
+          <ul><li>${avgNom/avgE>0.35?'⚠️ Por encima del 35% recomendado':'✅ Dentro del rango saludable'}</li>
+          <li>Prom/empleado: ~${fmt(avgNom/22)}/mes (estimado 22 empleados)</li></ul>
+        </div>
+        ${flujo>5000000?`<div class="rec-card"><h4>📈 Inversion Recomendada</h4>
+          <p>Flujo libre: <strong>${fmt(flujo)}/mes</strong></p>
+          <ul><li>70% CDT bajo riesgo (${fmt(flujo*0.7)}/mes) → ~${fmt(flujo*0.7*12*0.07)} intereses/ano</li>
+          <li>30% Capital trabajo/emergencia</li></ul>
+        </div>`:`<div class="rec-card"><h4>⚠️ Fondo de Emergencia</h4>
+          <p>Con flujo de ${fmt(flujo)}/mes, prioriza crear fondo de 3 meses de gastos: <strong>${fmt(avgE*3)}</strong></p>
+        </div>`}
+      </div></div>
+    </div>
+
+    <div class="card" style="margin-top:20px;"><div class="card-header"><h3>Composicion de Egresos - Evolucion</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartEgrEvol"></canvas></div></div></div>
+  `;
+
+  // Projection chart
+  destroyChart('chartProjection');
+  charts.chartProjection = new Chart(document.getElementById('chartProjection'), {
+    type:'line', data:{labels, datasets:[
+      {label:'Con tendencia',data:s1,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',fill:true,tension:.3},
+      {label:'Optimista (+15%)',data:s2,borderColor:'#10b981',borderDash:[5,5],tension:.3},
+      {label:'Pesimista (-15%)',data:s3,borderColor:'#ef4444',borderDash:[5,5],tension:.3},
+      {label:'-10% Ingresos',data:s4,borderColor:'#f59e0b',borderDash:[3,3],tension:.3},
+      {label:'-10% Gastos',data:s5,borderColor:'#8b5cf6',borderDash:[3,3],tension:.3}
+    ]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+  });
+
+  // Expense evolution stacked
+  if (nm >= 2) {
+    destroyChart('chartEgrEvol');
+    charts.chartEgrEvol = new Chart(document.getElementById('chartEgrEvol'), {
+      type:'bar', data:{labels:mData.map(d=>ml(d.k)), datasets:[
+        {label:'Nomina',data:mData.map(d=>d.nom),backgroundColor:'#ec4899'},
+        {label:'Proveedores',data:mData.map(d=>d.prov),backgroundColor:'#3b82f6'},
+        {label:'Impuestos',data:mData.map(d=>d.imp),backgroundColor:'#f59e0b'},
+        {label:'Bancarios',data:mData.map(d=>d.bank),backgroundColor:'#8b5cf6'},
+        {label:'Otros',data:mData.map(d=>d.otros),backgroundColor:'#94a3b8'}
+      ]}, options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,ticks:{color:'#94a3b8'}},y:{stacked:true,ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}},plugins:{legend:{labels:{color:'#94a3b8'}}}}
+    });
+  }
+}
+
+// ============================================================
+// RENDER: TRANSACCIONES
+// ============================================================
+function renderTransacciones() {
+  const cats=[...new Set(allTransactions.map(t=>t.categoria))].sort();
+  const mkeys=Object.keys(allMonths).sort();
+  document.getElementById('filterMonth').innerHTML='<option value="">Todos</option>'+mkeys.map(k=>'<option value="'+k+'">'+ml(k)+'</option>').join('');
+  document.getElementById('filterCat').innerHTML='<option value="">Todas</option>'+cats.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
+
+  const render=()=>{
+    const fM=document.getElementById('filterMonth').value;
+    const fC=document.getElementById('filterCat').value;
+    const fD=document.getElementById('filterDesc').value.toUpperCase();
+    const fMn=parseFloat(document.getElementById('filterMinAmt').value)||-Infinity;
+    const fMx=parseFloat(document.getElementById('filterMaxAmt').value)||Infinity;
+    const fDir=document.getElementById('filterDir').value;
+
+    const f=allTransactions.filter(t=>{
+      if(fM&&t.monthKey!==fM) return false;
+      if(fC&&t.categoria!==fC) return false;
+      if(fD&&!t.descripcion.toUpperCase().includes(fD)) return false;
+      if(fDir==='in'&&t.valor<=0) return false;
+      if(fDir==='out'&&t.valor>=0) return false;
+      const a=Math.abs(t.valor); return a>=fMn&&a<=fMx;
+    });
+
+    let sumIn=0,sumOut=0;
+    f.forEach(t=>{if(t.valor>0)sumIn+=t.valor;else sumOut+=Math.abs(t.valor);});
+
+    let h='<div style="margin-bottom:12px;font-size:13px;color:var(--text2);">'+f.length+' transacciones | <span class="pos">Ingresos: '+fmt(sumIn)+'</span> | <span class="neg">Egresos: '+fmt(sumOut)+'</span> | Neto: <span class="'+(sumIn-sumOut>=0?'pos':'neg')+'">'+fmt(sumIn-sumOut)+'</span></div>';
+    h+='<table><thead><tr><th>Fecha</th><th>Descripcion</th><th>Categoria</th><th class="text-right">Valor</th><th class="text-right">Saldo</th></tr></thead><tbody>';
+    f.forEach(t=>{h+='<tr><td style="white-space:nowrap">'+t.fecha+'</td><td>'+t.descripcion+'</td><td><span class="badge '+getCatBadge(t.categoria)+'">'+t.categoria+'</span></td><td class="text-right '+(t.valor>=0?'pos':'neg')+'">'+fmt(t.valor)+'</td><td class="text-right">'+fmt(t.saldo)+'</td></tr>';});
+    h+='</tbody></table>';
+    document.getElementById('txTable').innerHTML=h;
+  };
+  render();
+  ['filterMonth','filterCat','filterDesc','filterMinAmt','filterMaxAmt','filterDir'].forEach(id=>{document.getElementById(id).oninput=render;});
+}
+
+// ============================================================
+// RENDER: COMPARATIVO (Multi-month)
+// ============================================================
+function renderComparativo(months) {
+  if (!months) months = Object.keys(allMonths).sort();
+  const c = document.getElementById('comparativoContent');
+  const sortedM = [...months].sort();
+  if (sortedM.length < 2) { c.innerHTML='<div class="alert alert-blue">ℹ️ Selecciona 2+ meses para comparar.</div>'; return; }
+
+  const md = sortedM.map(k => {
+    const txs = allMonths[k].transactions;
+    let i=0,e=0,n=0,p=0,imp=0;
+    txs.forEach(t => {
+      if(t.valor>0)i+=t.valor; else e+=Math.abs(t.valor);
+      if(t.categoria==='Nomina'&&t.valor<0) n+=Math.abs(t.valor);
+      if((t.categoria==='Proveedores'||t.categoria==='Compras')&&t.valor<0) p+=Math.abs(t.valor);
+      if(t.categoria==='Impuestos'&&t.valor<0) imp+=Math.abs(t.valor);
+    });
+    return {k,l:ml(k),i,e,n,p,imp,neto:i-e,si:allMonths[k].summary.saldoAnterior,sf:allMonths[k].summary.saldoActual,tc:txs.length};
+  });
+
+  let h = '<div class="card"><div class="card-header"><h3>Evolucion - '+sortedM.length+' meses</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartComparative"></canvas></div></div></div>';
+
+  // Saldo evolution
+  h += '<div class="card" style="margin-top:20px;"><div class="card-header"><h3>Evolucion del Saldo</h3></div><div class="card-body"><div class="chart-container"><canvas id="chartSaldoEvol"></canvas></div></div></div>';
+
+  // Table
+  h += '<div class="card" style="margin-top:20px;"><div class="card-header"><h3>Tabla Comparativa</h3></div><div class="card-body"><div class="table-wrap"><table><thead><tr><th>Mes</th><th class="text-right">Saldo Ini</th><th class="text-right">Ingresos</th><th class="text-right">Egresos</th><th class="text-right">Nomina</th><th class="text-right">Proveedores</th><th class="text-right">Impuestos</th><th class="text-right">Flujo</th><th class="text-right">Saldo Fin</th><th class="text-center">Tx</th></tr></thead><tbody>';
+
+  md.forEach((m,idx) => {
+    let ic='',ec='';
+    if(idx>0){
+      const p=md[idx-1];
+      const id2=p.i?((m.i-p.i)/p.i*100).toFixed(1):'0';
+      const ed2=p.e?((m.e-p.e)/p.e*100).toFixed(1):'0';
+      ic=' <small style="color:'+(parseFloat(id2)>=0?'var(--green)':'var(--red)')+'">('+(parseFloat(id2)>0?'+':'')+id2+'%)</small>';
+      ec=' <small style="color:'+(parseFloat(ed2)<=0?'var(--green)':'var(--red)')+'">('+(parseFloat(ed2)>0?'+':'')+ed2+'%)</small>';
+    }
+    h+='<tr><td style="font-weight:600">'+m.l+'</td><td class="text-right">'+fmt(m.si)+'</td><td class="text-right pos">'+fmt(m.i)+ic+'</td><td class="text-right neg">'+fmt(m.e)+ec+'</td><td class="text-right">'+fmt(m.n)+'</td><td class="text-right">'+fmt(m.p)+'</td><td class="text-right">'+fmt(m.imp)+'</td><td class="text-right '+(m.neto>=0?'pos':'neg')+'">'+fmt(m.neto)+'</td><td class="text-right">'+fmt(m.sf)+'</td><td class="text-center">'+m.tc+'</td></tr>';
+  });
+
+  // Totals/averages row
+  const totI=md.reduce((s,m)=>s+m.i,0), totE=md.reduce((s,m)=>s+m.e,0);
+  h+='<tr style="font-weight:bold;border-top:2px solid var(--border)"><td>PROMEDIO</td><td></td><td class="text-right pos">'+fmt(totI/md.length)+'</td><td class="text-right neg">'+fmt(totE/md.length)+'</td><td class="text-right">'+fmt(md.reduce((s,m)=>s+m.n,0)/md.length)+'</td><td class="text-right">'+fmt(md.reduce((s,m)=>s+m.p,0)/md.length)+'</td><td class="text-right">'+fmt(md.reduce((s,m)=>s+m.imp,0)/md.length)+'</td><td class="text-right '+(totI-totE>=0?'pos':'neg')+'">'+fmt((totI-totE)/md.length)+'</td><td></td><td class="text-center">'+Math.round(md.reduce((s,m)=>s+m.tc,0)/md.length)+'</td></tr>';
+  h+='</tbody></table></div></div></div>';
+  c.innerHTML = h;
+
+  destroyChart('chartComparative');
+  charts.chartComparative = new Chart(document.getElementById('chartComparative'), {
+    type:'bar', data:{labels:md.map(m=>m.l), datasets:[
+      {label:'Ingresos',data:md.map(m=>m.i),backgroundColor:'#10b981'},
+      {label:'Egresos',data:md.map(m=>m.e),backgroundColor:'#ef4444'},
+      {label:'Nomina',data:md.map(m=>m.n),backgroundColor:'#ec4899'},
+      {label:'Proveedores',data:md.map(m=>m.p),backgroundColor:'#3b82f6'},
+      {label:'Impuestos',data:md.map(m=>m.imp),backgroundColor:'#f59e0b'}
+    ]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+  });
+
+  destroyChart('chartSaldoEvol');
+  charts.chartSaldoEvol = new Chart(document.getElementById('chartSaldoEvol'), {
+    type:'line', data:{labels:md.map(m=>m.l), datasets:[
+      {label:'Saldo Final',data:md.map(m=>m.sf),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',fill:true,tension:.3},
+      {label:'Flujo Neto',data:md.map(m=>m.neto),borderColor:md.map(m=>m.neto>=0?'#10b981':'#ef4444'),backgroundColor:'transparent',tension:.3,pointBackgroundColor:md.map(m=>m.neto>=0?'#10b981':'#ef4444')}
+    ]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8'}},y:{ticks:{color:'#94a3b8',callback:v=>fmtS(v)}}}}
+  });
+}
+
+// ============================================================
+// RENDER: CONCILIACION
+// ============================================================
+function renderConciliacion() {
+  const c=document.getElementById('conciliacionContent');
+  const keys=Object.keys(allMonths).sort();
+  let h='<h3 style="margin-bottom:16px;font-size:18px;">✅ Conciliacion Bancaria</h3>';
+  let allOk=true;
+
+  keys.forEach(mk=>{
+    const m=allMonths[mk],txs=m.transactions,s=m.summary;
+    let tI=0,tE=0;
+    txs.forEach(t=>{if(t.valor>0)tI+=t.valor;else tE+=Math.abs(t.valor);});
+    const calc=s.saldoAnterior+tI-tE;
+    const diff=Math.abs(calc-s.saldoActual);
+    const ok=diff<1;
+    if(!ok) allOk=false;
+
+    h+='<div class="card" style="margin-bottom:16px;"><div class="card-header"><h3>'+ml(mk)+' '+(ok?'✅':'⚠️')+'</h3></div><div class="card-body">';
+    h+='<div class="check-item">'+(ok?'✅':'⚠️')+' Saldo Ant ('+fmt(s.saldoAnterior)+') + Abonos ('+fmt(tI)+') - Cargos ('+fmt(tE)+') = '+fmt(calc)+' '+(ok?'= Saldo Actual ✓':'≠ '+fmt(s.saldoActual)+' Dif: '+fmt(diff))+'</div>';
+    h+='<div class="check-item">📊 Abonos: Extracto '+fmt(s.totalAbonos)+' | Calc '+fmt(tI)+' | Dif '+fmt(Math.abs(s.totalAbonos-tI))+'</div>';
+    h+='<div class="check-item">📊 Cargos: Extracto '+fmt(s.totalCargos)+' | Calc '+fmt(tE)+' | Dif '+fmt(Math.abs(s.totalCargos-tE))+'</div>';
+    h+='<div class="check-item">📋 Total: '+txs.length+' tx | (+): '+txs.filter(t=>t.valor>0).length+' | (-): '+txs.filter(t=>t.valor<0).length+'</div>';
+    h+='</div></div>';
+  });
+
+  if (allOk) h='<div class="alert alert-green" style="margin-bottom:20px;">✅ TODOS los '+keys.length+' meses concilian perfectamente con el extracto bancario.</div>'+h;
+  c.innerHTML=h;
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+function exportCSV() {
+  const rows=[['Fecha','Descripcion','Categoria','Proveedor','Empleado','Valor','Saldo','Mes']];
+  allTransactions.forEach(t=>rows.push([t.fecha,t.descripcion,t.categoria,t.proveedor,t.empleado,t.valor,t.saldo,t.monthKey]));
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'})); a.download='indoor_sport_transacciones.csv'; a.click();
+}
+
+// ============================================================
+// VENTAS - REMISIONES
+// ============================================================
+let ventasData = { remisiones: [], clientes: {} };
+const MARGEN_VENTAS = 0.50;
+const COSTOS_FIJOS = 131825518;
+
+const ventasDropZone = document.getElementById('ventasDropZone');
+const ventasFileInput = document.getElementById('ventasFileInput');
+if (ventasDropZone) {
+  ventasDropZone.addEventListener('click', () => ventasFileInput.click());
+  ventasDropZone.addEventListener('dragover', e => { e.preventDefault(); ventasDropZone.classList.add('drag'); });
+  ventasDropZone.addEventListener('dragleave', () => ventasDropZone.classList.remove('drag'));
+  ventasDropZone.addEventListener('drop', e => { e.preventDefault(); ventasDropZone.classList.remove('drag'); handleVentasFiles(e.dataTransfer.files); });
+}
+if (ventasFileInput) {
+  ventasFileInput.addEventListener('change', e => handleVentasFiles(e.target.files));
+}
+
 function parseRemisiones(workbook) {
   const ws = workbook.Sheets[workbook.SheetNames[0]];
-  const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
+  if (!ws || !ws['!ref']) return [];
 
+  const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
   const remisiones = [];
   const FECHA_MINIMA = new Date('2025-01-01');
 
   data.forEach(row => {
-    // Filter: only "Vigente", date >= 2025-01-01
     if (row['Vigencia']?.trim() !== 'Vigente') return;
 
     const fechaStr = row['Fecha entrega']?.trim() || '';
-    const fecha = parseDateColombia(fechaStr);
+    const fecha = parseDateString(fechaStr);
     if (!fecha || fecha < FECHA_MINIMA) return;
 
     const montoNeto = parseNum(row['Precio neto total']);
     const montoBruto = parseNum(row['Precio bruto total']);
 
-    remisiones.push({
-      id: row['ID remisión']?.toString().trim() || '',
-      cliente: row['Nombre cliente']?.trim() || '',
-      vendedor: row['Vendedor']?.trim() || '',
-      fecha: fechaStr,
-      estado_cxc: row['Estado CxC']?.trim() || '',
-      forma_pago: row['Formas de pago']?.trim() || '',
-      medio_pago: row['Medios de pago']?.trim() || '',
-      monto_neto: montoNeto,
-      monto_bruto: montoBruto,
-      cantidad: parseNum(row['Cantidad']) || 0,
-      referencia: row['Referencia artículo']?.trim() || ''
-    });
+    if (montoNeto > 0 || montoBruto > 0) {
+      remisiones.push({
+        id: row['ID remisión']?.toString().trim() || '',
+        cliente: row['Nombre cliente']?.trim() || 'Sin cliente',
+        vendedor: row['Vendedor']?.trim() || 'Sin vendedor',
+        fecha: fechaStr,
+        estado_cxc: row['Estado CxC']?.trim() || '',
+        forma_pago: row['Formas de pago']?.trim() || '',
+        medio_pago: row['Medios de pago']?.trim() || '',
+        monto_neto: montoNeto,
+        monto_bruto: montoBruto,
+        cantidad: parseNum(row['Cantidad']) || 0
+      });
+    }
   });
 
   return remisiones;
 }
 
-function parseDateColombia(dateStr) {
-  // Try DD/MM/YYYY format
+function parseDateString(dateStr) {
   const parts = dateStr.split('/');
   if (parts.length === 3) {
     const d = parseInt(parts[0]), m = parseInt(parts[1]), y = parseInt(parts[2]);
-    if (d && m && y) return new Date(y, m - 1, d);
+    if (d > 0 && m > 0 && m <= 12 && y > 2000) return new Date(y, m - 1, d);
   }
   return null;
 }
 
-// ============================================================
-// NÓMINA - PARSE EMPLOYEE DATA
-// ============================================================
-function parseNomina(workbook) {
-  const ws = workbook.Sheets[workbook.SheetNames[0]];
-
-  // Headers are typically in row 2 (0-indexed)
-  const getCell = (r, c) => {
-    const cell = ws[XLSX.utils.encode_cell({ r, c })];
-    return cell ? String(cell.v).trim() : '';
-  };
-
-  // Find header row
-  let headerRow = 2;
-  for (let r = 0; r < 5; r++) {
-    if (getCell(r, 0).toLowerCase().includes('nomina')) {
-      headerRow = r;
-      break;
-    }
-  }
-
-  const empleados = [];
-  const headers = [];
-
-  // Read headers
-  for (let c = 0; c < 20; c++) {
-    const h = getCell(headerRow, c);
-    if (h) headers.push(h);
-    else break;
-  }
-
-  // Read empleados (starting from headerRow + 1)
-  for (let r = headerRow + 1; r < 50; r++) {
-    const nombre = getCell(r, 0);
-    if (!nombre || nombre === '') break;
-
-    const emp = { nombre };
-    for (let c = 1; c < headers.length; c++) {
-      emp[headers[c]] = parseNum(getCell(r, c));
-    }
-    empleados.push(emp);
-  }
-
-  return { headers, empleados };
-}
-
-// ============================================================
-// FILE UPLOAD HANDLERS
-// ============================================================
-document.addEventListener('DOMContentLoaded', () => {
-  // Contabilidad (Bank Statements)
-  const bankDropZone = document.getElementById('bankDropZone');
-  const bankFileInput = document.getElementById('bankFileInput');
-  if (bankDropZone) {
-    bankDropZone.addEventListener('click', () => bankFileInput.click());
-    bankDropZone.addEventListener('dragover', (e) => { e.preventDefault(); bankDropZone.classList.add('drag'); });
-    bankDropZone.addEventListener('dragleave', () => bankDropZone.classList.remove('drag'));
-    bankDropZone.addEventListener('drop', (e) => { e.preventDefault(); bankDropZone.classList.remove('drag'); handleBankFiles(e.dataTransfer.files); });
-  }
-  if (bankFileInput) {
-    bankFileInput.addEventListener('change', (e) => handleBankFiles(e.target.files));
-  }
-
-  // Ventas (Remisiones)
-  const ventasDropZone = document.getElementById('ventasDropZone');
-  const ventasFileInput = document.getElementById('ventasFileInput');
-  if (ventasDropZone) {
-    ventasDropZone.addEventListener('click', () => ventasFileInput.click());
-    ventasDropZone.addEventListener('dragover', (e) => { e.preventDefault(); ventasDropZone.classList.add('drag'); });
-    ventasDropZone.addEventListener('dragleave', () => ventasDropZone.classList.remove('drag'));
-    ventasDropZone.addEventListener('drop', (e) => { e.preventDefault(); ventasDropZone.classList.remove('drag'); handleVentasFiles(e.dataTransfer.files); });
-  }
-  if (ventasFileInput) {
-    ventasFileInput.addEventListener('change', (e) => handleVentasFiles(e.target.files));
-  }
-
-  // Nómina
-  const nominaDropZone = document.getElementById('nominaDropZone');
-  const nominaFileInput = document.getElementById('nominaFileInput');
-  if (nominaDropZone) {
-    nominaDropZone.addEventListener('click', () => nominaFileInput.click());
-    nominaDropZone.addEventListener('dragover', (e) => { e.preventDefault(); nominaDropZone.classList.add('drag'); });
-    nominaDropZone.addEventListener('dragleave', () => nominaDropZone.classList.remove('drag'));
-    nominaDropZone.addEventListener('drop', (e) => { e.preventDefault(); nominaDropZone.classList.remove('drag'); handleNominaFiles(e.dataTransfer.files); });
-  }
-  if (nominaFileInput) {
-    nominaFileInput.addEventListener('change', (e) => handleNominaFiles(e.target.files));
-  }
-});
-
-function handleBankFiles(files) {
-  Array.from(files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const wb = XLSX.read(e.target.result);
-        const parsed = parseExtracto(wb);
-        parsed.forEach(p => {
-          STATE.contabilidad.months[p.monthKey] = p;
-        });
-        STATE.contabilidad.transactions = Object.values(STATE.contabilidad.months).flatMap(m => m.transactions);
-        saveState();
-        renderContabilidad();
-        document.getElementById('bankUploadLog').innerHTML = '<div class="alert alert-green">✅ Cargados ' + parsed.length + ' meses</div>';
-      } catch (err) {
-        document.getElementById('bankUploadLog').innerHTML = '<div class="alert alert-red">❌ Error: ' + err.message + '</div>';
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  });
-}
-
 function handleVentasFiles(files) {
+  const log = document.getElementById('ventasUploadLog');
   Array.from(files).forEach(file => {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       try {
         const wb = XLSX.read(e.target.result);
-        STATE.ventas.remisiones = parseRemisiones(wb);
+        ventasData.remisiones = parseRemisiones(wb);
 
-        // Build clients map
-        STATE.ventas.clientes = {};
-        STATE.ventas.remisiones.forEach(r => {
-          if (!STATE.ventas.clientes[r.cliente]) {
-            STATE.ventas.clientes[r.cliente] = { count: 0, monto: 0 };
+        if (ventasData.remisiones.length === 0) {
+          log.innerHTML = '<div class="alert alert-orange">⚠️ No se encontraron remisiones vigentes desde 2025-01-01</div>';
+          return;
+        }
+
+        // Reconstruir clientes
+        ventasData.clientes = {};
+        ventasData.remisiones.forEach(r => {
+          if (!ventasData.clientes[r.cliente]) {
+            ventasData.clientes[r.cliente] = { count: 0, monto: 0 };
           }
-          STATE.ventas.clientes[r.cliente].count++;
-          STATE.ventas.clientes[r.cliente].monto += r.monto_neto;
+          ventasData.clientes[r.cliente].count++;
+          ventasData.clientes[r.cliente].monto += r.monto_neto;
         });
 
-        saveState();
+        log.innerHTML = '<div class="alert alert-green">✅ Cargadas '+ventasData.remisiones.length+' remisiones vigentes</div>';
         renderVentas();
-        document.getElementById('ventasUploadLog').innerHTML = '<div class="alert alert-green">✅ Cargadas ' + STATE.ventas.remisiones.length + ' remisiones vigentes desde 2025-01-01</div>';
-      } catch (err) {
-        document.getElementById('ventasUploadLog').innerHTML = '<div class="alert alert-red">❌ Error: ' + err.message + '</div>';
+      } catch(err) {
+        log.innerHTML = '<div class="alert alert-red">❌ Error: '+err.message+'</div>';
       }
     };
     reader.readAsArrayBuffer(file);
   });
-}
-
-function handleNominaFiles(files) {
-  Array.from(files).forEach(file => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const wb = XLSX.read(e.target.result);
-        STATE.nomina.data = parseNomina(wb);
-        STATE.nomina.empleados = STATE.nomina.data.empleados;
-        saveState();
-        renderNomina();
-        document.getElementById('nominaUploadLog').innerHTML = '<div class="alert alert-green">✅ Cargados ' + STATE.nomina.empleados.length + ' empleados</div>';
-      } catch (err) {
-        document.getElementById('nominaUploadLog').innerHTML = '<div class="alert alert-red">❌ Error: ' + err.message + '</div>';
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-// ============================================================
-// RENDER FUNCTIONS
-// ============================================================
-function renderResumenGeneral() {
-  // Calculate total metrics from all modules
-  const totalIngresos = Object.values(STATE.contabilidad.months).reduce((s, m) => s + m.summary.totalAbonos, 0);
-  const totalEgresos = Object.values(STATE.contabilidad.months).reduce((s, m) => s + m.summary.totalCargos, 0);
-  const ventasTotales = STATE.ventas.remisiones.reduce((s, r) => s + r.monto_neto, 0);
-  const nominaMensual = STATE.nomina.empleados.length > 0 ? STATE.nomina.empleados.reduce((s, e) => s + (e['Valor mes'] || e['Total mes'] || 0), 0) : 0;
-
-  const margenVentas = ventasTotales * MARGEN_CONTRIBUCION;
-  const flujoPerdida = margenVentas - COSTOS_FIJOS_TOTAL;
-  const flujoBancario = totalIngresos - totalEgresos;
-
-  let html = `
-    <div class="metric">
-      <div class="label">Ingresos Bancarios</div>
-      <div class="value">${fmtM(totalIngresos)}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Egresos Bancarios</div>
-      <div class="value">${fmtM(totalEgresos)}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Flujo Bancario Neto</div>
-      <div class="value ${flujoBancario >= 0 ? 'pos' : 'neg'}">${fmtM(flujoBancario)}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Utilidad Operativa</div>
-      <div class="value ${flujoPerdida >= 0 ? 'pos' : 'neg'}">${fmtM(flujoPerdida)}</div>
-    </div>
-  `;
-
-  const container = document.getElementById('generalMetrics');
-  if (container) container.innerHTML = html;
-
-  // Chart: General Flow (últimos 6 meses o todos)
-  const months = Object.keys(STATE.contabilidad.months).sort();
-  const chartGeneralFlow = document.getElementById('chartGeneralFlow');
-  if (chartGeneralFlow && months.length > 0) {
-    const chartData = months.slice(-6).map(key => {
-      const m = STATE.contabilidad.months[key];
-      return { key, ing: m.summary.totalAbonos, egr: m.summary.totalCargos };
-    });
-    const ctx = chartGeneralFlow.getContext('2d');
-    if (window.chartGeneralFlowInstance) window.chartGeneralFlowInstance.destroy();
-    window.chartGeneralFlowInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: chartData.map(d => d.key),
-        datasets: [
-          { label: 'Ingresos', data: chartData.map(d => d.ing), backgroundColor: '#10b981' },
-          { label: 'Egresos', data: chartData.map(d => d.egr), backgroundColor: '#ef4444' }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f1f5f9' } } }, scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(71,85,105,.2)' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } } }
-    });
-  }
-
-  // Chart: Margen
-  const chartMargin = document.getElementById('chartMargin');
-  if (chartMargin && ventasTotales > 0) {
-    const ctx = chartMargin.getContext('2d');
-    if (window.chartMarginInstance) window.chartMarginInstance.destroy();
-    window.chartMarginInstance = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Margen Contribución', 'Costos Fijos', 'Utilidad/Pérdida'],
-        datasets: [{
-          data: [margenVentas, Math.min(COSTOS_FIJOS_TOTAL, margenVentas), Math.max(0, margenVentas - COSTOS_FIJOS_TOTAL)],
-          backgroundColor: ['#3b82f6', '#ef4444', margenVentas >= COSTOS_FIJOS_TOTAL ? '#10b981' : '#f59e0b']
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f1f5f9' } } } }
-    });
-  }
-
-  // General status
-  let status = '<p>Cargando datos...</p>';
-  if (Object.keys(STATE.contabilidad.months).length > 0) {
-    const meses = Object.keys(STATE.contabilidad.months).length;
-    status = `<p>📊 <strong>${meses} meses</strong> de datos bancarios</p>`;
-  }
-  if (STATE.ventas.remisiones.length > 0) {
-    status += `<p>📈 <strong>${STATE.ventas.remisiones.length}</strong> remisiones vigentes</p>`;
-    status += `<p>💰 Margen operativo: <strong class="${margenVentas >= COSTOS_FIJOS_TOTAL ? 'pos' : 'neg'}">${fmtM(flujoPerdida)}</strong></p>`;
-  }
-  if (STATE.nomina.empleados.length > 0) {
-    status += `<p>👥 <strong>${STATE.nomina.empleados.length}</strong> empleados en nómina</p>`;
-  }
-  const statusContainer = document.getElementById('generalStatus');
-  if (statusContainer) statusContainer.innerHTML = status || '<p>Esperando datos...</p>';
-}
-
-function renderContabilidad() {
-  const container = document.getElementById('contMetrics');
-  if (!container) return;
-
-  const months = Object.values(STATE.contabilidad.months).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
-  const totalAbonos = months.reduce((s, m) => s + m.summary.totalAbonos, 0);
-  const totalCargos = months.reduce((s, m) => s + m.summary.totalCargos, 0);
-  const neto = totalAbonos - totalCargos;
-  const promMensual = months.length > 0 ? totalAbonos / months.length : 0;
-
-  let html = `
-    <div class="metric">
-      <div class="label">Total Ingresos</div>
-      <div class="value pos">${fmtM(totalAbonos)}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Total Egresos</div>
-      <div class="value neg">${fmtM(totalCargos)}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Flujo Neto</div>
-      <div class="value ${neto >= 0 ? 'pos' : 'neg'}">${fmtM(neto)}</div>
-    </div>
-  `;
-
-  container.innerHTML = html;
-
-  // Summary table
-  const tableContainer = document.getElementById('contSummaryTable');
-  if (tableContainer) {
-    let table = '<table><thead><tr><th>Mes</th><th class="text-right">Ingresos</th><th class="text-right">Egresos</th><th class="text-right">Neto</th><th class="text-right">Saldo Actual</th></tr></thead><tbody>';
-    months.forEach(m => {
-      const neto = m.summary.totalAbonos - m.summary.totalCargos;
-      table += `
-        <tr>
-          <td>${m.monthKey}</td>
-          <td class="text-right pos">${fmt(m.summary.totalAbonos)}</td>
-          <td class="text-right neg">${fmt(m.summary.totalCargos)}</td>
-          <td class="text-right ${neto >= 0 ? 'pos' : 'neg'}">${fmt(neto)}</td>
-          <td class="text-right">${fmt(m.summary.saldoActual)}</td>
-        </tr>
-      `;
-    });
-    table += '</tbody></table>';
-    tableContainer.innerHTML = table;
-  }
-
-  // Chart: Top Proveedores
-  const chartProveedores = document.getElementById('chartTopProveedores');
-  if (chartProveedores && STATE.contabilidad.transactions.length > 0) {
-    const proveedoresMap = {};
-    STATE.contabilidad.transactions.filter(t => t.tipo === 'egreso').forEach(t => {
-      const prov = t.descripcion.substring(0, 40);
-      if (!proveedoresMap[prov]) proveedoresMap[prov] = 0;
-      proveedoresMap[prov] += Math.abs(t.valor);
-    });
-
-    const topProveedores = Object.entries(proveedoresMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
-
-    const ctx = chartProveedores.getContext('2d');
-    if (window.chartProveedoresInstance) window.chartProveedoresInstance.destroy();
-    window.chartProveedoresInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: topProveedores.map(d => d[0].substring(0, 25)),
-        datasets: [{ label: 'Monto Pagado', data: topProveedores.map(d => d[1]), backgroundColor: '#ef4444' }]
-      },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f1f5f9' } } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(71,85,105,.2)' } }, y: { ticks: { color: '#94a3b8' }, grid: { display: false } } } }
-    });
-  }
-
-  // Chart: Distribución
-  const chartProvDistribucion = document.getElementById('chartProvDistribucion');
-  if (chartProvDistribucion && STATE.contabilidad.transactions.length > 0) {
-    const tipos = { ingresos: 0, egresos: 0 };
-    STATE.contabilidad.transactions.forEach(t => {
-      if (t.tipo === 'ingreso') tipos.ingresos += t.valor;
-      else tipos.egresos += Math.abs(t.valor);
-    });
-
-    const ctx = chartProvDistribucion.getContext('2d');
-    if (window.chartProvDistribucionInstance) window.chartProvDistribucionInstance.destroy();
-    window.chartProvDistribucionInstance = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Ingresos', 'Egresos'],
-        datasets: [{ data: [tipos.ingresos, tipos.egresos], backgroundColor: ['#10b981', '#ef4444'] }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f1f5f9' } } } }
-    });
-  }
 }
 
 function renderVentas() {
-  const container = document.getElementById('ventasMetrics');
-  if (!container) return;
+  if (ventasData.remisiones.length === 0) return;
 
-  const total = STATE.ventas.remisiones.reduce((s, r) => s + r.monto_neto, 0);
-  const cantidad = STATE.ventas.remisiones.length;
-  const promedio = cantidad > 0 ? total / cantidad : 0;
-  const margen = total * MARGEN_CONTRIBUCION;
-
-  let html = `
-    <div class="metric">
-      <div class="label">Venta Total</div>
-      <div class="value">${fmtM(total)}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Remisiones</div>
-      <div class="value">${cantidad}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Promedio por Remisión</div>
-      <div class="value">${fmtM(promedio)}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Margen (50%)</div>
-      <div class="value pos">${fmtM(margen)}</div>
-    </div>
-  `;
-
-  container.innerHTML = html;
-
-  // Chart: Vendedores
-  const chartVendedores = document.getElementById('chartVendedores');
-  if (chartVendedores && cantidad > 0) {
-    const vendedoresMap = {};
-    STATE.ventas.remisiones.forEach(r => {
-      if (!vendedoresMap[r.vendedor]) vendedoresMap[r.vendedor] = 0;
-      vendedoresMap[r.vendedor] += r.monto_neto;
-    });
-    const topVendedores = Object.entries(vendedoresMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-
-    const ctx = chartVendedores.getContext('2d');
-    if (window.chartVendedoresInstance) window.chartVendedoresInstance.destroy();
-    window.chartVendedoresInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: topVendedores.map(d => d[0].substring(0, 20)),
-        datasets: [{ label: 'Venta por Vendedor', data: topVendedores.map(d => d[1]), backgroundColor: '#3b82f6' }]
-      },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f1f5f9' } } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(71,85,105,.2)' } }, y: { ticks: { color: '#94a3b8' }, grid: { display: false } } } }
-    });
-  }
-
-  // Chart: Estados CxC
-  const chartEstadoCxC = document.getElementById('chartEstadoCxC');
-  if (chartEstadoCxC && cantidad > 0) {
-    const estadoMap = {};
-    STATE.ventas.remisiones.forEach(r => {
-      if (!estadoMap[r.estado_cxc]) estadoMap[r.estado_cxc] = { count: 0, monto: 0 };
-      estadoMap[r.estado_cxc].count++;
-      estadoMap[r.estado_cxc].monto += r.monto_neto;
-    });
-
-    const ctx = chartEstadoCxC.getContext('2d');
-    if (window.chartEstadoCxCInstance) window.chartEstadoCxCInstance.destroy();
-    window.chartEstadoCxCInstance = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(estadoMap),
-        datasets: [{
-          data: Object.values(estadoMap).map(d => d.monto),
-          backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
-        }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f1f5f9' } } } }
-    });
-  }
-
-  // Clientes table
-  const clientesContainer = document.getElementById('ventasClientesTable');
-  if (clientesContainer) {
-    let table = '<table><thead><tr><th>Cliente</th><th class="text-right">Remisiones</th><th class="text-right">Total Venta</th><th class="text-right">% del Total</th></tr></thead><tbody>';
-    const clientes = Object.entries(STATE.ventas.clientes)
-      .map(([nombre, data]) => ({ nombre, ...data }))
-      .sort((a, b) => b.monto - a.monto);
-
-    clientes.forEach(c => {
-      const pct = (c.monto / total * 100).toFixed(1);
-      table += `
-        <tr>
-          <td>${c.nombre}</td>
-          <td class="text-right">${c.count}</td>
-          <td class="text-right">${fmt(c.monto)}</td>
-          <td class="text-right">${pct}%</td>
-        </tr>
-      `;
-    });
-    table += '</tbody></table>';
-    clientesContainer.innerHTML = table;
-  }
-
-  // CxC metrics
-  document.getElementById('cxcTotal').textContent = fmtM(total);
-  document.getElementById('cxcRemisiones').textContent = cantidad;
-
-  const pagados = STATE.ventas.remisiones.filter(r => r.estado_cxc === 'Pago total').length;
-  const pctPagado = cantidad > 0 ? (pagados / cantidad * 100).toFixed(1) : 0;
-  document.getElementById('cxcPagado').textContent = pctPagado + '%';
-
-  // CxC table (detailed)
-  const cxcContainer = document.getElementById('ventasCxCTable');
-  if (cxcContainer) {
-    let table = '<table><thead><tr><th>ID</th><th>Cliente</th><th>Estado</th><th>Forma Pago</th><th class="text-right">Monto</th></tr></thead><tbody>';
-    STATE.ventas.remisiones.slice(0, 100).forEach(r => {
-      table += `
-        <tr>
-          <td>${r.id}</td>
-          <td>${r.cliente.substring(0, 25)}</td>
-          <td><span class="badge badge-blue">${r.estado_cxc}</span></td>
-          <td>${r.forma_pago}</td>
-          <td class="text-right">${fmt(r.monto_neto)}</td>
-        </tr>
-      `;
-    });
-    table += '</tbody></table>';
-    cxcContainer.innerHTML = table;
-  }
-
-  // Margen analysis
-  document.getElementById('ventaBruta').textContent = fmtM(total);
-  document.getElementById('margenContrib').textContent = fmtM(margen);
-  document.getElementById('margenFinal').textContent = fmtM(margen - COSTOS_FIJOS_TOTAL);
-
-  // Break-even
-  const breakEven = COSTOS_FIJOS_TOTAL / MARGEN_CONTRIBUCION;
-  const diferencia = total - breakEven;
-  const breakEvenContainer = document.getElementById('breakEvenAnalysis');
-  if (breakEvenContainer) {
-    let analysis = `
-      <p><strong>Punto de Equilibrio (Break-even):</strong></p>
-      <p style="margin-left:20px;">Venta mínima requerida: <strong>${fmtM(breakEven)}</strong></p>
-      <p><strong>Situación Actual:</strong></p>
-      <p style="margin-left:20px;">Venta actual: <strong>${fmtM(total)}</strong></p>
-      <p style="margin-left:20px;">Diferencia: <strong class="${diferencia >= 0 ? 'pos' : 'neg'}">${fmtM(diferencia)}</strong></p>
-      <p style="margin-top:15px; padding-top:15px; border-top:1px solid var(--border);">
-        ${total >= breakEven ?
-          '<span class="pos">✅ OPERACIÓN RENTABLE - Superando break-even en ' + fmtM(diferencia) + '</span>' :
-          '<span class="neg">⚠️ OPERACIÓN CON PÉRDIDA - Falta ' + fmtM(Math.abs(diferencia)) + ' para break-even</span>'}
-      </p>
-      <p style="margin-top:10px; font-size:12px; color:var(--text2);">
-        <strong>Margen de seguridad:</strong> ${total > 0 ? ((diferencia / total * 100).toFixed(1)) : 0}%
-      </p>
-    `;
-    breakEvenContainer.innerHTML = analysis;
-  }
-}
-
-function renderNomina() {
-  const container = document.getElementById('nominaMetrics');
-  if (!container || STATE.nomina.empleados.length === 0) return;
-
-  const totalMensual = STATE.nomina.empleados.reduce((s, e) => s + (e['Valor mes'] || e['Total mes'] || 0), 0);
-  const totalNeto = STATE.nomina.empleados.reduce((s, e) => s + (e['Neto'] || 0), 0);
-  const totalProvisiones = STATE.nomina.empleados.reduce((s, e) => s + (e['Prestaciones/Mes'] || 0), 0);
+  const total = ventasData.remisiones.reduce((s, r) => s + r.monto_neto, 0);
+  const cantidad = ventasData.remisiones.length;
+  const margen = total * MARGEN_VENTAS;
+  const breakeven = COSTOS_FIJOS / MARGEN_VENTAS;
+  const utilidad = margen - COSTOS_FIJOS;
 
   let html = `
-    <div class="metric">
-      <div class="label">Empleados</div>
-      <div class="value">${STATE.nomina.empleados.length}</div>
+    <div class="grid grid-4" style="margin:20px 0;">
+      <div class="card"><div class="metric"><div class="label">Venta Total</div><div class="value">${fmtS(total)}</div></div></div>
+      <div class="card"><div class="metric"><div class="label">Remisiones</div><div class="value">${cantidad}</div></div></div>
+      <div class="card"><div class="metric"><div class="label">Margen (50%)</div><div class="value pos">${fmtS(margen)}</div></div></div>
+      <div class="card"><div class="metric"><div class="label">Utilidad/Pérdida</div><div class="value ${utilidad>=0?'pos':'neg'}">${fmtS(utilidad)}</div></div></div>
     </div>
-    <div class="metric">
-      <div class="label">Valor Mes</div>
-      <div class="value">${fmtM(totalMensual)}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Neto a Pagar</div>
-      <div class="value">${fmtM(totalNeto)}</div>
-    </div>
-    <div class="metric">
-      <div class="label">Provisiones/Mes</div>
-      <div class="value">${fmtM(totalProvisiones)}</div>
-    </div>
+    <div class="card" style="margin:20px 0;"><div class="card-header"><h3>Top 10 Clientes</h3></div><div class="card-body">
+      <div class="table-wrap"><table><thead><tr><th>Cliente</th><th class="text-right">Remisiones</th><th class="text-right">Total</th><th class="text-right">%</th></tr></thead><tbody>
   `;
 
-  container.innerHTML = html;
+  const clientesOrdenados = Object.entries(ventasData.clientes)
+    .map(([nombre, data]) => ({ nombre, ...data }))
+    .sort((a, b) => b.monto - a.monto)
+    .slice(0, 10);
 
-  // Chart: Nómina por Empleado
-  const chartNominaEmpleados = document.getElementById('chartNominaEmpleados');
-  if (chartNominaEmpleados) {
-    const topEmpleados = STATE.nomina.empleados
-      .map(e => ({ nombre: e.nombre, valor: e['Valor mes'] || e['Total mes'] || 0 }))
-      .sort((a, b) => b.valor - a.valor)
-      .slice(0, 10);
+  clientesOrdenados.forEach(c => {
+    const pct = (c.monto / total * 100).toFixed(1);
+    html += `<tr><td>${c.nombre}</td><td class="text-right">${c.count}</td><td class="text-right">${fmt(c.monto)}</td><td class="text-right">${pct}%</td></tr>`;
+  });
 
-    const ctx = chartNominaEmpleados.getContext('2d');
-    if (window.chartNominaEmpleadosInstance) window.chartNominaEmpleadosInstance.destroy();
-    window.chartNominaEmpleadosInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: topEmpleados.map(e => e.nombre.substring(0, 20)),
-        datasets: [{ label: 'Valor Mes', data: topEmpleados.map(e => e.valor), backgroundColor: '#ec4899' }]
-      },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f1f5f9' } } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(71,85,105,.2)' } }, y: { ticks: { color: '#94a3b8' }, grid: { display: false } } } }
-    });
-  }
+  html += `</tbody></table></div></div></div>
+    <div class="card" style="margin:20px 0;"><div class="card-header"><h3>Break-even Analysis</h3></div><div class="card-body"><div class="check-item">
+      <strong>Venta Mínima (Break-even):</strong> ${fmt(breakeven)}<br>
+      <strong>Venta Actual:</strong> ${fmt(total)}<br>
+      <strong>Diferencia:</strong> ${utilidad>=0?'<span class="pos">+'+fmt(utilidad)+'</span>':'<span class="neg">'+fmt(Math.abs(utilidad))+'</span>'}<br>
+      ${utilidad>=0?'<span class="pos">✅ RENTABLE</span>':'<span class="neg">⚠️ CON PÉRDIDA</span>'}
+    </div></div></div>
+  `;
 
-  // Chart: Desglose de Conceptos
-  const chartNominaConceptos = document.getElementById('chartNominaConceptos');
-  if (chartNominaConceptos && STATE.nomina.data && STATE.nomina.data.headers.length > 0) {
-    const conceptosMap = {};
-    const conceptoHeaders = ['Salud', 'Pension', 'Arl', 'Caja', 'Prima', 'Cesantias', 'Vacaciones', 'Auxilio de transporte'];
-
-    conceptoHeaders.forEach(h => {
-      const idx = STATE.nomina.data.headers.indexOf(h);
-      if (idx >= 0) {
-        const total = STATE.nomina.empleados.reduce((s, e) => s + (e[h] || 0), 0);
-        if (total > 0) conceptosMap[h] = total;
-      }
-    });
-
-    const ctx = chartNominaConceptos.getContext('2d');
-    if (window.chartNominaConceptosInstance) window.chartNominaConceptosInstance.destroy();
-    window.chartNominaConceptosInstance = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: Object.keys(conceptosMap),
-        datasets: [{ data: Object.values(conceptosMap), backgroundColor: ['#3b82f6', '#06b6d4', '#8b5cf6', '#ec4899', '#f59e0b', '#ef4444', '#10b981', '#06b6d4'] }]
-      },
-      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#f1f5f9' }, position: 'right' } } }
-    });
-  }
-
-  // Empleados table
-  const empContainer = document.getElementById('nominaEmpleadosTable');
-  if (empContainer) {
-    let table = '<table><thead><tr><th>Empleado</th><th class="text-right">Valor Mes</th><th class="text-right">Neto</th><th class="text-right">Deducibles</th><th class="text-right">Provisiones</th></tr></thead><tbody>';
-    STATE.nomina.empleados.forEach(e => {
-      const valorMes = e['Valor mes'] || e['Total mes'] || 0;
-      const neto = e['Neto'] || 0;
-      const deducibles = valorMes - neto;
-      const provisiones = e['Prestaciones/Mes'] || 0;
-      table += `
-        <tr>
-          <td>${e.nombre}</td>
-          <td class="text-right">${fmt(valorMes)}</td>
-          <td class="text-right pos">${fmt(neto)}</td>
-          <td class="text-right neg">${fmt(deducibles)}</td>
-          <td class="text-right">${fmt(provisiones)}</td>
-        </tr>
-      `;
-    });
-    table += '</tbody></table>';
-    empContainer.innerHTML = table;
-  }
-
-  // Provisiones totales
-  const prima = STATE.nomina.empleados.reduce((s, e) => s + (e['Prima'] || 0), 0);
-  const cesantias = STATE.nomina.empleados.reduce((s, e) => s + (e['Cesantias'] || 0), 0);
-  const vacaciones = STATE.nomina.empleados.reduce((s, e) => s + (e['Vacaciones'] || 0), 0);
-
-  document.getElementById('provPrima').textContent = fmtM(prima);
-  document.getElementById('provCesantias').textContent = fmtM(cesantias);
-  document.getElementById('provVacaciones').textContent = fmtM(vacaciones);
-
-  // Provisiones table
-  const provContainer = document.getElementById('nominaProvisionesTable');
-  if (provContainer) {
-    let table = '<table><thead><tr><th>Empleado</th><th class="text-right">Prima</th><th class="text-right">Cesantías</th><th class="text-right">Vacaciones</th><th class="text-right">Total Prov.</th></tr></thead><tbody>';
-    STATE.nomina.empleados.forEach(e => {
-      const prima = e['Prima'] || 0;
-      const cesantias = e['Cesantias'] || 0;
-      const vacaciones = e['Vacaciones'] || 0;
-      const total = prima + cesantias + vacaciones;
-      table += `
-        <tr>
-          <td>${e.nombre}</td>
-          <td class="text-right">${fmt(prima)}</td>
-          <td class="text-right">${fmt(cesantias)}</td>
-          <td class="text-right">${fmt(vacaciones)}</td>
-          <td class="text-right">${fmt(total)}</td>
-        </tr>
-      `;
-    });
-    table += '</tbody></table>';
-    provContainer.innerHTML = table;
-  }
+  document.getElementById('ventasContent').innerHTML = html;
+  document.getElementById('ventasAnalisisContent').innerHTML = html;
 }
 
 // ============================================================
-// DATA PERSISTENCE
+// UTILS
 // ============================================================
-function saveState() {
-  localStorage.setItem('indoor_sport_v3', JSON.stringify(STATE));
-}
-
-function loadState() {
-  const saved = localStorage.getItem('indoor_sport_v3');
-  if (saved) {
-    try {
-      const loaded = JSON.parse(saved);
-      Object.assign(STATE, loaded);
-      renderResumenGeneral();
-    } catch (e) {}
-  }
-}
-
-function exportData() {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(STATE, null, 2)], { type: 'application/json' }));
-  a.download = 'indoor_sport_backup_' + new Date().toISOString().slice(0, 10) + '.json';
-  a.click();
-}
-
-function handleImport(event) {
-  const f = event.target.files[0];
-  if (!f) return;
-  const r = new FileReader();
-  r.onload = (e) => {
-    try {
-      const loaded = JSON.parse(e.target.result);
-      Object.assign(STATE, loaded);
-      saveState();
-      renderModule(STATE.currentModule);
-      alert('✅ Datos importados correctamente');
-    } catch (err) {
-      alert('❌ Error al importar: ' + err.message);
-    }
-  };
-  r.readAsText(f);
-  event.target.value = '';
-}
+function destroyChart(id) { if(charts[id]){charts[id].destroy();delete charts[id];} }
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(71,85,105,.3)';
 
 // ============================================================
-// TAB SWITCHING WITHIN MODULES
+// INIT
 // ============================================================
-function switchTab(tabName) {
-  const tabs = document.querySelectorAll('.tabs .tab');
-  const contents = document.querySelectorAll('.tab-content');
-
-  tabs.forEach(t => {
-    if (t.dataset.tab === tabName) {
-      t.classList.add('active');
-    } else {
-      t.classList.remove('active');
-    }
-  });
-
-  contents.forEach(c => {
-    if (c.id === 'tab-' + tabName) {
-      c.classList.remove('hidden');
-    } else {
-      c.classList.add('hidden');
-    }
-  });
-}
-
-// Tab click handlers
-document.addEventListener('DOMContentLoaded', () => {
-  loadState();
-
-  // Tab navigation
-  document.querySelectorAll('.tabs .tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const tabName = tab.dataset.tab;
-      switchTab(tabName);
-    });
-  });
-
-  // File input handlers
-  const bankDropZone = document.getElementById('bankDropZone');
-  const ventasDropZone = document.getElementById('ventasDropZone');
-  const nominaDropZone = document.getElementById('nominaDropZone');
-
-  [bankDropZone, ventasDropZone, nominaDropZone].forEach(zone => {
-    if (zone) {
-      zone.addEventListener('click', () => {
-        zone.parentElement.querySelector('input[type="file"]').click();
-      });
-    }
-  });
-});
-
+window.addEventListener('DOMContentLoaded', loadFromStorage);
 </script>
-
 </body>
 </html>
