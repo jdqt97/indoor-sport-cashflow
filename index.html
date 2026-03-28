@@ -688,8 +688,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Deactivate all contents in this module
       const module = tab.closest('.module');
-      module.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-      module.querySelector('#tab-' + tabName)?.classList.remove('hidden');
+      module.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.remove('active');
+        c.classList.add('hidden');
+      });
+      const tabContent = module.querySelector('#tab-' + tabName);
+      if (tabContent) {
+        tabContent.classList.remove('hidden');
+        tabContent.classList.add('active');
+      }
     });
   });
 
@@ -1042,9 +1049,13 @@ function handleFiles(files) {
 
             if (tabResumenContent) {
               // Hide all tab contents in Contabilidad module
-              document.querySelectorAll('#module-contabilidad .tab-content').forEach(c => c.classList.add('hidden'));
+              document.querySelectorAll('#module-contabilidad .tab-content').forEach(c => {
+                c.classList.remove('active');
+                c.classList.add('hidden');
+              });
               // Show resumen tab
               tabResumenContent.classList.remove('hidden');
+              tabResumenContent.classList.add('active');
               console.log('handleFiles: tab-resumen is now visible');
             }
             console.log('handleFiles: Tab switched to resumen');
@@ -1114,8 +1125,15 @@ function handleVentasFiles(files) {
             ventasTab.classList.add('active');
 
             const module = ventasTab.closest('.module');
-            module.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-            document.getElementById('tab-ventas-analisis')?.classList.remove('hidden');
+            module.querySelectorAll('.tab-content').forEach(c => {
+              c.classList.remove('active');
+              c.classList.add('hidden');
+            });
+            const ventasAnalisisContent = document.getElementById('tab-ventas-analisis');
+            if (ventasAnalisisContent) {
+              ventasAnalisisContent.classList.remove('hidden');
+              ventasAnalisisContent.classList.add('active');
+            }
             console.log('handleVentasFiles: Tab switched to ventas-analisis');
           }
         }
@@ -1154,8 +1172,15 @@ function handleNominaImport(event) {
         nominaTab.classList.add('active');
 
         const module = nominaTab.closest('.module');
-        module.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-        document.getElementById('tab-nomina-editor')?.classList.remove('hidden');
+        module.querySelectorAll('.tab-content').forEach(c => {
+          c.classList.remove('active');
+          c.classList.add('hidden');
+        });
+        const nominaEditorContent = document.getElementById('tab-nomina-editor');
+        if (nominaEditorContent) {
+          nominaEditorContent.classList.remove('hidden');
+          nominaEditorContent.classList.add('active');
+        }
       }
 
       alert('✅ Nómina importada: ' + nominaData.length + ' empleados');
