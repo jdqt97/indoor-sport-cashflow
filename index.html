@@ -811,7 +811,11 @@ function ml(key) { const[y,m]=key.split('-'); return MNF[parseInt(m)]+' '+y; }
 function createMultiMonthSelector(containerId, onChange) {
   const keys = Object.keys(allMonths).sort();
   const container = document.getElementById(containerId);
-  if (!container) return;
+  console.log('createMultiMonthSelector: ', containerId, 'months:', keys.length, 'container:', !!container);
+  if (!container) {
+    console.warn('Container not found:', containerId);
+    return;
+  }
 
   // Start with ALL months selected
   let selected = new Set(keys);
@@ -1160,7 +1164,11 @@ function renderResumen(months) {
 // RENDER: CALENDARIO
 // ============================================================
 function renderCalendario(months) {
-  if (!months || months.length === 0) return;
+  console.log('renderCalendario called with months:', months ? months.length : 0, 'data:', months);
+  if (!months || months.length === 0) {
+    console.warn('renderCalendario: No months provided, returning');
+    return;
+  }
   const sortedM = [...months].sort();
   let h = '';
 
@@ -1200,6 +1208,7 @@ function renderCalendario(months) {
   });
 
   document.getElementById('calendarContent').innerHTML = h;
+  console.log('renderCalendario: Rendered calendar with', sortedM.length, 'months');
 }
 
 // ============================================================
@@ -1207,6 +1216,7 @@ function renderCalendario(months) {
 // ============================================================
 function renderProveedores(months) {
   if (!months) months = Object.keys(allMonths).sort();
+  console.log('renderProveedores called with months:', months.length, 'data:', months);
   const txs = getTxForMonths(months);
   const nm = months.length;
   const pd = {};
