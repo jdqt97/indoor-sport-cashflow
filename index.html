@@ -787,7 +787,10 @@ function parseExtracto(workbook) {
   const results = [];
   workbook.SheetNames.forEach(sheetName => {
     const ws = workbook.Sheets[sheetName];
-    if (!ws['!ref']) return;
+    if (!ws['!ref']) {
+      console.log('parseExtracto: Sheet ' + sheetName + ' has no data');
+      return;
+    }
     const range = XLSX.utils.decode_range(ws['!ref']);
     const totalRows = range.e.r + 1;
     const getCell = (r, c) => {
@@ -805,6 +808,7 @@ function parseExtracto(workbook) {
           totalCargos: parseNum(getCell(dr, 2)),
           saldoActual: parseNum(getCell(dr, 3))
         };
+        console.log('parseExtracto: Found summary data:', summaryData);
         break;
       }
     }
@@ -813,6 +817,7 @@ function parseExtracto(workbook) {
     for (let r = 0; r < Math.min(15, totalRows); r++) {
       if (getCell(r, 0) === 'DESDE') {
         hasta = getCell(r + 1, 1);
+        console.log('parseExtracto: Period date found:', hasta);
         break;
       }
     }
@@ -822,6 +827,7 @@ function parseExtracto(workbook) {
     let r = 0;
     while (r < totalRows) {
       if (getCell(r, 0) === 'FECHA' && getCell(r, 1).includes('DESCRIPCI')) {
+        console.log('parseExtracto: Found transaction table at row ' + r);
         r++;
         while (r < totalRows) {
           const fecha = getCell(r, 0), desc = getCell(r, 1);
@@ -852,8 +858,12 @@ function parseExtracto(workbook) {
     if (transactions.length > 0) {
       let monthKey = hasta ? hasta.split('/')[0] + '-' + hasta.split('/')[1] : transactions[0].fecha.substring(0, 7);
       results.push({ monthKey, transactions, summary: summaryData });
+      console.log('parseExtracto: Parsed month ' + monthKey + ' with ' + transactions.length + ' transactions');
+    } else {
+      console.log('parseExtracto: No transactions found in sheet ' + sheetName);
     }
   });
+  console.log('parseExtracto: Complete. Parsed ' + results.length + ' months total');
   return results;
 }
 
@@ -864,31 +874,44 @@ function parseRemisiones(workbook) {
   const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
   const remisiones = [];
 
-  data.forEach(row => {
-    // Filter: only "Vigente"
-    const vigencia = row['Vigencia']?.trim() || '';
-    if (vigencia !== 'Vigente' && vigencia !== 'vigente') return;
+  console.log('parseRemisiones: Processing ' + data.length + ' rows');
+  console.log('Sample row columns:', Object.keys(data[0] || {}));
 
-    const montoNeto = parseNum(row['Precio neto total']);
-    const montoBruto = parseNum(row['Precio bruto total']);
+  data.forEach((row, idx) => {
+    // Check vigencia if column exists, otherwise include all rows
+    const vigencia = row['Vigencia']?.trim() || row['vigencia']?.trim() || '';
+    if (vigencia && vigencia !== 'Vigente' && vigencia !== 'vigente') {
+      if (idx < 3) console.log('Skipping row ' + idx + ': vigencia=' + vigencia);
+      return;
+    }
+
+    const montoNeto = parseNum(row['Precio neto total'] || row['Monto neto'] || row['monto_neto'] || 0);
+    const montoBruto = parseNum(row['Precio bruto total'] || row['Monto bruto'] || row['monto_bruto'] || 0);
+
+    // Use either neto or bruto, default to neto
+    const monto = montoNeto > 0 ? montoNeto : montoBruto;
 
     // Only include if has amount
-    if (montoNeto <= 0 && montoBruto <= 0) return;
+    if (monto <= 0) {
+      if (idx < 3) console.log('Skipping row ' + idx + ': monto=' + monto);
+      return;
+    }
 
     remisiones.push({
-      id: row['ID remisión']?.toString().trim() || row['id remisión']?.toString().trim() || '',
-      cliente: row['Nombre cliente']?.trim() || row['nombre cliente']?.trim() || 'Sin cliente',
+      id: row['ID remisión']?.toString().trim() || row['id remisión']?.toString().trim() || row['ID']?.toString().trim() || '',
+      cliente: row['Nombre cliente']?.trim() || row['nombre cliente']?.trim() || row['Cliente']?.trim() || 'Sin cliente',
       vendedor: row['Vendedor']?.trim() || row['vendedor']?.trim() || 'Sin vendedor',
-      fecha: (row['Fecha entrega']?.trim() || row['fecha entrega']?.trim() || ''),
-      estado_cxc: row['Estado CxC']?.trim() || row['estado cxc']?.trim() || '',
+      fecha: (row['Fecha entrega']?.trim() || row['fecha entrega']?.trim() || row['Fecha']?.trim() || ''),
+      estado_cxc: row['Estado CxC']?.trim() || row['estado cxc']?.trim() || row['Estado']?.trim() || '',
       forma_pago: row['Formas de pago']?.trim() || row['formas de pago']?.trim() || '',
       medio_pago: row['Medios de pago']?.trim() || row['medios de pago']?.trim() || '',
-      monto_neto: montoNeto,
+      monto_neto: montoNeto > 0 ? montoNeto : montoBruto,
       monto_bruto: montoBruto,
-      cantidad: parseNum(row['Cantidad'] || row['cantidad'] || 0)
+      cantidad: parseNum(row['Cantidad'] || row['cantidad'] || row['Qty'] || 0)
     });
   });
 
+  console.log('parseRemisiones: Successfully parsed ' + remisiones.length + ' remisiones');
   return remisiones;
 }
 
@@ -953,28 +976,46 @@ function handleFiles(files) {
   const log = document.getElementById('uploadLog');
   let uploadCount = 0;
 
+  console.log('handleFiles: Starting upload of ' + files.length + ' file(s)');
+
   Array.from(files).forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
       try {
+        console.log('handleFiles: Processing ' + file.name);
         const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
         const parsed = parseExtracto(wb);
+        console.log('handleFiles: parseExtracto returned ' + parsed.length + ' months');
+
         if (parsed.length === 0) {
-          log.innerHTML += '<div class="alert alert-red">❌ No se encontraron transacciones en ' + file.name + '</div>';
+          const msg = '❌ No se encontraron transacciones en ' + file.name;
+          console.warn(msg);
+          log.innerHTML += '<div class="alert alert-red">' + msg + '</div>';
           return;
         }
+
         parsed.forEach(p => {
           const isNew = !allMonths[p.monthKey];
           allMonths[p.monthKey] = p;
-          log.innerHTML += '<div class="alert alert-green">✅ ' + file.name + ': ' + p.transactions.length + ' tx ' + (isNew ? 'cargadas' : 'actualizadas') + ' - ' + ml(p.monthKey) + '</div>';
+          const msg = '✅ ' + file.name + ': ' + p.transactions.length + ' tx ' + (isNew ? 'cargadas' : 'actualizadas') + ' - ' + ml(p.monthKey);
+          console.log('handleFiles: ' + msg);
+          log.innerHTML += '<div class="alert alert-green">' + msg + '</div>';
         });
+
+        console.log('handleFiles: Calling rebuildData()');
         rebuildData();
+        console.log('handleFiles: allTransactions now has ' + allTransactions.length + ' items');
+
+        console.log('handleFiles: Calling saveToStorage()');
         saveToStorage();
+
+        console.log('handleFiles: Calling renderAll()');
         renderAll();
         uploadCount++;
 
         // After first successful upload, switch to resumen tab to show results
         if (uploadCount === 1) {
+          console.log('handleFiles: Switching to resumen tab');
           const resumenTab = document.querySelector('[data-tab="resumen"]');
           const tabsContainer = resumenTab?.closest('.tabs');
           if (resumenTab && tabsContainer) {
@@ -984,10 +1025,13 @@ function handleFiles(files) {
             const module = resumenTab.closest('.module');
             module.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.getElementById('tab-resumen')?.classList.remove('hidden');
+            console.log('handleFiles: Tab switched to resumen');
           }
         }
       } catch (err) {
-        log.innerHTML += '<div class="alert alert-red">❌ Error: ' + err.message + '</div>';
+        const msg = '❌ Error: ' + err.message;
+        console.error('handleFiles error:', err);
+        log.innerHTML += '<div class="alert alert-red">' + msg + '</div>';
       }
     };
     reader.readAsArrayBuffer(file);
@@ -998,15 +1042,21 @@ function handleVentasFiles(files) {
   const log = document.getElementById('ventasUploadLog');
   let uploadCount = 0;
 
+  console.log('handleVentasFiles: Starting upload of ' + files.length + ' file(s)');
+
   Array.from(files).forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
       try {
+        console.log('handleVentasFiles: Processing ' + file.name);
         const wb = XLSX.read(e.target.result);
         ventasData.remisiones = parseRemisiones(wb);
+        console.log('handleVentasFiles: parseRemisiones returned ' + ventasData.remisiones.length + ' remisiones');
 
         if (ventasData.remisiones.length === 0) {
-          log.innerHTML = '<div class="alert alert-orange">⚠️ No se encontraron remisiones vigentes</div>';
+          const msg = '⚠️ No se encontraron remisiones en ' + file.name;
+          console.warn(msg);
+          log.innerHTML = '<div class="alert alert-orange">' + msg + '</div>';
           return;
         }
 
@@ -1019,13 +1069,20 @@ function handleVentasFiles(files) {
           ventasData.clientes[r.cliente].monto += r.monto_neto;
         });
 
-        log.innerHTML = '<div class="alert alert-green">✅ Cargadas ' + ventasData.remisiones.length + ' remisiones vigentes</div>';
+        const msg = '✅ Cargadas ' + ventasData.remisiones.length + ' remisiones';
+        console.log('handleVentasFiles: ' + msg);
+        log.innerHTML = '<div class="alert alert-green">' + msg + '</div>';
+
+        console.log('handleVentasFiles: Calling saveToStorage()');
         saveToStorage();
+
+        console.log('handleVentasFiles: Calling renderVentas()');
         renderVentas();
         uploadCount++;
 
         // After first successful upload, switch to ventas-analisis tab to show results
         if (uploadCount === 1) {
+          console.log('handleVentasFiles: Switching to ventas-analisis tab');
           const ventasTab = document.querySelector('[data-tab="ventas-analisis"]');
           const tabsContainer = ventasTab?.closest('.tabs');
           if (ventasTab && tabsContainer) {
@@ -1035,10 +1092,13 @@ function handleVentasFiles(files) {
             const module = ventasTab.closest('.module');
             module.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
             document.getElementById('tab-ventas-analisis')?.classList.remove('hidden');
+            console.log('handleVentasFiles: Tab switched to ventas-analisis');
           }
         }
       } catch (err) {
-        log.innerHTML = '<div class="alert alert-red">❌ Error: ' + err.message + '</div>';
+        const msg = '❌ Error: ' + err.message;
+        console.error('handleVentasFiles error:', err);
+        log.innerHTML = '<div class="alert alert-red">' + msg + '</div>';
       }
     };
     reader.readAsArrayBuffer(file);
