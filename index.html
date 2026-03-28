@@ -951,6 +951,8 @@ function isEgreso(t) { return t.valor < 0; }
 // ============================================================
 function handleFiles(files) {
   const log = document.getElementById('uploadLog');
+  let uploadCount = 0;
+
   Array.from(files).forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -969,6 +971,21 @@ function handleFiles(files) {
         rebuildData();
         saveToStorage();
         renderAll();
+        uploadCount++;
+
+        // After first successful upload, switch to resumen tab to show results
+        if (uploadCount === 1) {
+          const resumenTab = document.querySelector('[data-tab="resumen"]');
+          const tabsContainer = resumenTab?.closest('.tabs');
+          if (resumenTab && tabsContainer) {
+            tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            resumenTab.classList.add('active');
+
+            const module = resumenTab.closest('.module');
+            module.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById('tab-resumen')?.classList.remove('hidden');
+          }
+        }
       } catch (err) {
         log.innerHTML += '<div class="alert alert-red">❌ Error: ' + err.message + '</div>';
       }
@@ -979,6 +996,8 @@ function handleFiles(files) {
 
 function handleVentasFiles(files) {
   const log = document.getElementById('ventasUploadLog');
+  let uploadCount = 0;
+
   Array.from(files).forEach(file => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -987,7 +1006,7 @@ function handleVentasFiles(files) {
         ventasData.remisiones = parseRemisiones(wb);
 
         if (ventasData.remisiones.length === 0) {
-          log.innerHTML = '<div class="alert alert-orange">⚠️ No se encontraron remisiones vigentes desde 2025-01-01</div>';
+          log.innerHTML = '<div class="alert alert-orange">⚠️ No se encontraron remisiones vigentes</div>';
           return;
         }
 
@@ -1003,6 +1022,21 @@ function handleVentasFiles(files) {
         log.innerHTML = '<div class="alert alert-green">✅ Cargadas ' + ventasData.remisiones.length + ' remisiones vigentes</div>';
         saveToStorage();
         renderVentas();
+        uploadCount++;
+
+        // After first successful upload, switch to ventas-analisis tab to show results
+        if (uploadCount === 1) {
+          const ventasTab = document.querySelector('[data-tab="ventas-analisis"]');
+          const tabsContainer = ventasTab?.closest('.tabs');
+          if (ventasTab && tabsContainer) {
+            tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            ventasTab.classList.add('active');
+
+            const module = ventasTab.closest('.module');
+            module.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById('tab-ventas-analisis')?.classList.remove('hidden');
+          }
+        }
       } catch (err) {
         log.innerHTML = '<div class="alert alert-red">❌ Error: ' + err.message + '</div>';
       }
@@ -1027,6 +1061,19 @@ function handleNominaImport(event) {
 
       saveToStorage();
       renderNominaEditor();
+
+      // Switch to nomina-editor tab to show results
+      const nominaTab = document.querySelector('[data-tab="nomina-editor"]');
+      const tabsContainer = nominaTab?.closest('.tabs');
+      if (nominaTab && tabsContainer) {
+        tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        nominaTab.classList.add('active');
+
+        const module = nominaTab.closest('.module');
+        module.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById('tab-nomina-editor')?.classList.remove('hidden');
+      }
+
       alert('✅ Nómina importada: ' + nominaData.length + ' empleados');
     } catch (err) {
       alert('❌ Error: ' + err.message);
@@ -1059,10 +1106,14 @@ function rebuildData() {
 }
 
 function renderAll() {
-  if (allTransactions.length === 0) return;
+  if (allTransactions.length === 0) {
+    console.log('No transactions to render');
+    return;
+  }
+
+  console.log('renderAll() called with ' + allTransactions.length + ' transactions');
 
   const keys = Object.keys(allMonths).sort();
-  document.querySelector('.tab[data-tab="resumen"]').click();
 
   let totalIng = 0, totalEgr = 0;
   allTransactions.forEach(t => {
@@ -1080,14 +1131,17 @@ function renderAll() {
   const metrics = [
     { l:'Saldo Inicial', v:fmt(si), c:'', cls:'' },
     { l:'Saldo Final', v:fmt(sf), c:'Dif: '+fmt(sf-si), cls:sf>=si?'pos':'neg' },
-    { l:'Total Ingresos', v:fmt(totalIng), c:allTransactions.length+' tx ('+keys.length+' meses)', cls:'pos' },
+    { l:'Total Ingresos', v:fmt(totalIng), c:allTransactions.length+' tx', cls:'pos' },
     { l:'Total Egresos', v:fmt(totalEgr), c:'Flujo neto: '+fmt(flujo), cls:flujo>=0?'pos':'neg' },
     { l:'Runway', v:runwayDays+' dias', c:'Con saldo actual', cls:runwayDays>=30?'pos':'' },
   ];
 
-  document.getElementById('metricCards').innerHTML = metrics.map(m =>
-    '<div class="card"><div class="metric"><div class="label">'+m.l+'</div><div class="value">'+m.v+'</div><div class="change '+m.cls+'">'+m.c+'</div></div></div>'
-  ).join('');
+  const metricsContainer = document.getElementById('metricCards');
+  if (metricsContainer) {
+    metricsContainer.innerHTML = metrics.map(m =>
+      '<div class="card"><div class="metric"><div class="label">'+m.l+'</div><div class="value">'+m.v+'</div><div class="change '+m.cls+'">'+m.c+'</div></div></div>'
+    ).join('');
+  }
 
   let h = '<div class="table-wrap"><table style="width:100%;"><thead><tr><th>Mes</th><th class="text-right">Ingresos</th><th class="text-right">Egresos</th><th class="text-right">Neto</th><th class="text-right">Saldo</th></tr></thead><tbody>';
   keys.forEach(k => {
@@ -1096,7 +1150,14 @@ function renderAll() {
     h += '<tr><td>'+ml(k)+'</td><td class="text-right pos">'+fmt(m.summary.totalAbonos)+'</td><td class="text-right neg">'+fmt(m.summary.totalCargos)+'</td><td class="text-right '+((neto>=0)?'pos':'neg')+'">'+fmt(neto)+'</td><td class="text-right">'+fmt(m.summary.saldoActual)+'</td></tr>';
   });
   h += '</tbody></table></div>';
-  document.getElementById('weeklyTable').innerHTML = h;
+
+  const weeklyTable = document.getElementById('weeklyTable');
+  if (weeklyTable) {
+    weeklyTable.innerHTML = h;
+  }
+
+  // Log success
+  console.log('renderAll() completed. Rendered ' + keys.length + ' months');
 }
 
 function renderVentas() {
