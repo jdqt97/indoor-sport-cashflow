@@ -1006,7 +1006,6 @@ function renderAll() {
   createMultiMonthSelector('resumenFilters', months => renderResumen(months));
   createMultiMonthSelector('calFilters', months => renderCalendario(months));
   createMultiMonthSelector('provFilters', months => renderProveedores(months));
-  createMultiMonthSelector('nomFilters', months => renderNomina(months));
   createMultiMonthSelector('clientFilters', months => renderClientes(months));
   createMultiMonthSelector('flujoFilters', months => renderFlujo(months));
   createMultiMonthSelector('taxFilters', months => renderImpuestos(months));
@@ -1015,7 +1014,6 @@ function renderAll() {
   renderResumen(keys);
   renderCalendario(keys);
   renderProveedores(keys);
-  renderNomina(keys);
   renderClientes(keys);
   renderFlujo(keys);
   renderRecurrentes();
