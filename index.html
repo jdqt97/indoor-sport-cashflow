@@ -799,8 +799,9 @@ function parseExtracto(workbook) {
     };
 
     let summaryData = {};
-    for (let r = 0; r < Math.min(20, totalRows); r++) {
-      if (getCell(r, 0) === 'SALDO ANTERIOR') {
+    for (let r = 0; r < Math.min(25, totalRows); r++) {
+      const cell0 = getCell(r, 0);
+      if (cell0 === 'SALDO ANTERIOR' || cell0.includes('SALDO') || cell0.includes('Saldo')) {
         const dr = r + 1;
         summaryData = {
           saldoAnterior: parseNum(getCell(dr, 0)),
@@ -808,9 +809,12 @@ function parseExtracto(workbook) {
           totalCargos: parseNum(getCell(dr, 2)),
           saldoActual: parseNum(getCell(dr, 3))
         };
-        console.log('parseExtracto: Found summary data:', summaryData);
+        console.log('parseExtracto: Found summary data at row ' + r + ':', summaryData);
         break;
       }
+    }
+    if (!summaryData.saldoAnterior && !summaryData.totalAbonos) {
+      console.log('parseExtracto: WARNING - No summary data found in sheet ' + sheetName);
     }
 
     let hasta = '';
@@ -879,8 +883,8 @@ function parseRemisiones(workbook) {
 
   data.forEach((row, idx) => {
     // Check vigencia if column exists, otherwise include all rows
-    const vigencia = row['Vigencia']?.trim() || row['vigencia']?.trim() || '';
-    if (vigencia && vigencia !== 'Vigente' && vigencia !== 'vigente') {
+    const vigencia = row['Remisión vigente']?.trim() || row['Vigencia']?.trim() || row['vigencia']?.trim() || '';
+    if (vigencia && vigencia !== 'Vigente' && vigencia !== 'vigente' && vigencia !== 'SI' && vigencia !== 'Sí' && vigencia !== 'si') {
       if (idx < 3) console.log('Skipping row ' + idx + ': vigencia=' + vigencia);
       return;
     }
@@ -1174,6 +1178,7 @@ function renderAll() {
   console.log('renderAll() called with ' + allTransactions.length + ' transactions');
 
   const keys = Object.keys(allMonths).sort();
+  console.log('Months found:', keys);
 
   let totalIng = 0, totalEgr = 0;
   allTransactions.forEach(t => {
@@ -1181,12 +1186,14 @@ function renderAll() {
     else if (isEgreso(t)) totalEgr += Math.abs(t.valor);
   });
 
-  const si = allMonths[keys[0]]?.summary.saldoAnterior || 0;
-  const sf = allMonths[keys[keys.length-1]]?.summary.saldoActual || 0;
+  const si = allMonths[keys[0]]?.summary?.saldoAnterior || 0;
+  const sf = allMonths[keys[keys.length-1]]?.summary?.saldoActual || 0;
   const flujo = totalIng - totalEgr;
   const days = new Set(allTransactions.map(t=>t.fecha)).size || 1;
   const avgDailyExp = totalEgr / days;
   const runwayDays = avgDailyExp > 0 ? Math.floor(sf / avgDailyExp) : 999;
+
+  console.log('Summary data - SI:', si, 'SF:', sf, 'totalIng:', totalIng, 'totalEgr:', totalEgr);
 
   const metrics = [
     { l:'Saldo Inicial', v:fmt(si), c:'', cls:'' },
@@ -1198,25 +1205,32 @@ function renderAll() {
 
   const metricsContainer = document.getElementById('metricCards');
   if (metricsContainer) {
+    console.log('Found metricCards element, rendering metrics');
     metricsContainer.innerHTML = metrics.map(m =>
       '<div class="card"><div class="metric"><div class="label">'+m.l+'</div><div class="value">'+m.v+'</div><div class="change '+m.cls+'">'+m.c+'</div></div></div>'
     ).join('');
+    console.log('Metrics rendered successfully');
+  } else {
+    console.error('ERROR: metricCards element not found!');
   }
 
   let h = '<div class="table-wrap"><table style="width:100%;"><thead><tr><th>Mes</th><th class="text-right">Ingresos</th><th class="text-right">Egresos</th><th class="text-right">Neto</th><th class="text-right">Saldo</th></tr></thead><tbody>';
   keys.forEach(k => {
     const m = allMonths[k];
-    const neto = m.summary.totalAbonos - m.summary.totalCargos;
-    h += '<tr><td>'+ml(k)+'</td><td class="text-right pos">'+fmt(m.summary.totalAbonos)+'</td><td class="text-right neg">'+fmt(m.summary.totalCargos)+'</td><td class="text-right '+((neto>=0)?'pos':'neg')+'">'+fmt(neto)+'</td><td class="text-right">'+fmt(m.summary.saldoActual)+'</td></tr>';
+    const neto = (m.summary?.totalAbonos || 0) - (m.summary?.totalCargos || 0);
+    h += '<tr><td>'+ml(k)+'</td><td class="text-right pos">'+fmt(m.summary?.totalAbonos || 0)+'</td><td class="text-right neg">'+fmt(m.summary?.totalCargos || 0)+'</td><td class="text-right '+((neto>=0)?'pos':'neg')+'">'+fmt(neto)+'</td><td class="text-right">'+fmt(m.summary?.saldoActual || 0)+'</td></tr>';
   });
   h += '</tbody></table></div>';
 
   const weeklyTable = document.getElementById('weeklyTable');
   if (weeklyTable) {
+    console.log('Found weeklyTable element, rendering table with ' + keys.length + ' months');
     weeklyTable.innerHTML = h;
+    console.log('Table rendered successfully');
+  } else {
+    console.error('ERROR: weeklyTable element not found!');
   }
 
-  // Log success
   console.log('renderAll() completed. Rendered ' + keys.length + ' months');
 }
 
