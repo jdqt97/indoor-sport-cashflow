@@ -133,10 +133,10 @@ tr:hover td { background:rgba(59,130,246,.05); }
 <!-- TAB: Dashboard -->
 <div class="content" id="tab-dashboard">
   <div class="filters">
-    <input type="date" id="filterFechaFrom" onchange="renderDashboard()">
-    <input type="date" id="filterFechaTo" onchange="renderDashboard()">
-    <input type="text" id="filterCliente" placeholder="🔍 Cliente..." onchange="renderDashboard()">
-    <select id="filterVendedor" onchange="renderDashboard()">
+    <input type="date" id="filterFechaFrom" placeholder="Desde...">
+    <input type="date" id="filterFechaTo" placeholder="Hasta...">
+    <input type="text" id="filterCliente" placeholder="🔍 Cliente...">
+    <select id="filterVendedor">
       <option value="">Todos los vendedores</option>
     </select>
   </div>
@@ -458,16 +458,41 @@ function populateVendedoresSelect() {
 }
 
 function renderDashboard() {
-  let filtered = ventasData.remisiones;
+  let filtered = [...ventasData.remisiones];
   const fechaFrom = document.getElementById('filterFechaFrom').value;
   const fechaTo = document.getElementById('filterFechaTo').value;
   const cliente = document.getElementById('filterCliente').value.toUpperCase();
   const vendedor = document.getElementById('filterVendedor').value;
 
-  if (fechaFrom) filtered = filtered.filter(r => r.fecha >= fechaFrom);
-  if (fechaTo) filtered = filtered.filter(r => r.fecha <= fechaTo);
-  if (cliente) filtered = filtered.filter(r => r.cliente.toUpperCase().includes(cliente));
-  if (vendedor) filtered = filtered.filter(r => r.vendedor === vendedor);
+  console.log('📊 renderDashboard - Filtros:', { fechaFrom, fechaTo, cliente, vendedor, totalRemisiones: filtered.length });
+
+  if (fechaFrom) {
+    filtered = filtered.filter(r => {
+      const match = r.fecha && r.fecha >= fechaFrom;
+      return match;
+    });
+    console.log('  ✅ Después fecha desde:', filtered.length);
+  }
+
+  if (fechaTo) {
+    filtered = filtered.filter(r => {
+      const match = r.fecha && r.fecha <= fechaTo;
+      return match;
+    });
+    console.log('  ✅ Después fecha hasta:', filtered.length);
+  }
+
+  if (cliente) {
+    filtered = filtered.filter(r => r.cliente.toUpperCase().includes(cliente));
+    console.log('  ✅ Después cliente:', filtered.length);
+  }
+
+  if (vendedor) {
+    filtered = filtered.filter(r => r.vendedor === vendedor);
+    console.log('  ✅ Después vendedor:', filtered.length);
+  }
+
+  console.log('📈 Datos finales a renderizar:', filtered.length, 'remisiones');
 
   const totalVentas = filtered.reduce((s, r) => s + r.monto_neto, 0);
   const totalRemisiones = filtered.length;
@@ -613,6 +638,29 @@ function renderNomina() {
 function destroyChart(id) {
   if (charts[id]) charts[id].destroy();
 }
+
+// ============================================================
+// EVENT LISTENERS - FILTROS
+// ============================================================
+document.getElementById('filterFechaFrom').addEventListener('change', () => {
+  console.log('📅 Fecha desde cambiada');
+  renderDashboard();
+});
+
+document.getElementById('filterFechaTo').addEventListener('change', () => {
+  console.log('📅 Fecha hasta cambiada');
+  renderDashboard();
+});
+
+document.getElementById('filterCliente').addEventListener('change', () => {
+  console.log('🔍 Cliente cambiado');
+  renderDashboard();
+});
+
+document.getElementById('filterVendedor').addEventListener('change', () => {
+  console.log('👤 Vendedor cambiado');
+  renderDashboard();
+});
 
 // ============================================================
 // INIT
