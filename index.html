@@ -889,17 +889,25 @@ function parseRemisiones(workbook) {
   console.log('Sample row columns:', Object.keys(data[0] || {}));
 
   data.forEach((row, idx) => {
-    // Check vigencia if column exists, otherwise include all rows
-    const vigencia = row['Vigencia']?.trim() || row['vigencia']?.trim() || '';
+    // Helper to safely convert any value to string
+    const toString = (val) => {
+      if (val === null || val === undefined) return '';
+      if (typeof val === 'string') return val.trim();
+      return String(val).trim();
+    };
+
+    // Check vigencia if column exists
+    const vigencia = toString(row['Vigencia']);
     if (vigencia && vigencia !== 'Vigente' && vigencia !== 'vigente' && vigencia !== 'Remisión vigente' && vigencia !== 'SI' && vigencia !== 'Sí' && vigencia !== 'si') {
       if (idx < 3) console.log('Skipping row ' + idx + ': vigencia=' + vigencia);
       return;
     }
 
+    // Use "Precio neto total" (tiene IVA 19%) como monto principal
     const montoNeto = parseNum(row['Precio neto total'] || row['Monto neto'] || row['monto_neto'] || 0);
     const montoBruto = parseNum(row['Precio bruto total'] || row['Monto bruto'] || row['monto_bruto'] || 0);
 
-    // Use either neto or bruto, default to neto
+    // Use neto (which includes IVA 19%)
     const monto = montoNeto > 0 ? montoNeto : montoBruto;
 
     // Only include if has amount
@@ -909,14 +917,14 @@ function parseRemisiones(workbook) {
     }
 
     remisiones.push({
-      id: row['ID remisión']?.toString().trim() || row['id remisión']?.toString().trim() || row['ID']?.toString().trim() || '',
-      cliente: row['Nombre cliente']?.trim() || row['nombre cliente']?.trim() || row['Cliente']?.trim() || 'Sin cliente',
-      vendedor: row['Vendedor']?.trim() || row['vendedor']?.trim() || 'Sin vendedor',
-      fecha: (row['Fecha entrega']?.trim() || row['fecha entrega']?.trim() || row['Fecha']?.trim() || ''),
-      estado_cxc: row['Estado CxC']?.trim() || row['estado cxc']?.trim() || row['Estado']?.trim() || '',
-      forma_pago: row['Formas de pago']?.trim() || row['formas de pago']?.trim() || '',
-      medio_pago: row['Medios de pago']?.trim() || row['medios de pago']?.trim() || '',
-      monto_neto: montoNeto > 0 ? montoNeto : montoBruto,
+      id: toString(row['ID remisión'] || row['id remisión'] || row['ID']),
+      cliente: toString(row['Nombre cliente'] || row['nombre cliente'] || row['Cliente']) || 'Sin cliente',
+      vendedor: toString(row['Vendedor'] || row['vendedor']) || 'Sin vendedor',
+      fecha: toString(row['Fecha entrega'] || row['fecha entrega'] || row['Fecha creación'] || row['Fecha']),
+      estado_cxc: toString(row['Estado CXC'] || row['Estado CxC'] || row['estado cxc']),
+      forma_pago: toString(row['Formas de pago remisión'] || row['Formas de pago'] || row['formas de pago']),
+      medio_pago: toString(row['Medios de pago remisión'] || row['Medios de pago'] || row['medios de pago']),
+      monto_neto: montoNeto,
       monto_bruto: montoBruto,
       cantidad: parseNum(row['Cantidad'] || row['cantidad'] || row['Qty'] || 0)
     });
