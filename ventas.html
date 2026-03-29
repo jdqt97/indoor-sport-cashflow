@@ -572,32 +572,29 @@ function finishCxCLoad(pendientes, log, fileName) {
 
 function parseCxCHTML(html) {
   const pendientes = {};
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
 
   // Detect frameset: EFFI exports .xls as HTML frameset referencing sheet001.htm
-  const sheetLink = doc.querySelector('link[href*="sheet001"], link[href*="sheet"]');
-  if (sheetLink) {
-    const href = sheetLink.getAttribute('href') || '';
-    const folder = href.split('/')[0] || '';
+  // Check for shLink pattern (frameset reference to sheet file)
+  const framesetMatch = html.match(/href="[^"]*?_archivos\/sheet\d+\.htm/i) || html.match(/id="shLink"/i);
+  if (framesetMatch && !html.includes('<table')) {
+    const folderMatch = html.match(/href="([^"]*?)\/sheet\d+\.htm/i);
+    const folder = folderMatch ? decodeURIComponent(folderMatch[1]) : '';
     throw new Error(`FRAMESET_DETECTED|${folder}`);
   }
 
-  const rows = doc.querySelectorAll('tr');
-  let started = false;
-  rows.forEach(tr => {
-    const cells = tr.querySelectorAll('td');
-    if (cells.length < 2) return;
-    const c0 = cells[0].textContent.trim();
-    const c1 = cells[1].textContent.trim();
-    // Skip header row
-    if (c0.toLowerCase().includes('id') || c0.toLowerCase().includes('remisi')) { started = true; return; }
-    if (!started && isNaN(parseInt(c0))) return;
-    started = true;
-    const id = c0.replace(/[^\d]/g, '');
-    if (!id) return;
-    pendientes[id] = parseMonto(c1);
-  });
+  // Regex-based parsing: extract pairs of (ID, monto) from table rows
+  // Pattern: a <td> with a number (ID), followed by a <td> with a currency value
+  const rowRegex = /<tr[^>]*>[\s\S]*?<td[^>]*>([\s\S]*?)<\/td>[\s\S]*?<td[^>]*>([\s\S]*?)<\/td>[\s\S]*?<\/tr>/gi;
+  let match;
+  while ((match = rowRegex.exec(html)) !== null) {
+    const cell0 = match[1].replace(/<[^>]*>/g, '').trim();
+    const cell1 = match[2].replace(/<[^>]*>/g, '').trim();
+    // Skip header
+    if (cell0.toLowerCase().includes('id') || cell0.toLowerCase().includes('remisi')) continue;
+    const id = cell0.replace(/[^\d]/g, '');
+    if (!id || id.length < 2) continue;
+    pendientes[id] = parseMonto(cell1);
+  }
   return pendientes;
 }
 
