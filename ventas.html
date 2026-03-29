@@ -133,7 +133,7 @@ tr:hover td { background:rgba(59,130,246,.05); }
     <h2>Carga documento de Pendientes CxC</h2>
     <p>Archivo con columnas: ID remision, Pdte. de cobro (.xlsx o .csv)</p>
     <p style="margin-top:8px;color:var(--orange);font-size:13px;">Opcional — actualiza los montos reales pendientes de cobro</p>
-    <input type="file" id="fileCxC" accept=".xlsx,.xls,.csv" style="display:none">
+    <input type="file" id="fileCxC" accept=".xlsx,.xls,.csv,.htm,.html" style="display:none">
   </div>
   <div id="uploadLogCxC" style="margin-bottom:20px;"></div>
   <div class="storage-info" id="storageInfo" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin-bottom:10px;">
@@ -540,8 +540,17 @@ function handleCxCFile(file) {
       }
       finishCxCLoad(pendientes, log, file.name);
     } catch (err) {
-      log.innerHTML = '<div class="alert alert-red">Error: ' + err.message + '</div>';
-      console.error(err);
+      if (err.message && err.message.startsWith('FRAMESET_DETECTED')) {
+        const folder = err.message.split('|')[1] || '';
+        log.innerHTML = `<div class="alert alert-orange">
+          <strong>Archivo frameset detectado.</strong> Este .xls de EFFI es un marco HTML.<br>
+          Busca en la carpeta <strong>${folder || 'nombre_archivos'}/</strong> el archivo <strong>sheet001.htm</strong> y cargalo aqui directamente.<br>
+          <span style="font-size:12px;color:var(--text2);">La carpeta esta junto al archivo .xls en tu carpeta de Descargas.</span>
+        </div>`;
+      } else {
+        log.innerHTML = '<div class="alert alert-red">Error: ' + err.message + '</div>';
+        console.error(err);
+      }
     }
   };
   reader.readAsText(file, 'UTF-8');
@@ -565,6 +574,15 @@ function parseCxCHTML(html) {
   const pendientes = {};
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
+
+  // Detect frameset: EFFI exports .xls as HTML frameset referencing sheet001.htm
+  const sheetLink = doc.querySelector('link[href*="sheet001"], link[href*="sheet"]');
+  if (sheetLink) {
+    const href = sheetLink.getAttribute('href') || '';
+    const folder = href.split('/')[0] || '';
+    throw new Error(`FRAMESET_DETECTED|${folder}`);
+  }
+
   const rows = doc.querySelectorAll('tr');
   let started = false;
   rows.forEach(tr => {
