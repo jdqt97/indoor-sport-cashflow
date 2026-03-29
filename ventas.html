@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>INDOOR SPORT SAS - Ventas y Nómina</title>
+<title>INDOOR SPORT SAS - Ventas y Nomina</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -46,8 +46,9 @@ body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); 
 .grid-3 { grid-template-columns:1fr 1fr 1fr; }
 .grid-4 { grid-template-columns:1fr 1fr 1fr 1fr; }
 .grid-5 { grid-template-columns:repeat(5,1fr); }
-@media(max-width:1200px) { .grid-4,.grid-5 { grid-template-columns:1fr 1fr; } }
-@media(max-width:900px) { .grid-2,.grid-3,.grid-4,.grid-5 { grid-template-columns:1fr; } }
+.grid-6 { grid-template-columns:repeat(6,1fr); }
+@media(max-width:1200px) { .grid-4,.grid-5,.grid-6 { grid-template-columns:1fr 1fr; } }
+@media(max-width:900px) { .grid-2,.grid-3,.grid-4,.grid-5,.grid-6 { grid-template-columns:1fr; } }
 .card { background:var(--surface); border-radius:12px; border:1px solid var(--border); overflow:hidden; }
 .card-header { padding:16px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
 .card-header h3 { font-size:14px; font-weight:600; }
@@ -81,32 +82,40 @@ tr:hover td { background:rgba(59,130,246,.05); }
 .btn-sm { padding:5px 10px; font-size:11px; }
 .btn-primary { background:var(--accent); border-color:var(--accent); }
 .btn-red { background:var(--red); border-color:var(--red); }
-.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:500; background:rgba(59,130,246,.15); color:var(--accent); }
+.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:500; }
+.badge-green { background:rgba(16,185,129,.15); color:var(--green); }
+.badge-red { background:rgba(239,68,68,.15); color:var(--red); }
+.badge-orange { background:rgba(245,158,11,.15); color:var(--orange); }
+.badge-blue { background:rgba(59,130,246,.15); color:var(--accent); }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="header-left">
-    <h1>📊 VENTAS Y NÓMINA</h1>
-    <div class="sub">INDOOR SPORT SAS | Análisis de Ventas y Gestión de Nómina</div>
+    <h1>VENTAS Y NOMINA</h1>
+    <div class="sub">INDOOR SPORT SAS | Analisis de Ventas y Gestion de Nomina</div>
   </div>
   <div class="header-right">
     <div class="nav-links">
-      <a href="index.html">💰 Contabilidad</a>
-      <button class="btn btn-sm" onclick="window.print()">🖨️ PDF</button>
+      <a href="index.html">Contabilidad</a>
+      <button class="btn btn-sm" onclick="window.print()">PDF</button>
     </div>
   </div>
 </div>
 
 <div class="tabs" id="tabsContainer">
-  <div class="tab active" data-tab="upload">📦 Cargar</div>
-  <div class="tab" data-tab="dashboard">📊 Dashboard</div>
-  <div class="tab" data-tab="clientes">💼 Clientes</div>
-  <div class="tab" data-tab="vendedores">👤 Vendedores</div>
-  <div class="tab" data-tab="cxc">📋 CxC</div>
-  <div class="tab" data-tab="rentabilidad">💰 Rentabilidad</div>
-  <div class="tab" data-tab="nomina">👷 Nómina</div>
+  <div class="tab active" data-tab="upload">Cargar</div>
+  <div class="tab" data-tab="dashboard">Dashboard</div>
+  <div class="tab" data-tab="clientes">Clientes</div>
+  <div class="tab" data-tab="vendedores">Vendedores</div>
+  <div class="tab" data-tab="productos">Productos</div>
+  <div class="tab" data-tab="cxc">CxC</div>
+  <div class="tab" data-tab="rentabilidad">Rentabilidad</div>
+  <div class="tab" data-tab="analisis">Analisis Gerencial</div>
+  <div class="tab" data-tab="tesoreria">Tesoreria</div>
+  <div class="tab" data-tab="inventario">Inventario</div>
+  <div class="tab" data-tab="nomina">Nomina</div>
 </div>
 
 <!-- TAB: Upload -->
@@ -114,70 +123,116 @@ tr:hover td { background:rgba(59,130,246,.05); }
   <div class="upload-zone" id="dropZone">
     <div class="icon">📦</div>
     <h2>Carga tu archivo de remisiones</h2>
-    <p>Reporte de conceptos de remisiones de venta (.xlsx)</p>
+    <p>Reporte de conceptos de remisiones de venta (.xlsx o .csv)</p>
     <p style="margin-top:8px;color:var(--accent);font-size:13px;">O haz clic para seleccionar</p>
-    <input type="file" id="fileInput" accept=".xlsx,.xls" multiple style="display:none">
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
   </div>
   <div id="uploadLog" style="margin-bottom:20px;"></div>
+  <div class="upload-zone" id="dropZoneCxC" style="border-color:var(--orange);margin-bottom:20px;padding:30px 40px;">
+    <div class="icon">💰</div>
+    <h2>Carga documento de Pendientes CxC</h2>
+    <p>Archivo con columnas: ID remision, Pdte. de cobro (.xlsx o .csv)</p>
+    <p style="margin-top:8px;color:var(--orange);font-size:13px;">Opcional — actualiza los montos reales pendientes de cobro</p>
+    <input type="file" id="fileCxC" accept=".xlsx,.xls,.csv" style="display:none">
+  </div>
+  <div id="uploadLogCxC" style="margin-bottom:20px;"></div>
   <div class="storage-info" id="storageInfo" style="display:none; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 20px; margin-bottom:10px;">
-    <div>💾 Datos: <span class="count" id="storedCount">0</span> remisiones cargadas</div>
+    <div>Datos: <span class="count" id="storedCount">0</span> remisiones cargadas | <span id="storedLineas">0</span> lineas de producto</div>
     <div style="display:flex;gap:8px;margin-top:10px;">
-      <button class="btn btn-sm" onclick="exportJSON()">📥 Backup</button>
-      <button class="btn btn-sm" onclick="document.getElementById('importJSON').click()">📤 Importar</button>
-      <button class="btn btn-sm btn-red" onclick="clearStorage()">🗑️ Borrar</button>
+      <button class="btn btn-sm" onclick="exportJSON()">Backup</button>
+      <button class="btn btn-sm" onclick="document.getElementById('importJSON').click()">Importar</button>
+      <button class="btn btn-sm btn-red" onclick="clearStorage()">Borrar todo</button>
+      <button class="btn btn-sm" onclick="diagnosticarDatos()" style="background:var(--orange);border-color:var(--orange);">Diagnostico</button>
       <input type="file" id="importJSON" accept=".json" style="display:none" onchange="importJSON(event)">
     </div>
+    <div id="diagResult" style="margin-top:10px;font-size:12px;font-family:monospace;background:#0f172a;padding:10px;border-radius:6px;display:none;white-space:pre-wrap;color:#94a3b8;max-height:200px;overflow-y:auto;"></div>
   </div>
 </div>
 
 <!-- TAB: Dashboard -->
 <div class="content" id="tab-dashboard">
   <div class="filters">
-    <input type="date" id="filterFechaFrom" placeholder="Desde...">
-    <input type="date" id="filterFechaTo" placeholder="Hasta...">
-    <input type="text" id="filterCliente" placeholder="🔍 Cliente...">
-    <select id="filterVendedor">
-      <option value="">Todos los vendedores</option>
-    </select>
+    <input type="date" id="filterFechaFrom">
+    <input type="date" id="filterFechaTo">
+    <select id="filterVendedor"><option value="">Todos los vendedores</option></select>
+    <select id="filterBodega"><option value="">Todas las bodegas/lineas</option></select>
+    <input type="text" id="filterCliente" placeholder="Buscar cliente...">
+  </div>
+  <div id="dataRangeInfo" style="font-size:12px;color:var(--text2);margin-bottom:8px;padding:6px 10px;background:var(--surface);border-radius:6px;display:none;">
+    Datos desde <strong id="fechaMin">-</strong> hasta <strong id="fechaMax">-</strong> | Mostrando: <strong id="filteredCount">-</strong> remisiones
   </div>
   <div class="grid grid-5" id="kpiCards"></div>
   <div class="grid grid-2" style="margin-top:20px;">
     <div class="card"><div class="card-header"><h3>Ventas por Vendedor</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartVendedores"></canvas></div></div></div>
     <div class="card"><div class="card-header"><h3>Ventas por Cliente (Top 10)</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartClientes"></canvas></div></div></div>
   </div>
+  <div class="grid grid-2" style="margin-top:20px;">
+    <div class="card"><div class="card-header"><h3>Ventas por Bodega/Linea</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartBodegas"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Top 10 Productos</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartProductos"></canvas></div></div></div>
+  </div>
 </div>
 
 <!-- TAB: Clientes -->
 <div class="content" id="tab-clientes">
   <div class="filters">
-    <input type="text" id="searchCliente" placeholder="🔍 Buscar cliente..." style="width:300px;" onchange="filterClientesTable()">
+    <input type="date" id="cliFilterFrom">
+    <input type="date" id="cliFilterTo">
+    <select id="cliFilterBodega"><option value="">Todas las bodegas</option></select>
+    <input type="text" id="searchCliente" placeholder="Buscar cliente..." style="width:250px;">
   </div>
-  <div class="card"><div class="card-header"><h3>Top 20 Clientes</h3></div><div class="card-body"><div class="table-wrap" id="clientesTable"></div></div></div>
+  <div class="card"><div class="card-header"><h3>Clientes</h3></div><div class="card-body"><div class="table-wrap" id="clientesTable"></div></div></div>
 </div>
 
 <!-- TAB: Vendedores -->
 <div class="content" id="tab-vendedores">
   <div class="filters">
-    <input type="text" id="searchVendedor" placeholder="🔍 Buscar vendedor..." style="width:300px;" onchange="filterVendedoresTable()">
+    <input type="date" id="venFilterFrom">
+    <input type="date" id="venFilterTo">
+    <select id="venFilterBodega"><option value="">Todas las bodegas</option></select>
+    <input type="text" id="searchVendedor" placeholder="Buscar vendedor..." style="width:250px;">
   </div>
-  <div class="card"><div class="card-header"><h3>Desempeño de Vendedores</h3></div><div class="card-body"><div class="table-wrap" id="vendedoresTable"></div></div></div>
+  <div class="card"><div class="card-header"><h3>Vendedores</h3></div><div class="card-body"><div class="table-wrap" id="vendedoresTable"></div></div></div>
+</div>
+
+<!-- TAB: Productos -->
+<div class="content" id="tab-productos">
+  <div class="filters">
+    <input type="date" id="prodFilterFrom">
+    <input type="date" id="prodFilterTo">
+    <select id="prodFilterBodega"><option value="">Todas las bodegas</option></select>
+    <input type="text" id="searchProducto" placeholder="Buscar referencia o descripcion..." style="width:300px;">
+  </div>
+  <div class="grid grid-3" id="prodKpis" style="margin-bottom:20px;"></div>
+  <div class="grid grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-header"><h3>Unidades por Bodega/Linea</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartUnidadesBodega"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Venta Base por Bodega/Linea</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartVentaBodega"></canvas></div></div></div>
+  </div>
+  <div class="card"><div class="card-header"><h3>Productos por Referencia</h3></div><div class="card-body"><div class="table-wrap" id="productosTable"></div></div></div>
 </div>
 
 <!-- TAB: CxC -->
 <div class="content" id="tab-cxc">
   <div class="filters">
-    <select id="filterEstadoCxC" onchange="filterCxCTable()">
+    <input type="date" id="cxcFilterFrom">
+    <input type="date" id="cxcFilterTo">
+    <select id="cxcFilterVendedor"><option value="">Todos los vendedores</option></select>
+    <select id="filterEstadoCxC">
       <option value="">Todos los estados</option>
-      <option value="Pago Total">Pago Total</option>
-      <option value="Pago Parcial">Pago Parcial</option>
-      <option value="Por Cobrar">Por Cobrar</option>
+      <option value="pago total">Pago Total</option>
+      <option value="pago parcial">Pago Parcial</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="por cobrar">Por Cobrar</option>
     </select>
-    <input type="text" id="searchCxC" placeholder="🔍 Buscar..." style="width:300px;" onchange="filterCxCTable()">
+    <input type="text" id="searchCxC" placeholder="Buscar..." style="width:250px;">
   </div>
-  <div class="grid grid-3" style="margin-bottom:20px;">
-    <div class="card"><div class="metric"><div class="label">Total CxC</div><div class="value" id="totalCxC">$0</div></div></div>
-    <div class="card"><div class="metric"><div class="label">Pago Total</div><div class="value pos" id="totalPago">$0</div></div></div>
-    <div class="card"><div class="metric"><div class="label">Por Cobrar</div><div class="value neg" id="totalPorCobrar">$0</div></div></div>
+  <div class="grid grid-5" style="margin-bottom:20px;" id="cxcKpis"></div>
+  <div class="grid grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-header"><h3>Top Clientes Morosos</h3></div><div class="card-body" id="clienteMoroso"></div></div>
+    <div class="card"><div class="card-header"><h3>Remisiones Vencidas (por fecha vencimiento)</h3></div><div class="card-body" id="remisionesPendientes"></div></div>
+  </div>
+  <div class="grid grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-header"><h3>Pendiente por Estado</h3></div><div class="card-body"><div class="chart-container"><canvas id="chartCxCEstado"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Pendiente por Cliente (Top 10)</h3></div><div class="card-body"><div class="chart-container"><canvas id="chartCxCCliente"></canvas></div></div></div>
   </div>
   <div class="card"><div class="card-header"><h3>Detalle de CxC</h3></div><div class="card-body"><div class="table-wrap" id="cxcTable"></div></div></div>
 </div>
@@ -188,46 +243,149 @@ tr:hover td { background:rgba(59,130,246,.05); }
     <input type="date" id="rentFechaFrom" onchange="renderRentabilidad()">
     <input type="date" id="rentFechaTo" onchange="renderRentabilidad()">
   </div>
-  <div class="grid grid-4" style="margin-bottom:20px;">
-    <div class="card"><div class="metric"><div class="label">Venta Total</div><div class="value" id="rentVentaTotal">$0</div><div class="change" id="rentMargenDisplay">-</div></div></div>
-    <div class="card"><div class="metric"><div class="label">Margen (50%)</div><div class="value pos" id="rentMargen">$0</div><div class="change">Margen Bruto</div></div></div>
-    <div class="card"><div class="metric"><div class="label">Costos Fijos</div><div class="value neg" id="rentCostosF">$131.8M</div><div class="change">Mensuales</div></div></div>
-    <div class="card"><div class="metric"><div class="label">Utilidad Neta</div><div class="value" id="rentUtilidad">$0</div><div class="change" id="rentUtilidadStatus">-</div></div></div>
+  <div class="grid grid-6" style="margin-bottom:20px;" id="rentKpis"></div>
+  <div class="grid grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-header"><h3>Estructura de Costos</h3></div><div class="card-body" id="costStructure"></div></div>
+    <div class="card"><div class="card-header"><h3>Break-Even Analysis</h3></div><div class="card-body" id="breakEvenContent"></div></div>
   </div>
   <div class="grid grid-2" style="margin-bottom:20px;">
-    <div class="card"><div class="card-header"><h3>Break-Even Analysis</h3></div><div class="card-body" id="breakEvenContent"></div></div>
-    <div class="card"><div class="card-header"><h3>Tendencia de Rentabilidad</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartRentabilidad"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Tendencia Mensual</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartRentabilidad"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Estructura de Costos</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartCostos"></canvas></div></div></div>
   </div>
+  <div class="card" style="margin-bottom:20px;"><div class="card-header"><h3>Calendario de Impuestos (IVA Trimestral)</h3></div><div class="card-body" id="taxCalendar"></div></div>
 </div>
 
-<!-- TAB: Nómina -->
-<div class="content" id="tab-nomina">
-  <div class="grid grid-3" style="margin-bottom:20px;">
-    <div class="card"><div class="metric"><div class="label">Total Nómina</div><div class="value" id="nominaTotal">$0</div><div class="change">Estimado Mensual</div></div></div>
-    <div class="card"><div class="metric"><div class="label">Empleados</div><div class="value" id="nominaEmpleados">0</div><div class="change">Basado en Banco</div></div></div>
-    <div class="card"><div class="metric"><div class="label">Promedio/Empleado</div><div class="value" id="nominaPromedio">$0</div><div class="change">Prom. Mensual</div></div></div>
+<!-- TAB: Analisis Gerencial -->
+<div class="content" id="tab-analisis">
+  <div class="filters">
+    <input type="date" id="anaFilterFrom">
+    <input type="date" id="anaFilterTo">
+  </div>
+  <div class="grid grid-4" style="margin-bottom:20px;" id="anaKpis"></div>
+  <div class="grid grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-header"><h3>Concentracion de Clientes (Pareto)</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartPareto"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Tendencia de Ventas Mensual</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartTendencia"></canvas></div></div></div>
   </div>
   <div class="grid grid-2" style="margin-bottom:20px;">
-    <div class="card"><div class="card-header"><h3>Nómina Mensual</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartNominaEvol"></canvas></div></div></div>
-    <div class="card"><div class="card-header"><h3>Provisiones Anuales</h3></div><div class="card-body" id="provisionesContent"></div></div>
+    <div class="card"><div class="card-header"><h3>MC por Linea de Produccion</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartMCLinea"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Estacionalidad (Venta Prom por Mes)</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartEstacionalidad"></canvas></div></div></div>
   </div>
-  <div class="card"><div class="card-header"><h3>Información de Nómina</h3></div><div class="card-body"><div style="color:var(--text2);font-size:14px;line-height:1.8;"><p><strong>📌 Nota:</strong> Los datos de nómina se extraen de las transacciones de la Contabilidad.</p><p style="margin-top:12px;">Para análisis detallado de nómina, provisiones y planilla, carga el archivo correspondiente desde la herramienta de Contabilidad.</p><p style="margin-top:12px;"><a href="index.html" style="color:var(--accent);text-decoration:none;">→ Ir a Contabilidad</a></p></div></div></div>
+  <div class="grid grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-header"><h3>Eficiencia Comercial</h3></div><div class="card-body" id="anaEficiencia"></div></div>
+    <div class="card"><div class="card-header"><h3>Alertas y Recomendaciones</h3></div><div class="card-body" id="anaAlertas"></div></div>
+  </div>
+  <div class="card" style="margin-bottom:20px;"><div class="card-header"><h3>Proyeccion Financiera (3 meses)</h3></div><div class="card-body" id="anaProyeccion"></div></div>
+</div>
+
+<!-- TAB: Tesoreria -->
+<div class="content" id="tab-tesoreria">
+  <div class="filters">
+    <input type="date" id="tesFilterFrom">
+    <input type="date" id="tesFilterTo">
+  </div>
+  <div class="grid grid-4" style="margin-bottom:20px;" id="tesKpis"></div>
+  <div class="grid grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-header"><h3>Flujo de Caja Proyectado (por semana)</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartFlujo"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Ingresos por Condicion de Pago</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartCondicion"></canvas></div></div></div>
+  </div>
+  <div class="card" style="margin-bottom:20px;"><div class="card-header"><h3>Detalle de Flujo de Caja</h3></div><div class="card-body"><div class="table-wrap" id="tesoreriaTable"></div></div></div>
+</div>
+
+<!-- TAB: Inventario -->
+<div class="content" id="tab-inventario">
+  <div class="filters">
+    <input type="date" id="invFilterFrom">
+    <input type="date" id="invFilterTo">
+    <select id="invFilterTipo"><option value="">Todos los tipos</option></select>
+    <select id="invFilterTela"><option value="">Todas las telas</option></select>
+  </div>
+  <div class="grid grid-4" style="margin-bottom:20px;" id="invKpis"></div>
+  <div class="grid grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-header"><h3>Unidades por Tipo de Prenda</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartTipoPrenda"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Unidades por Tela</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartTela"></canvas></div></div></div>
+  </div>
+  <div class="grid grid-2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-header"><h3>Demanda por Mes (Tipo de Prenda)</h3></div><div class="card-body"><div class="chart-container-lg"><canvas id="chartDemandaMes"></canvas></div></div></div>
+    <div class="card"><div class="card-header"><h3>Proyeccion de Abastecimiento</h3></div><div class="card-body" id="invAbastecimiento"></div></div>
+  </div>
+  <div class="card" style="margin-bottom:20px;"><div class="card-header"><h3>Detalle: Tipo x Tela x Mes</h3></div><div class="card-body"><div class="table-wrap" id="inventarioTable"></div></div></div>
+</div>
+
+<!-- TAB: Nomina -->
+<div class="content" id="tab-nomina">
+  <div class="card"><div class="card-header"><h3>Informacion de Nomina</h3></div><div class="card-body"><div style="color:var(--text2);font-size:14px;line-height:1.8;"><p><strong>Nota:</strong> Los datos de nomina se extraen de las transacciones de la Contabilidad.</p><p style="margin-top:12px;"><a href="index.html" style="color:var(--accent);text-decoration:none;">Ir a Contabilidad</a></p></div></div></div>
 </div>
 
 <script>
+// ============================================================
+// CONSTANTS
+// ============================================================
 const DB_KEY = 'ventasData';
-const MARGEN_VENTAS = 0.50;
-const COSTOS_FIJOS = 131825518;
-let ventasData = { remisiones: [], clientes: {}, vendedores: {} };
+const MARGEN_VENTAS = 0.45;
+const COSTOS_FIJOS = 135000000;
+const DB_NAME = 'VentasDB';
+const DB_VERSION = 2;
+const STORE_NAME = 'remisiones';
+
+let ventasData = { remisiones: [], lineas: [], pendientes_cobro: {} };
 let charts = {};
 
 // ============================================================
-// STORAGE - IndexedDB (more capacity than localStorage)
+// UTILITIES
 // ============================================================
-const DB_NAME = 'VentasDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'remisiones';
+function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
+function pct(n) { return isFinite(n) ? (n * 100).toFixed(1) + '%' : '0%'; }
 
+function parseMonto(str) {
+  if (!str) return 0;
+  if (typeof str === 'number') return str;
+  let s = String(str).replace(/\$/g, '').replace(/\s/g, '');
+  if (!s) return 0;
+  const dotCount = (s.match(/\./g) || []).length;
+  if (s.includes(',')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (dotCount <= 1) {
+    // decimal real or integer - no tocar
+  } else {
+    s = s.replace(/\./g, '');
+  }
+  return parseFloat(s) || 0;
+}
+
+function excelFechaToISO(raw) {
+  if (!raw || !String(raw).trim()) return null;
+  const str = String(raw).trim();
+  if (!isNaN(Number(str)) && !str.includes('-') && !str.includes('/')) {
+    const serial = Number(str);
+    if (serial > 1000) {
+      const d = new Date(Date.UTC(1900, 0, 0) + (serial - 1) * 86400000);
+      return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+    }
+  }
+  if (str.includes('/')) {
+    const datePart = str.split(' ')[0];
+    const partes = datePart.split('/');
+    if (partes.length === 3) {
+      const day = parseInt(partes[0]);
+      const month = parseInt(partes[1]);
+      let year = parseInt(partes[2]);
+      if (year < 100) year = year < 50 ? 2000 + year : 1900 + year;
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        return `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      }
+    }
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
+  return null;
+}
+
+function destroyChart(id) { if (charts[id]) charts[id].destroy(); }
+
+const CHART_COLORS = ['#3b82f6','#10b981','#f59e0b','#ec4899','#8b5cf6','#06b6d4','#ef4444','#f97316','#6366f1','#14b8a6','#a855f7','#d946ef'];
+
+// ============================================================
+// STORAGE - IndexedDB
+// ============================================================
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -248,37 +406,69 @@ async function saveToStorage() {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     tx.objectStore(STORE_NAME).put(JSON.stringify(ventasData), DB_KEY);
     updateStorageInfo();
-    console.log('✅ Datos guardados en IndexedDB');
-  } catch (e) {
-    console.error('❌ Error guardando:', e);
-  }
+  } catch (e) { console.error('Error guardando:', e); }
 }
 
 async function loadFromStorage() {
   try {
     const db = await openDB();
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const req = tx.objectStore(STORE_NAME).get(DB_KEY);
-    req.onsuccess = () => {
-      if (req.result) {
-        ventasData = JSON.parse(req.result);
-        updateStorageInfo();
-        console.log('✅ Datos cargados de IndexedDB');
-      }
-    };
-  } catch (e) {
-    console.error('❌ Error cargando:', e);
-  }
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const req = tx.objectStore(STORE_NAME).get(DB_KEY);
+      req.onsuccess = () => {
+        if (req.result) {
+          ventasData = JSON.parse(req.result);
+          if (!ventasData.lineas) ventasData.lineas = [];
+                if (!ventasData.pendientes_cobro) ventasData.pendientes_cobro = {};
+          updateStorageInfo();
+        }
+        resolve();
+      };
+      req.onerror = () => resolve();
+    });
+  } catch (e) { console.error('Error cargando:', e); }
 }
 
 function updateStorageInfo() {
   const el = document.getElementById('storageInfo');
   if (ventasData.remisiones.length > 0) {
     el.style.display = 'flex';
+    el.style.flexDirection = 'column';
     document.getElementById('storedCount').textContent = ventasData.remisiones.length;
+    document.getElementById('storedLineas').textContent = ventasData.lineas.length;
   } else {
     el.style.display = 'none';
   }
+}
+
+function diagnosticarDatos() {
+  const el = document.getElementById('diagResult');
+  el.style.display = 'block';
+  const total = ventasData.remisiones.length;
+  if (total === 0) { el.textContent = 'No hay datos cargados.'; return; }
+  const conFecha = ventasData.remisiones.filter(r => r.fecha).length;
+  const fechas = ventasData.remisiones.map(r => r.fecha).filter(Boolean).sort();
+  const bodegas = [...new Set(ventasData.lineas.map(l => l.bodega).filter(Boolean))];
+  const totalVentaBase = ventasData.remisiones.reduce((s,r) => s + r.venta_base, 0);
+  const totalImpuestos = ventasData.remisiones.reduce((s,r) => s + r.impuesto_total, 0);
+  const totalNeto = ventasData.remisiones.reduce((s,r) => s + r.monto_neto, 0);
+  const muestra = ventasData.remisiones.slice(0, 3).map(r =>
+    `  ID:${r.id_remisional} | ${r.fecha} | base=${fmt(r.venta_base)} imp=${fmt(r.impuesto_total)} neto=${fmt(r.monto_neto)}`
+  );
+  el.textContent = [
+    `REMISIONES: ${total} | Lineas producto: ${ventasData.lineas.length}`,
+    `Con fecha: ${conFecha} | Sin fecha: ${total - conFecha}`,
+    `Rango: ${fechas[0] || 'N/A'} -> ${fechas[fechas.length-1] || 'N/A'}`,
+    `Bodegas: ${bodegas.join(', ') || 'N/A'}`,
+    ``,
+    `TOTALES:`,
+    `  Venta Base (sin IVA): ${fmt(totalVentaBase)}`,
+    `  Impuestos: ${fmt(totalImpuestos)}`,
+    `  Precio Neto Total: ${fmt(totalNeto)}`,
+    ``,
+    `MUESTRA:`,
+    ...muestra,
+  ].join('\n');
 }
 
 function exportJSON() {
@@ -295,27 +485,111 @@ function importJSON(event) {
   r.onload = e => {
     try {
       ventasData = JSON.parse(e.target.result);
+      if (!ventasData.lineas) ventasData.lineas = [];
       saveToStorage();
       renderAll();
-      document.getElementById('uploadLog').innerHTML = '<div class="alert alert-green">✅ Backup importado correctamente.</div>';
-    } catch (err) {
-      alert('Error: ' + err.message);
-    }
+      document.getElementById('uploadLog').innerHTML = '<div class="alert alert-green">Backup importado correctamente.</div>';
+    } catch (err) { alert('Error: ' + err.message); }
   };
   r.readAsText(f);
   event.target.value = '';
 }
 
-function clearStorage() {
-  if (!confirm('¿Eliminar todos los datos?')) return;
-  ventasData = { remisiones: [], clientes: {}, vendedores: {} };
-  localStorage.removeItem(DB_KEY);
+// ============================================================
+// CXC PENDIENTES FILE UPLOAD
+// ============================================================
+const dropZoneCxC = document.getElementById('dropZoneCxC');
+const fileCxC = document.getElementById('fileCxC');
+dropZoneCxC.addEventListener('click', () => fileCxC.click());
+dropZoneCxC.addEventListener('dragover', e => { e.preventDefault(); dropZoneCxC.classList.add('drag'); });
+dropZoneCxC.addEventListener('dragleave', () => dropZoneCxC.classList.remove('drag'));
+dropZoneCxC.addEventListener('drop', e => { e.preventDefault(); dropZoneCxC.classList.remove('drag'); handleCxCFile(e.dataTransfer.files[0]); });
+fileCxC.addEventListener('change', e => handleCxCFile(e.target.files[0]));
+
+function handleCxCFile(file) {
+  if (!file) return;
+  const log = document.getElementById('uploadLogCxC');
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      let pendientes;
+      if (file.name.toLowerCase().endsWith('.csv')) {
+        pendientes = parseCxCCSV(e.target.result);
+      } else {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        pendientes = parseCxCXLSX(wb);
+      }
+      const count = Object.keys(pendientes).length;
+      if (count === 0) {
+        log.innerHTML = '<div class="alert alert-red">No se encontraron datos de pendientes en ' + file.name + '</div>';
+        return;
+      }
+      ventasData.pendientes_cobro = pendientes;
+      saveToStorage();
+      // Re-render CxC and Tesoreria
+      if (ventasData.remisiones.length > 0) { renderCxC(); renderTesoreria(); }
+      const totalPend = Object.values(pendientes).reduce((s,v) => s + v, 0);
+      const conSaldo = Object.values(pendientes).filter(v => v > 0).length;
+      log.innerHTML = `<div class="alert alert-green"><strong>${count}</strong> remisiones con datos de pendientes | <strong>${conSaldo}</strong> con saldo > $0 | Total pendiente: <strong>${fmt(totalPend)}</strong></div>`;
+    } catch (err) {
+      log.innerHTML = '<div class="alert alert-red">Error: ' + err.message + '</div>';
+      console.error(err);
+    }
+  };
+  if (file.name.toLowerCase().endsWith('.csv')) {
+    reader.readAsText(file, 'UTF-8');
+  } else {
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseCxCCSV(rawCsv) {
+  const csv = rawCsv.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = csv.split('\n');
+  const headers = lines[0].split(';').length > 1 ? lines[0].split(';') : lines[0].split(',');
+  const sep = lines[0].split(';').length > 1 ? ';' : ',';
+  const pendientes = {};
+  for (let i = 1; i < lines.length; i++) {
+    const parts = lines[i].trim().split(sep).map(s => s.trim());
+    if (parts.length < 2 || !parts[0]) continue;
+    const id = parts[0].replace(/['"]/g, '');
+    const monto = parseMonto(parts[1]);
+    pendientes[id] = monto;
+  }
+  return pendientes;
+}
+
+function parseCxCXLSX(workbook) {
+  const pendientes = {};
+  const ws = workbook.Sheets[workbook.SheetNames[0]];
+  if (!ws['!ref']) return pendientes;
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  const getCell = (r, c) => { const cell = ws[XLSX.utils.encode_cell({r,c})]; return cell ? String(cell.v).trim() : ''; };
+  const getCellNum = (r, c) => { const cell = ws[XLSX.utils.encode_cell({r,c})]; if (!cell) return 0; if (typeof cell.v === 'number') return cell.v; return parseMonto(String(cell.v)); };
+  for (let r = 1; r <= range.e.r; r++) {
+    const id = getCell(r, 0);
+    if (!id) continue;
+    pendientes[id] = getCellNum(r, 1);
+  }
+  return pendientes;
+}
+
+async function clearStorage() {
+  if (!confirm('Eliminar todos los datos cargados?')) return;
+  ventasData = { remisiones: [], lineas: [], pendientes_cobro: {} };
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).delete(DB_KEY);
+  } catch (e) {}
   updateStorageInfo();
-  document.getElementById('uploadLog').innerHTML = '<div class="alert alert-orange">⚠️ Datos eliminados.</div>';
+  document.getElementById('kpiCards').innerHTML = '';
+  document.getElementById('dataRangeInfo').style.display = 'none';
+  document.getElementById('uploadLog').innerHTML = '<div class="alert alert-orange">Datos eliminados. Carga el archivo nuevamente.</div>';
 }
 
 // ============================================================
-// FILE UPLOAD
+// FILE UPLOAD & PARSING
 // ============================================================
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
@@ -331,143 +605,302 @@ function handleFiles(files) {
     const reader = new FileReader();
     reader.onload = e => {
       try {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const parsed = parseRemisiones(wb);
-        if (parsed.length === 0) {
-          log.innerHTML += '<div class="alert alert-red">❌ No se encontraron remisiones en ' + file.name + '</div>';
+        let result;
+        if (file.name.toLowerCase().endsWith('.csv')) {
+          result = parseCSV(e.target.result);
+        } else {
+          const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          result = parseXLSX(wb);
+        }
+        if (result.remisiones.length === 0) {
+          log.innerHTML = '<div class="alert alert-red">No se encontraron remisiones vigentes en ' + file.name + '</div>';
           return;
         }
-        ventasData.remisiones = ventasData.remisiones.concat(parsed);
-        rebuildData();
+        ventasData = result;
         saveToStorage();
         renderAll();
-        log.innerHTML = '<div class="alert alert-green">✅ Cargadas ' + parsed.length + ' remisiones.</div>';
+        const fechas = result.remisiones.map(r => r.fecha).filter(Boolean).sort();
+        log.innerHTML = `<div class="alert alert-green"><strong>${result.remisiones.length}</strong> remisiones vigentes | <strong>${result.lineas.length}</strong> lineas de producto<br>Fechas: ${fechas[0] || '?'} a ${fechas[fechas.length-1] || '?'}</div>`;
       } catch (err) {
-        log.innerHTML += '<div class="alert alert-red">❌ Error: ' + err.message + '</div>';
+        log.innerHTML = '<div class="alert alert-red">Error: ' + err.message + '</div>';
+        console.error(err);
       }
     };
-    reader.readAsArrayBuffer(file);
+    if (file.name.toLowerCase().endsWith('.csv')) {
+      reader.readAsText(file, 'UTF-8');
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
   });
 }
 
-function parseRemisiones(workbook) {
-  const results = [];
+// ---------- CSV Parser ----------
+function parseCSV(rawCsv) {
+  const csv = rawCsv.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = csv.split('\n');
+  const headers = lines[0].split(';').map(h => h.trim());
+  const col = name => headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase()));
+  const colExact = name => headers.findIndex(h => h.trim() === name);
+
+  const cols = {
+    sucursal: col('Sucursal'), centro: col('Centro de costos'), bodega: col('Bodega'),
+    id: col('ID remisi'), cliente: col('Nombre cliente'), idCliente: col('ID. cliente'),
+    email: col('Email cliente'), direccion: col('Direcci'), vendedor: col('Vendedor'),
+    tercero: col('Tercero'), fechaEntrega: col('Fecha entrega'), estadoCxC: col('Estado CXC'),
+    vigencia: colExact('Vigencia'), fecha: col('Fecha creaci'),
+    formasPago: col('Formas de pago'), mediosPago: col('Medios de pago'),
+    descripcion: col('Descripci'), referencia: col('Referencia'),
+    cantidad: col('Cantidad'), precioBrutoU: col('Precio bruto unitario'),
+    precioBrutoT: col('Precio bruto total'), descuentoU: col('Descuento unitario'),
+    descuentoT: col('Descuento total'), impuesto: col('Impuesto total'),
+    precioNeto: col('Precio neto total')
+  };
+
+  const remMap = {};
+  const lineas = [];
+  let anuladas = 0;
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const p = line.split(';').map(s => s.trim());
+
+    const vigencia = p[cols.vigencia] || '';
+    if (!vigencia.toLowerCase().includes('vigente')) { anuladas++; continue; }
+
+    const idRem = p[cols.id] || '';
+    if (!idRem) continue;
+
+    const precioNeto = parseMonto(p[cols.precioNeto]);
+    const impuesto = parseMonto(p[cols.impuesto]);
+    const precioBrutoT = parseMonto(p[cols.precioBrutoT]);
+    const descuentoT = parseMonto(p[cols.descuentoT]);
+    const cantidad = parseFloat(p[cols.cantidad]) || 0;
+
+    const linea = {
+      id_remisional: idRem,
+      bodega: p[cols.bodega] || '',
+      descripcion: p[cols.descripcion] || '',
+      referencia: p[cols.referencia] || '',
+      cantidad: cantidad,
+      precio_bruto_u: parseMonto(p[cols.precioBrutoU]),
+      precio_bruto_t: precioBrutoT,
+      descuento_u: parseMonto(p[cols.descuentoU]),
+      descuento_t: descuentoT,
+      impuesto: impuesto,
+      precio_neto: precioNeto
+    };
+    lineas.push(linea);
+
+    if (!remMap[idRem]) {
+      remMap[idRem] = {
+        id_remisional: idRem,
+        fecha: excelFechaToISO(p[cols.fecha] || ''),
+        fecha_entrega: excelFechaToISO(p[cols.fechaEntrega] || ''),
+        sucursal: p[cols.sucursal] || '',
+        centro_costos: p[cols.centro] || '',
+        cliente: (p[cols.cliente] || 'N/A').substring(0, 60),
+        id_cliente: p[cols.idCliente] || '',
+        email_cliente: p[cols.email] || '',
+        direccion_cliente: p[cols.direccion] || '',
+        vendedor: (p[cols.vendedor] || 'Sin Vendedor').substring(0, 40),
+        tercero: p[cols.tercero] || '',
+        estado_cxc: p[cols.estadoCxC] || 'Por Cobrar',
+        vigencia: vigencia,
+        formas_pago: p[cols.formasPago] || '',
+        medios_pago: p[cols.mediosPago] || '',
+        monto_neto: 0, impuesto_total: 0, precio_bruto: 0, descuento_total: 0, venta_base: 0,
+        bodegas: new Set()
+      };
+    }
+    remMap[idRem].monto_neto += precioNeto;
+    remMap[idRem].impuesto_total += impuesto;
+    remMap[idRem].precio_bruto += precioBrutoT;
+    remMap[idRem].descuento_total += descuentoT;
+    if (linea.bodega) remMap[idRem].bodegas.add(linea.bodega);
+  }
+
+  const remisiones = Object.values(remMap).map(r => {
+    r.venta_base = r.monto_neto - r.impuesto_total;
+    r.bodegas = [...r.bodegas];
+    return r;
+  });
+
+  console.log(`CSV: ${remisiones.length} remisiones | ${lineas.length} lineas | ${anuladas} anuladas`);
+  return { remisiones, lineas };
+}
+
+// ---------- XLSX Parser ----------
+function parseXLSX(workbook) {
+  const remMap = {};
+  const lineas = [];
 
   workbook.SheetNames.forEach(sheetName => {
-    console.log('📄 parseRemisiones: Processing sheet:', sheetName);
     const ws = workbook.Sheets[sheetName];
-    if (!ws['!ref']) {
-      console.warn('⚠️ Sheet has no ref');
-      return;
-    }
-
+    if (!ws['!ref']) return;
     const range = XLSX.utils.decode_range(ws['!ref']);
     const totalRows = range.e.r + 1;
     const totalCols = range.e.c + 1;
-    console.log('📊 Total rows:', totalRows, 'Total cols:', totalCols);
 
-    const getCell = (r, c) => { const cell = ws[XLSX.utils.encode_cell({ r, c })]; return cell ? String(cell.v).trim() : ''; };
+    const getCell = (r, c) => { const cell = ws[XLSX.utils.encode_cell({r,c})]; return cell ? String(cell.v).trim() : ''; };
+    const getCellNum = (r, c) => { const cell = ws[XLSX.utils.encode_cell({r,c})]; if (!cell) return 0; if (typeof cell.v === 'number') return cell.v; return parseMonto(String(cell.v)); };
 
-    // Debug: Print first row (headers)
-    console.log('🔍 Header row (row 0):');
-    for (let c = 0; c < Math.min(26, totalCols); c++) {
-      const cellVal = getCell(0, c);
-      if (cellVal) console.log(`  Col ${c} (${String.fromCharCode(65+c)}): ${cellVal}`);
+    // Detect columns by header name
+    const colMap = {};
+    for (let c = 0; c < Math.min(30, totalCols); c++) {
+      const h = getCell(0, c).toLowerCase();
+      if (h.includes('sucursal')) colMap.sucursal = c;
+      if (h.includes('centro de costos')) colMap.centro = c;
+      if (h.includes('bodega')) colMap.bodega = c;
+      if (h.includes('id remisi')) colMap.id = c;
+      if (h.includes('nombre cliente')) colMap.cliente = c;
+      if (h.includes('id. cliente')) colMap.idCliente = c;
+      if (h.includes('email cliente')) colMap.email = c;
+      if (h.includes('direcci') && h.includes('cliente')) colMap.direccion = c;
+      if (h.includes('vendedor')) colMap.vendedor = c;
+      if (h.includes('tercero')) colMap.tercero = c;
+      if (h.includes('fecha entrega')) colMap.fechaEntrega = c;
+      if (h.includes('estado') && h.includes('cxc')) colMap.estadoCxC = c;
+      if (h === 'vigencia') colMap.vigencia = c;
+      if (h.includes('fecha creaci')) colMap.fecha = c;
+      if (h.includes('formas de pago')) colMap.formasPago = c;
+      if (h.includes('medios de pago')) colMap.mediosPago = c;
+      if (h.includes('descripci') && h.includes('art')) colMap.descripcion = c;
+      if (h.includes('referencia')) colMap.referencia = c;
+      if (h.includes('cantidad')) colMap.cantidad = c;
+      if (h.includes('precio bruto unitario')) colMap.precioBrutoU = c;
+      if (h.includes('precio bruto total')) colMap.precioBrutoT = c;
+      if (h.includes('descuento unitario')) colMap.descuentoU = c;
+      if (h.includes('descuento total')) colMap.descuentoT = c;
+      if (h.includes('impuesto total')) colMap.impuesto = c;
+      if (h.includes('precio neto total')) colMap.precioNeto = c;
     }
 
-    // EFFI Report columns (0-indexed):
-    // D (3) = ID remisión, E (4) = Nombre cliente, I (8) = Vendedor
-    // N (13) = Fecha creación, Y (24) = Precio neto total, L (11) = Estado CxC
+    // Fallback to fixed positions if detection fails
+    const g = (key, fallback) => colMap[key] !== undefined ? colMap[key] : fallback;
+    const C = {
+      sucursal: g('sucursal',0), centro: g('centro',1), bodega: g('bodega',2),
+      id: g('id',3), cliente: g('cliente',4), idCliente: g('idCliente',5),
+      email: g('email',6), direccion: g('direccion',7), vendedor: g('vendedor',8),
+      tercero: g('tercero',9), fechaEntrega: g('fechaEntrega',10), estadoCxC: g('estadoCxC',11),
+      vigencia: g('vigencia',12), fecha: g('fecha',13), formasPago: g('formasPago',14),
+      mediosPago: g('mediosPago',15), descripcion: g('descripcion',16), referencia: g('referencia',17),
+      cantidad: g('cantidad',18), precioBrutoU: g('precioBrutoU',19), precioBrutoT: g('precioBrutoT',20),
+      descuentoU: g('descuentoU',21), descuentoT: g('descuentoT',22), impuesto: g('impuesto',23),
+      precioNeto: g('precioNeto',24)
+    };
 
-    let parsed = 0;
+    let anuladas = 0;
     for (let r = 1; r < totalRows; r++) {
-      const idRemisional = getCell(r, 3);
-      if (!idRemisional || idRemisional.toLowerCase().includes('remisi')) continue;
+      const idRem = getCell(r, C.id);
+      if (!idRem || isNaN(Number(idRem))) continue;
 
-      const cliente = getCell(r, 4);
-      if (!cliente) continue;
+      const vigencia = getCell(r, C.vigencia);
+      if (vigencia && !vigencia.toLowerCase().includes('vigente')) { anuladas++; continue; }
 
-      const vendedor = getCell(r, 8) || 'Sin Vendedor';
-      const fecha = getCell(r, 13);
-      const estadoCxC = getCell(r, 11) || 'Por Cobrar';
+      const precioNeto = getCellNum(r, C.precioNeto);
+      const impuesto = getCellNum(r, C.impuesto);
+      const precioBrutoT = getCellNum(r, C.precioBrutoT);
+      const descuentoT = getCellNum(r, C.descuentoT);
+      const cantidad = getCellNum(r, C.cantidad);
+      const bodega = getCell(r, C.bodega);
 
-      // SKIP remisiones anuladas
-      if (estadoCxC.toLowerCase().includes('anulad')) {
-        console.log('⏭️ Skipping anulada:', idRemisional);
-        continue;
+      const linea = {
+        id_remisional: idRem, bodega: bodega,
+        descripcion: getCell(r, C.descripcion), referencia: getCell(r, C.referencia),
+        cantidad: cantidad, precio_bruto_u: getCellNum(r, C.precioBrutoU),
+        precio_bruto_t: precioBrutoT, descuento_u: getCellNum(r, C.descuentoU),
+        descuento_t: descuentoT, impuesto: impuesto, precio_neto: precioNeto
+      };
+      lineas.push(linea);
+
+      if (!remMap[idRem]) {
+        remMap[idRem] = {
+          id_remisional: idRem,
+          fecha: excelFechaToISO(getCell(r, C.fecha)),
+          fecha_entrega: excelFechaToISO(getCell(r, C.fechaEntrega)),
+          sucursal: getCell(r, C.sucursal), centro_costos: getCell(r, C.centro),
+          cliente: (getCell(r, C.cliente) || 'N/A').substring(0, 60),
+          id_cliente: getCell(r, C.idCliente), email_cliente: getCell(r, C.email),
+          direccion_cliente: getCell(r, C.direccion),
+          vendedor: (getCell(r, C.vendedor) || 'Sin Vendedor').substring(0, 40),
+          tercero: getCell(r, C.tercero),
+          estado_cxc: getCell(r, C.estadoCxC) || 'Por Cobrar',
+          vigencia: vigencia,
+          formas_pago: getCell(r, C.formasPago), medios_pago: getCell(r, C.mediosPago),
+          monto_neto: 0, impuesto_total: 0, precio_bruto: 0, descuento_total: 0, venta_base: 0,
+          bodegas: new Set()
+        };
       }
-
-      const montoStr = getCell(r, 24);
-
-      if (!montoStr) continue;
-
-      let monto = 0;
-      try {
-        // Parse Colombian format: 1.234.567,89 or 1234567
-        let cleaned = montoStr.replace(/\$/g, '').trim();
-
-        // If contains comma, it's decimal separator (1.234.567,89)
-        if (cleaned.includes(',')) {
-          // Remove dots (thousand separator) and replace comma with dot
-          cleaned = cleaned.replace(/\./g, '').replace(',', '.');
-        } else {
-          // If no comma, just remove dots if they're thousands separators
-          // But be careful: 1234567 should stay as is
-          if (cleaned.includes('.')) {
-            // If has dots, remove them (they're thousand separators)
-            cleaned = cleaned.replace(/\./g, '');
-          }
-        }
-
-        monto = parseFloat(cleaned) || 0;
-        console.log(`💰 Parsed ${montoStr} → ${monto}`);
-      } catch (e) {
-        console.warn('⚠️ Error parsing monto:', montoStr);
-        continue;
-      }
-
-      if (monto === 0) continue;
-
-      // Parse fecha (format: DD/MM/YYYY HH:MM)
-      let fechaISO = fecha;
-      if (fecha && fecha.includes('/')) {
-        const parts = fecha.split(' ')[0].split('/');
-        if (parts.length === 3) {
-          fechaISO = `2026-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-        }
-      }
-
-      results.push({
-        id_remisional: idRemisional,
-        fecha: fechaISO,
-        cliente: cliente.substring(0, 50),
-        vendedor: vendedor.substring(0, 40),
-        monto_neto: monto,
-        estado_cxc: estadoCxC
-      });
-
-      parsed++;
+      remMap[idRem].monto_neto += precioNeto;
+      remMap[idRem].impuesto_total += impuesto;
+      remMap[idRem].precio_bruto += precioBrutoT;
+      remMap[idRem].descuento_total += descuentoT;
+      if (bodega) remMap[idRem].bodegas.add(bodega);
     }
-
-    console.log(`✅ Sheet "${sheetName}": Parsed ${parsed} remisiones`);
+    console.log(`XLSX sheet "${sheetName}": ${Object.keys(remMap).length} remisiones | ${anuladas} anuladas`);
   });
 
-  console.log('🎯 parseRemisiones: Total found:', results.length, 'remisiones');
-  return results;
+  const remisiones = Object.values(remMap).map(r => {
+    r.venta_base = r.monto_neto - r.impuesto_total;
+    r.bodegas = [...r.bodegas];
+    return r;
+  });
+  return { remisiones, lineas };
 }
 
-function rebuildData() {
-  ventasData.clientes = {};
-  ventasData.vendedores = {};
-  ventasData.remisiones.forEach(r => {
-    if (!ventasData.clientes[r.cliente]) ventasData.clientes[r.cliente] = { count: 0, monto: 0 };
-    ventasData.clientes[r.cliente].count++;
-    ventasData.clientes[r.cliente].monto += r.monto_neto;
+// ============================================================
+// FILTERING HELPERS
+// ============================================================
+function getFilteredRemisiones(fromId, toId, vendedorId, bodegaId, clienteId) {
+  let data = [...ventasData.remisiones];
+  const from = fromId ? document.getElementById(fromId).value : '';
+  const to = toId ? document.getElementById(toId).value : '';
+  const vendedor = vendedorId ? document.getElementById(vendedorId).value : '';
+  const bodega = bodegaId ? document.getElementById(bodegaId).value : '';
+  const cliente = clienteId ? document.getElementById(clienteId).value.toUpperCase().trim() : '';
 
-    if (!ventasData.vendedores[r.vendedor]) ventasData.vendedores[r.vendedor] = { count: 0, monto: 0 };
-    ventasData.vendedores[r.vendedor].count++;
-    ventasData.vendedores[r.vendedor].monto += r.monto_neto;
-  });
+  if (from) data = data.filter(r => r.fecha && r.fecha >= from);
+  if (to) data = data.filter(r => r.fecha && r.fecha <= to);
+  if (vendedor) data = data.filter(r => r.vendedor === vendedor);
+  if (bodega) data = data.filter(r => r.bodegas && r.bodegas.includes(bodega));
+  if (cliente) data = data.filter(r => r.cliente.toUpperCase().includes(cliente));
+  return data;
+}
+
+function getFilteredLineas(fromId, toId, bodegaId) {
+  const from = fromId ? document.getElementById(fromId).value : '';
+  const to = toId ? document.getElementById(toId).value : '';
+  const bodega = bodegaId ? document.getElementById(bodegaId).value : '';
+
+  // Build a set of valid remision IDs based on date filter
+  let validIds = null;
+  if (from || to) {
+    validIds = new Set();
+    ventasData.remisiones.forEach(r => {
+      if (from && (!r.fecha || r.fecha < from)) return;
+      if (to && (!r.fecha || r.fecha > to)) return;
+      validIds.add(r.id_remisional);
+    });
+  }
+
+  let data = [...ventasData.lineas];
+  if (validIds) data = data.filter(l => validIds.has(l.id_remisional));
+  if (bodega) data = data.filter(l => l.bodega === bodega);
+  return data;
+}
+
+function calcMeses(fromId, toId, filtered) {
+  const from = fromId ? document.getElementById(fromId).value : '';
+  const to = toId ? document.getElementById(toId).value : '';
+  if (from && to) {
+    return Math.max(1, Math.round((new Date(to) - new Date(from)) / (1000*60*60*24*30.44)));
+  }
+  const fs = filtered.map(r => r.fecha).filter(Boolean).sort();
+  if (fs.length > 1) {
+    return Math.max(1, Math.round((new Date(fs[fs.length-1]) - new Date(fs[0])) / (1000*60*60*24*30.44)));
+  }
+  return 1;
 }
 
 // ============================================================
@@ -483,247 +916,1138 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // ============================================================
-// RENDER
+// POPULATE SELECTS
 // ============================================================
-function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
-function pct(n) { return isFinite(n) ? (n * 100).toFixed(1) + '%' : '0%'; }
+function populateSelects() {
+  const vendedores = [...new Set(ventasData.remisiones.map(r => r.vendedor))].sort();
+  const bodegas = [...new Set(ventasData.lineas.map(l => l.bodega).filter(Boolean))].sort();
 
+  ['filterVendedor','cxcFilterVendedor'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">Todos los vendedores</option>';
+    vendedores.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+  });
+
+  ['filterBodega','cliFilterBodega','venFilterBodega','prodFilterBodega'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">Todas las bodegas/lineas</option>';
+    bodegas.forEach(b => sel.innerHTML += `<option value="${b}">${b}</option>`);
+  });
+}
+
+// ============================================================
+// RENDER ALL
+// ============================================================
 function renderAll() {
   if (ventasData.remisiones.length === 0) return;
-  populateVendedoresSelect();
+  populateSelects();
+  // Reset filters
+  ['filterFechaFrom','filterFechaTo','filterCliente','filterVendedor','filterBodega',
+   'cliFilterFrom','cliFilterTo','searchCliente','cliFilterBodega',
+   'venFilterFrom','venFilterTo','searchVendedor','venFilterBodega',
+   'prodFilterFrom','prodFilterTo','searchProducto','prodFilterBodega',
+   'cxcFilterFrom','cxcFilterTo','filterEstadoCxC','searchCxC','cxcFilterVendedor',
+   'anaFilterFrom','anaFilterTo',
+   'tesFilterFrom','tesFilterTo',
+   'invFilterFrom','invFilterTo','invFilterTipo','invFilterTela'
+  ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
   renderDashboard();
   renderClientes();
   renderVendedores();
+  renderProductos();
   renderCxC();
   renderRentabilidad();
-  renderNomina();
+  renderAnalisis();
+  renderTesoreria();
+  renderInventario();
 }
 
-function populateVendedoresSelect() {
-  const sel = document.getElementById('filterVendedor');
-  const vendedores = Object.keys(ventasData.vendedores).sort();
-  const current = sel.value;
-  sel.innerHTML = '<option value="">Todos los vendedores</option>';
-  vendedores.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = v;
-    opt.textContent = v;
-    sel.appendChild(opt);
-  });
-  if (current) sel.value = current;
-}
-
+// ============================================================
+// DASHBOARD
+// ============================================================
 function renderDashboard() {
-  let filtered = [...ventasData.remisiones];
-  const fechaFrom = document.getElementById('filterFechaFrom').value;
-  const fechaTo = document.getElementById('filterFechaTo').value;
-  const cliente = document.getElementById('filterCliente').value.toUpperCase();
-  const vendedor = document.getElementById('filterVendedor').value;
+  const filtered = getFilteredRemisiones('filterFechaFrom','filterFechaTo','filterVendedor','filterBodega','filterCliente');
+  const filteredLineas = getFilteredLineas('filterFechaFrom','filterFechaTo','filterBodega');
 
-  console.log('📊 renderDashboard - Filtros:', { fechaFrom, fechaTo, cliente, vendedor, totalRemisiones: filtered.length });
-
-  if (fechaFrom) {
-    filtered = filtered.filter(r => {
-      const match = r.fecha && r.fecha >= fechaFrom;
-      return match;
-    });
-    console.log('  ✅ Después fecha desde:', filtered.length);
+  // Data range info
+  const allFechas = ventasData.remisiones.map(r => r.fecha).filter(Boolean).sort();
+  if (allFechas.length > 0) {
+    document.getElementById('dataRangeInfo').style.display = 'block';
+    document.getElementById('fechaMin').textContent = allFechas[0];
+    document.getElementById('fechaMax').textContent = allFechas[allFechas.length - 1];
   }
+  document.getElementById('filteredCount').textContent = filtered.length;
 
-  if (fechaTo) {
-    filtered = filtered.filter(r => {
-      const match = r.fecha && r.fecha <= fechaTo;
-      return match;
-    });
-    console.log('  ✅ Después fecha hasta:', filtered.length);
-  }
+  const totalNeto = filtered.reduce((s, r) => s + r.monto_neto, 0);
+  const totalImpuestos = filtered.reduce((s, r) => s + r.impuesto_total, 0);
+  const ventaBase = totalNeto - totalImpuestos;
+  const margenContrib = ventaBase * MARGEN_VENTAS;
+  const mesesPeriodo = calcMeses('filterFechaFrom', 'filterFechaTo', filtered);
+  const labelP = `(${mesesPeriodo} mes${mesesPeriodo > 1 ? 'es' : ''})`;
+  const costosFijos = COSTOS_FIJOS * mesesPeriodo;
+  const utilidad = margenContrib - costosFijos;
+  const ventaMensual = mesesPeriodo > 0 ? ventaBase / mesesPeriodo : 0;
+  const breakEven = COSTOS_FIJOS / MARGEN_VENTAS;
 
-  if (cliente) {
-    filtered = filtered.filter(r => r.cliente.toUpperCase().includes(cliente));
-    console.log('  ✅ Después cliente:', filtered.length);
-  }
+  document.getElementById('kpiCards').innerHTML = [
+    { label: `Venta Base (sin IVA) ${labelP}`, value: fmt(ventaBase), change: `${filtered.length} remisiones | Imp: ${fmt(totalImpuestos)} | Neto: ${fmt(totalNeto)}` },
+    { label: 'MC (45%)', value: fmt(margenContrib), change: `CV: ${fmt(ventaBase - margenContrib)} | Prom/mes: ${fmt(margenContrib / mesesPeriodo)}` },
+    { label: `Costos Fijos ${labelP}`, value: fmt(costosFijos), change: `$135M/mes x ${mesesPeriodo}`, cls: 'neg' },
+    { label: `Utilidad ${labelP}`, value: fmt(Math.abs(utilidad)), change: utilidad >= 0 ? 'Ganancia' : 'Perdida', cls: utilidad >= 0 ? 'pos' : 'neg' },
+    { label: 'Break-Even Mensual', value: fmt(breakEven), change: ventaMensual >= breakEven ? 'Prom/mes cubre equilibrio' : `Falta ${fmt(breakEven - ventaMensual)}/mes`, cls: ventaMensual >= breakEven ? 'pos' : 'neg' },
+  ].map(k => `<div class="card"><div class="metric"><div class="label">${k.label}</div><div class="value ${k.cls||''}">${k.value}</div><div class="change">${k.change}</div></div></div>`).join('');
 
-  if (vendedor) {
-    filtered = filtered.filter(r => r.vendedor === vendedor);
-    console.log('  ✅ Después vendedor:', filtered.length);
-  }
-
-  console.log('📈 Datos finales a renderizar:', filtered.length, 'remisiones');
-
-  const totalVentas = filtered.reduce((s, r) => s + r.monto_neto, 0);
-  const totalRemisiones = filtered.length;
-  const margen = totalVentas * MARGEN_VENTAS;
-  const utilidad = margen - COSTOS_FIJOS;
-
-  const kpis = [
-    { label: 'Venta Total', value: fmt(totalVentas), change: totalRemisiones + ' remisiones' },
-    { label: 'Margen Bruto', value: fmt(margen), change: pct(MARGEN_VENTAS) },
-    { label: 'Costos Fijos', value: fmt(COSTOS_FIJOS), change: 'Mensuales' },
-    { label: 'Utilidad', value: fmt(utilidad), change: utilidad > 0 ? 'Ganancia' : 'Pérdida', class: utilidad > 0 ? 'pos' : 'neg' },
-    { label: 'Break-Even', value: fmt(COSTOS_FIJOS / MARGEN_VENTAS), change: totalVentas > COSTOS_FIJOS / MARGEN_VENTAS ? '✓ Cubierto' : '✗ Falta' }
-  ];
-
-  let h = '';
-  kpis.forEach(kpi => {
-    h += `<div class="card"><div class="metric"><div class="label">${kpi.label}</div><div class="value ${kpi.class || ''}">${kpi.value}</div><div class="change">${kpi.change}</div></div></div>`;
-  });
-  document.getElementById('kpiCards').innerHTML = h;
-
-  // Charts
-  const vendedorData = {};
-  filtered.forEach(r => {
-    if (!vendedorData[r.vendedor]) vendedorData[r.vendedor] = 0;
-    vendedorData[r.vendedor] += r.monto_neto;
-  });
-  const vendedores = Object.entries(vendedorData).sort((a, b) => b[1] - a[1]).slice(0, 10);
-
+  // Chart: Vendedores
+  const vendData = {};
+  filtered.forEach(r => { vendData[r.vendedor] = (vendData[r.vendedor] || 0) + r.venta_base; });
+  const vendSorted = Object.entries(vendData).sort((a,b) => b[1] - a[1]).slice(0, 10);
   destroyChart('chartVendedores');
   charts.chartVendedores = new Chart(document.getElementById('chartVendedores'), {
-    type: 'bar',
-    data: {
-      labels: vendedores.map(([n]) => n.substring(0, 20)),
-      datasets: [{ label: 'Ventas', data: vendedores.map(([, v]) => v), backgroundColor: '#10b981' }]
-    },
+    type: 'bar', data: { labels: vendSorted.map(([n]) => n.substring(0,20)), datasets: [{ label: 'Venta Base', data: vendSorted.map(([,v]) => v), backgroundColor: '#10b981' }] },
     options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
   });
 
-  const clienteData = {};
-  filtered.forEach(r => {
-    if (!clienteData[r.cliente]) clienteData[r.cliente] = 0;
-    clienteData[r.cliente] += r.monto_neto;
-  });
-  const clientes = Object.entries(clienteData).sort((a, b) => b[1] - a[1]).slice(0, 10);
-
+  // Chart: Clientes
+  const cliData = {};
+  filtered.forEach(r => { cliData[r.cliente] = (cliData[r.cliente] || 0) + r.venta_base; });
+  const cliSorted = Object.entries(cliData).sort((a,b) => b[1] - a[1]).slice(0, 10);
   destroyChart('chartClientes');
   charts.chartClientes = new Chart(document.getElementById('chartClientes'), {
-    type: 'doughnut',
-    data: {
-      labels: clientes.map(([n]) => n.substring(0, 20)),
-      datasets: [{ data: clientes.map(([, v]) => v), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#ef4444', '#f97316', '#6366f1', '#14b8a6'] }]
-    },
+    type: 'doughnut', data: { labels: cliSorted.map(([n]) => n.substring(0,20)), datasets: [{ data: cliSorted.map(([,v]) => v), backgroundColor: CHART_COLORS }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Chart: Bodegas
+  const bodData = {};
+  filteredLineas.forEach(l => { bodData[l.bodega || 'Sin Bodega'] = (bodData[l.bodega || 'Sin Bodega'] || 0) + l.precio_neto - l.impuesto; });
+  const bodSorted = Object.entries(bodData).sort((a,b) => b[1] - a[1]);
+  destroyChart('chartBodegas');
+  charts.chartBodegas = new Chart(document.getElementById('chartBodegas'), {
+    type: 'bar', data: { labels: bodSorted.map(([n]) => n.substring(0,25)), datasets: [{ label: 'Venta Base', data: bodSorted.map(([,v]) => v), backgroundColor: '#3b82f6' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+
+  // Chart: Top Productos
+  const prodData = {};
+  filteredLineas.forEach(l => {
+    const key = l.referencia || l.descripcion || 'N/A';
+    if (!prodData[key]) prodData[key] = { venta: 0, qty: 0 };
+    prodData[key].venta += l.precio_neto - l.impuesto;
+    prodData[key].qty += l.cantidad;
+  });
+  const prodSorted = Object.entries(prodData).sort((a,b) => b[1].venta - a[1].venta).slice(0, 10);
+  destroyChart('chartProductos');
+  charts.chartProductos = new Chart(document.getElementById('chartProductos'), {
+    type: 'bar', data: { labels: prodSorted.map(([n]) => n.substring(0,20)), datasets: [{ label: 'Venta Base', data: prodSorted.map(([,v]) => v.venta), backgroundColor: '#f59e0b' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
   });
 }
 
+// ============================================================
+// CLIENTES
+// ============================================================
 function renderClientes() {
-  let h = '<table><thead><tr><th>#</th><th>Cliente</th><th class="text-right">Monto</th><th class="text-right">Remisiones</th><th class="text-right">Ticket Prom</th></tr></thead><tbody>';
-  const sorted = Object.entries(ventasData.clientes).sort((a, b) => b[1].monto - a[1].monto);
-  sorted.forEach(([name, data], i) => {
-    h += `<tr><td>${i + 1}</td><td>${name}</td><td class="text-right">${fmt(data.monto)}</td><td class="text-right">${data.count}</td><td class="text-right">${fmt(data.monto / data.count)}</td></tr>`;
+  const filtered = getFilteredRemisiones('cliFilterFrom','cliFilterTo', null, 'cliFilterBodega', null);
+  const search = document.getElementById('searchCliente').value.toUpperCase().trim();
+
+  const clienteMap = {};
+  filtered.forEach(r => {
+    if (search && !r.cliente.toUpperCase().includes(search)) return;
+    if (!clienteMap[r.cliente]) clienteMap[r.cliente] = { count: 0, venta_base: 0, impuesto: 0, neto: 0 };
+    clienteMap[r.cliente].count++;
+    clienteMap[r.cliente].venta_base += r.venta_base;
+    clienteMap[r.cliente].impuesto += r.impuesto_total;
+    clienteMap[r.cliente].neto += r.monto_neto;
+  });
+
+  const sorted = Object.entries(clienteMap).sort((a,b) => b[1].venta_base - a[1].venta_base);
+  let h = '<table><thead><tr><th>#</th><th>Cliente</th><th class="text-right">Venta Base</th><th class="text-right">Impuestos</th><th class="text-right">Total Neto</th><th class="text-right">Remisiones</th><th class="text-right">Ticket Prom</th></tr></thead><tbody>';
+  sorted.forEach(([name, d], i) => {
+    h += `<tr><td>${i+1}</td><td>${name}</td><td class="text-right">${fmt(d.venta_base)}</td><td class="text-right">${fmt(d.impuesto)}</td><td class="text-right">${fmt(d.neto)}</td><td class="text-right">${d.count}</td><td class="text-right">${fmt(d.venta_base / d.count)}</td></tr>`;
   });
   h += '</tbody></table>';
   document.getElementById('clientesTable').innerHTML = h;
 }
 
-function filterClientesTable() {
-  const q = document.getElementById('searchCliente').value.toUpperCase();
-  document.querySelectorAll('#clientesTable tbody tr').forEach(r => {
-    r.style.display = (!q || r.cells[1].textContent.includes(q)) ? '' : 'none';
-  });
-}
-
+// ============================================================
+// VENDEDORES
+// ============================================================
 function renderVendedores() {
-  let h = '<table><thead><tr><th>#</th><th>Vendedor</th><th class="text-right">Monto Total</th><th class="text-right">Remisiones</th><th class="text-right">Ticket Prom</th></tr></thead><tbody>';
-  const sorted = Object.entries(ventasData.vendedores).sort((a, b) => b[1].monto - a[1].monto);
-  sorted.forEach(([name, data], i) => {
-    h += `<tr><td>${i + 1}</td><td>${name}</td><td class="text-right">${fmt(data.monto)}</td><td class="text-right">${data.count}</td><td class="text-right">${fmt(data.monto / data.count)}</td></tr>`;
+  const filtered = getFilteredRemisiones('venFilterFrom','venFilterTo', null, 'venFilterBodega', null);
+  const search = document.getElementById('searchVendedor').value.toUpperCase().trim();
+
+  const vendMap = {};
+  filtered.forEach(r => {
+    if (search && !r.vendedor.toUpperCase().includes(search)) return;
+    if (!vendMap[r.vendedor]) vendMap[r.vendedor] = { count: 0, venta_base: 0, impuesto: 0, neto: 0 };
+    vendMap[r.vendedor].count++;
+    vendMap[r.vendedor].venta_base += r.venta_base;
+    vendMap[r.vendedor].impuesto += r.impuesto_total;
+    vendMap[r.vendedor].neto += r.monto_neto;
+  });
+
+  const sorted = Object.entries(vendMap).sort((a,b) => b[1].venta_base - a[1].venta_base);
+  let h = '<table><thead><tr><th>#</th><th>Vendedor</th><th class="text-right">Venta Base</th><th class="text-right">Impuestos</th><th class="text-right">Total Neto</th><th class="text-right">Remisiones</th><th class="text-right">Ticket Prom</th></tr></thead><tbody>';
+  sorted.forEach(([name, d], i) => {
+    h += `<tr><td>${i+1}</td><td>${name}</td><td class="text-right">${fmt(d.venta_base)}</td><td class="text-right">${fmt(d.impuesto)}</td><td class="text-right">${fmt(d.neto)}</td><td class="text-right">${d.count}</td><td class="text-right">${fmt(d.venta_base / d.count)}</td></tr>`;
   });
   h += '</tbody></table>';
   document.getElementById('vendedoresTable').innerHTML = h;
 }
 
-function filterVendedoresTable() {
-  const q = document.getElementById('searchVendedor').value.toUpperCase();
-  document.querySelectorAll('#vendedoresTable tbody tr').forEach(r => {
-    r.style.display = (!q || r.cells[1].textContent.includes(q)) ? '' : 'none';
+// ============================================================
+// PRODUCTOS
+// ============================================================
+function renderProductos() {
+  const filteredLineas = getFilteredLineas('prodFilterFrom','prodFilterTo','prodFilterBodega');
+  const search = document.getElementById('searchProducto').value.toUpperCase().trim();
+
+  const prodMap = {};
+  const bodegaUnits = {};
+  const bodegaVenta = {};
+  let totalUnidades = 0, totalBodegas = new Set();
+
+  filteredLineas.forEach(l => {
+    if (search && !l.referencia.toUpperCase().includes(search) && !l.descripcion.toUpperCase().includes(search)) return;
+    const key = l.referencia || 'SIN-REF';
+    if (!prodMap[key]) prodMap[key] = { referencia: key, descripcion: l.descripcion, cantidad: 0, venta_base: 0, impuesto: 0, neto: 0, bodegas: new Set() };
+    prodMap[key].cantidad += l.cantidad;
+    prodMap[key].venta_base += l.precio_neto - l.impuesto;
+    prodMap[key].impuesto += l.impuesto;
+    prodMap[key].neto += l.precio_neto;
+    if (l.bodega) prodMap[key].bodegas.add(l.bodega);
+    totalUnidades += l.cantidad;
+    if (l.bodega) totalBodegas.add(l.bodega);
+
+    const bk = l.bodega || 'Sin Bodega';
+    bodegaUnits[bk] = (bodegaUnits[bk] || 0) + l.cantidad;
+    bodegaVenta[bk] = (bodegaVenta[bk] || 0) + (l.precio_neto - l.impuesto);
   });
+
+  const sorted = Object.values(prodMap).sort((a,b) => b.cantidad - a.cantidad);
+  const topRef = sorted[0];
+  document.getElementById('prodKpis').innerHTML = [
+    { label: 'Total Unidades', value: Math.round(totalUnidades).toLocaleString('es-CO') },
+    { label: 'Lineas de Produccion', value: totalBodegas.size },
+    { label: 'Referencia mas vendida', value: topRef ? topRef.referencia.substring(0,15) : 'N/A', change: topRef ? `${Math.round(topRef.cantidad)} uds — ${topRef.descripcion.substring(0,30)}` : '' },
+  ].map(k => `<div class="card"><div class="metric"><div class="label">${k.label}</div><div class="value">${k.value}</div>${k.change ? `<div class="change">${k.change}</div>` : ''}</div></div>`).join('');
+
+  // Chart: Unidades por Bodega
+  const bodSortedU = Object.entries(bodegaUnits).sort((a,b) => b[1] - a[1]);
+  destroyChart('chartUnidadesBodega');
+  charts.chartUnidadesBodega = new Chart(document.getElementById('chartUnidadesBodega'), {
+    type: 'bar', data: { labels: bodSortedU.map(([n]) => n), datasets: [{ label: 'Unidades', data: bodSortedU.map(([,v]) => v), backgroundColor: CHART_COLORS }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+
+  // Chart: Venta Base por Bodega
+  const bodSortedV = Object.entries(bodegaVenta).sort((a,b) => b[1] - a[1]);
+  destroyChart('chartVentaBodega');
+  charts.chartVentaBodega = new Chart(document.getElementById('chartVentaBodega'), {
+    type: 'doughnut', data: { labels: bodSortedV.map(([n]) => n), datasets: [{ data: bodSortedV.map(([,v]) => v), backgroundColor: CHART_COLORS }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Table
+  let h = '<table><thead><tr><th>#</th><th>Referencia</th><th>Descripcion</th><th class="text-right">Cantidad</th><th class="text-right">Venta Base</th><th class="text-right">Impuestos</th><th class="text-right">Neto</th><th>Bodegas</th></tr></thead><tbody>';
+  sorted.forEach((p, i) => {
+    h += `<tr><td>${i+1}</td><td><strong>${p.referencia}</strong></td><td>${p.descripcion.substring(0,40)}</td><td class="text-right">${Math.round(p.cantidad).toLocaleString('es-CO')}</td><td class="text-right">${fmt(p.venta_base)}</td><td class="text-right">${fmt(p.impuesto)}</td><td class="text-right">${fmt(p.neto)}</td><td>${[...p.bodegas].join(', ')}</td></tr>`;
+  });
+  h += '</tbody></table>';
+  document.getElementById('productosTable').innerHTML = h;
+}
+
+// ============================================================
+// CXC
+// ============================================================
+// Extrae dias de credito de formas_pago: "30 dias $164000.0" → 30, "Contado $398500.0" → 0
+function parseDiasCredito(formasPago) {
+  if (!formasPago) return 0;
+  const s = formasPago.toLowerCase();
+  if (s.includes('contado')) return 0;
+  const m = s.match(/(\d+)\s*d[ií]as?/);
+  return m ? parseInt(m[1]) : 0;
+}
+
+// Calcula fecha de vencimiento = fecha_entrega + dias_credito
+function calcFechaVencimiento(r) {
+  const base = r.fecha_entrega || r.fecha;
+  if (!base) return null;
+  const dias = parseDiasCredito(r.formas_pago);
+  const d = new Date(base);
+  d.setDate(d.getDate() + dias);
+  return d;
+}
+
+function esPagado(estadoCxc) {
+  if (!estadoCxc) return false;
+  return estadoCxc.toLowerCase().includes('pago total');
+}
+
+// Obtener pendiente real de cobro: si hay documento CxC cargado, usar ese monto; sino, usar monto_neto si no está pagado
+function getPendienteCobro(r) {
+  const pc = ventasData.pendientes_cobro || {};
+  if (Object.keys(pc).length > 0) {
+    return pc[r.id_remisional] !== undefined ? pc[r.id_remisional] : 0;
+  }
+  // Sin documento CxC: si pagado = 0, sino monto_neto
+  return r._pagado ? 0 : r.monto_neto;
 }
 
 function renderCxC() {
-  const totales = { total: 0, pago: 0, porCobrar: 0 };
-  ventasData.remisiones.forEach(r => {
-    totales.total += r.monto_neto;
-    if (r.estado_cxc === 'Pago Total') totales.pago += r.monto_neto;
-    else totales.porCobrar += r.monto_neto;
+  const from = document.getElementById('cxcFilterFrom').value;
+  const to = document.getElementById('cxcFilterTo').value;
+  const vendedor = document.getElementById('cxcFilterVendedor').value;
+  const estado = document.getElementById('filterEstadoCxC').value;
+  const search = document.getElementById('searchCxC').value.toUpperCase().trim();
+
+  let data = [...ventasData.remisiones];
+  if (from) data = data.filter(r => r.fecha && r.fecha >= from);
+  if (to) data = data.filter(r => r.fecha && r.fecha <= to);
+  if (vendedor) data = data.filter(r => r.vendedor === vendedor);
+  if (estado) data = data.filter(r => r.estado_cxc && r.estado_cxc.toLowerCase().includes(estado));
+  if (search) data = data.filter(r => r.cliente.toUpperCase().includes(search) || r.id_remisional.includes(search));
+
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  const tienePendientesDoc = Object.keys(ventasData.pendientes_cobro || {}).length > 0;
+
+  // Enriquecer con fecha vencimiento y dias mora
+  data.forEach(r => {
+    r._pagado = esPagado(r.estado_cxc);
+    r._fechaVenc = calcFechaVencimiento(r);
+    r._pendienteCobro = getPendienteCobro(r);
+    // Si hay doc de pendientes, pagado = pendiente es 0
+    if (tienePendientesDoc) {
+      r._pagado = r._pendienteCobro === 0;
+    }
+    if (!r._pagado && r._fechaVenc) {
+      r._diasMora = Math.round((hoy - r._fechaVenc) / 86400000);
+    } else {
+      r._diasMora = 0;
+    }
+    r._vencida = !r._pagado && r._diasMora > 0;
   });
 
-  document.getElementById('totalCxC').textContent = fmt(totales.total);
-  document.getElementById('totalPago').textContent = fmt(totales.pago);
-  document.getElementById('totalPorCobrar').textContent = fmt(totales.porCobrar);
+  // KPIs
+  const totales = { total: 0, pagado: 0, pendiente: 0, vencido: 0, porVencer: 0 };
+  data.forEach(r => {
+    totales.total += r.monto_neto;
+    if (r._pagado) {
+      totales.pagado += r.monto_neto;
+    } else if (r._vencida) {
+      totales.vencido += r._pendienteCobro;
+    } else {
+      totales.porVencer += r._pendienteCobro;
+    }
+    if (!r._pagado) totales.pendiente += r._pendienteCobro;
+  });
 
-  let h = '<table><thead><tr><th>Cliente</th><th>Remisión</th><th class="text-right">Monto</th><th>Estado</th><th>Forma Pago</th></tr></thead><tbody>';
-  ventasData.remisiones.forEach(r => {
-    h += `<tr><td>${r.cliente}</td><td>${r.descripcion.substring(0, 30)}</td><td class="text-right">${fmt(r.monto_neto)}</td><td>${r.estado_cxc}</td><td>-</td></tr>`;
+  document.getElementById('cxcKpis').innerHTML = [
+    { label: 'Total Facturado', value: fmt(totales.total) },
+    { label: 'Pagado', value: fmt(totales.pagado), cls: 'pos' },
+    { label: 'Pendiente Total', value: fmt(totales.pendiente), cls: 'neg' },
+    { label: 'Vencido', value: fmt(totales.vencido), cls: 'neg', change: 'Fuera de plazo' },
+    { label: 'Por Vencer', value: fmt(totales.porVencer), cls: '', change: 'Dentro de plazo' },
+  ].map(k => `<div class="card"><div class="metric"><div class="label">${k.label}</div><div class="value ${k.cls||''}">${k.value}</div>${k.change ? `<div class="change">${k.change}</div>` : ''}</div></div>`).join('');
+
+  // Solo pendientes (NO pagados) para morosos y vencidas
+  const noPagados = data.filter(r => !r._pagado);
+
+  // Top clientes morosos (solo vencidos, ordenados por monto vencido)
+  const morosoMap = {};
+  noPagados.filter(r => r._vencida).forEach(r => {
+    if (!morosoMap[r.cliente]) morosoMap[r.cliente] = { monto: 0, count: 0, maxDias: 0 };
+    morosoMap[r.cliente].monto += r._pendienteCobro;
+    morosoMap[r.cliente].count++;
+    morosoMap[r.cliente].maxDias = Math.max(morosoMap[r.cliente].maxDias, r._diasMora);
+  });
+  const morosos = Object.entries(morosoMap).sort((a,b) => b[1].monto - a[1].monto);
+  if (morosos.length > 0) {
+    let mh = '<div style="font-size:13px;line-height:2.2;">';
+    morosos.slice(0, 7).forEach(([cli, d], i) => {
+      mh += `<div>${i+1}. <strong>${cli}</strong> — <span class="neg">${fmt(d.monto)}</span> (${d.count} rem, max ${d.maxDias} dias mora)</div>`;
+    });
+    mh += '</div>';
+    document.getElementById('clienteMoroso').innerHTML = mh;
+  } else {
+    document.getElementById('clienteMoroso').innerHTML = '<div style="color:var(--green);padding:20px;">Sin clientes con facturas vencidas</div>';
+  }
+
+  // Remisiones mas vencidas (ordenadas por dias de mora desc)
+  const vencidas = noPagados.filter(r => r._vencida).sort((a,b) => b._diasMora - a._diasMora);
+  if (vencidas.length > 0) {
+    let ph = '<div style="font-size:13px;line-height:2.2;">';
+    vencidas.slice(0, 8).forEach(r => {
+      const fv = r._fechaVenc ? r._fechaVenc.toISOString().substring(0,10) : '?';
+      ph += `<div>Rem #${r.id_remisional} — ${r.cliente.substring(0,22)} — <span class="neg">${fmt(r._pendienteCobro)}</span> — Venc: ${fv} (<strong>${r._diasMora} dias mora</strong>)</div>`;
+    });
+    ph += '</div>';
+    document.getElementById('remisionesPendientes').innerHTML = ph;
+  } else {
+    document.getElementById('remisionesPendientes').innerHTML = '<div style="color:var(--green);padding:20px;">Sin remisiones vencidas</div>';
+  }
+
+  // Chart: Pendiente por Estado
+  const estadoMap = {};
+  noPagados.forEach(r => {
+    const key = r.estado_cxc || 'Sin Estado';
+    estadoMap[key] = (estadoMap[key] || 0) + r._pendienteCobro;
+  });
+  const estadoSorted = Object.entries(estadoMap).sort((a,b) => b[1] - a[1]);
+  destroyChart('chartCxCEstado');
+  charts.chartCxCEstado = new Chart(document.getElementById('chartCxCEstado'), {
+    type: 'doughnut', data: { labels: estadoSorted.map(([n]) => n), datasets: [{ data: estadoSorted.map(([,v]) => v), backgroundColor: ['#ef4444','#f59e0b','#ec4899','#8b5cf6','#3b82f6'] }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Chart: Pendiente por Cliente Top 10
+  const cliPendMap = {};
+  noPagados.forEach(r => { cliPendMap[r.cliente] = (cliPendMap[r.cliente] || 0) + r._pendienteCobro; });
+  const cliPendSorted = Object.entries(cliPendMap).sort((a,b) => b[1] - a[1]).slice(0, 10);
+  destroyChart('chartCxCCliente');
+  charts.chartCxCCliente = new Chart(document.getElementById('chartCxCCliente'), {
+    type: 'bar', data: { labels: cliPendSorted.map(([n]) => n.substring(0,18)), datasets: [{ label: 'Pendiente', data: cliPendSorted.map(([,v]) => v), backgroundColor: '#ef4444' }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+
+  // Table
+  const pendCol = tienePendientesDoc ? '<th class="text-right">Pdte. Cobro</th>' : '';
+  let h = `<table><thead><tr><th>Rem</th><th>F. Creacion</th><th>F. Entrega</th><th>F. Vencimiento</th><th>Cliente</th><th>Vendedor</th><th class="text-right">Neto</th>${pendCol}<th>Estado</th><th>Condicion</th><th>Dias Mora</th></tr></thead><tbody>`;
+  data.sort((a,b) => b._diasMora - a._diasMora).forEach(r => {
+    const badge = r._pagado ? 'badge-green' : r._vencida ? 'badge-red' : 'badge-orange';
+    const fv = r._fechaVenc ? r._fechaVenc.toISOString().substring(0,10) : '-';
+    const diasCredito = parseDiasCredito(r.formas_pago);
+    const condicion = diasCredito === 0 ? 'Contado' : `${diasCredito} dias`;
+    const moraCell = r._pagado ? '-' : r._vencida ? `<span class="neg"><strong>${r._diasMora}</strong></span>` : `<span style="color:var(--green)">Al dia</span>`;
+    const pendTd = tienePendientesDoc ? `<td class="text-right ${r._pendienteCobro > 0 ? 'neg' : 'pos'}">${fmt(r._pendienteCobro)}</td>` : '';
+    h += `<tr><td>${r.id_remisional}</td><td>${r.fecha || '-'}</td><td>${r.fecha_entrega || '-'}</td><td>${fv}</td><td>${r.cliente.substring(0,25)}</td><td>${r.vendedor.substring(0,20)}</td><td class="text-right">${fmt(r.monto_neto)}</td>${pendTd}<td><span class="badge ${badge}">${r.estado_cxc}</span></td><td>${condicion}</td><td class="text-center">${moraCell}</td></tr>`;
   });
   h += '</tbody></table>';
   document.getElementById('cxcTable').innerHTML = h;
 }
 
-function filterCxCTable() {
-  const estado = document.getElementById('filterEstadoCxC').value;
-  const q = document.getElementById('searchCxC').value.toUpperCase();
-  document.querySelectorAll('#cxcTable tbody tr').forEach(r => {
-    const match = (!estado || r.cells[3].textContent.includes(estado)) && (!q || r.cells[0].textContent.includes(q) || r.cells[1].textContent.includes(q));
-    r.style.display = match ? '' : 'none';
-  });
-}
-
+// ============================================================
+// RENTABILIDAD
+// ============================================================
 function renderRentabilidad() {
-  const totalVentas = ventasData.remisiones.reduce((s, r) => s + r.monto_neto, 0);
-  const margen = totalVentas * MARGEN_VENTAS;
-  const utilidad = margen - COSTOS_FIJOS;
-  const breakEven = COSTOS_FIJOS / MARGEN_VENTAS;
+  const from = document.getElementById('rentFechaFrom').value;
+  const to = document.getElementById('rentFechaTo').value;
 
-  document.getElementById('rentVentaTotal').textContent = fmt(totalVentas);
-  document.getElementById('rentMargen').textContent = fmt(margen);
-  document.getElementById('rentUtilidad').textContent = fmt(Math.max(0, utilidad));
-  document.getElementById('rentUtilidadStatus').textContent = utilidad > 0 ? '✓ Ganancia' : '✗ Pérdida';
-  if (utilidad <= 0) document.getElementById('rentUtilidad').style.color = 'var(--red)';
+  let datos = [...ventasData.remisiones];
+  if (from) datos = datos.filter(r => r.fecha && r.fecha >= from);
+  if (to) datos = datos.filter(r => r.fecha && r.fecha <= to);
 
-  let breakEvenHtml = `<div style="padding:20px;text-align:center;"><div style="font-size:28px;font-weight:700;color:var(--orange);">${fmt(breakEven)}</div><div style="color:var(--text2);margin-top:8px;">Punto de Equilibrio</div><div style="margin-top:16px;color:var(--text2);font-size:13px;line-height:1.6;"><p>Necesitas vender <strong>${fmt(breakEven)}</strong> para cubrir costos fijos.</p><p style="margin-top:8px;">Venta Actual: <strong>${fmt(totalVentas)}</strong></p><p style="margin-top:8px;color:${totalVentas >= breakEven ? 'var(--green)' : 'var(--red)'}">${totalVentas >= breakEven ? '✓ Cubierto' : '✗ Falta: ' + fmt(breakEven - totalVentas)}</p></div></div>`;
-  document.getElementById('breakEvenContent').innerHTML = breakEvenHtml;
-}
+  const totalNeto = datos.reduce((s,r) => s + r.monto_neto, 0);
+  const totalImp = datos.reduce((s,r) => s + r.impuesto_total, 0);
+  const ventaBase = totalNeto - totalImp;
+  const costosVar = ventaBase * (1 - MARGEN_VENTAS);
+  const margenContrib = ventaBase * MARGEN_VENTAS;
+  const breakEvenMes = COSTOS_FIJOS / MARGEN_VENTAS;
 
-function renderNomina() {
-  const nominaTransactions = []; // Placeholder - en v2 vendrá de Contabilidad
-  document.getElementById('nominaTotal').textContent = fmt(0);
-  document.getElementById('nominaEmpleados').textContent = '0';
-  document.getElementById('nominaPromedio').textContent = fmt(0);
-}
+  let mesesPeriodo = calcMeses('rentFechaFrom', 'rentFechaTo', datos);
+  const costosFijos = COSTOS_FIJOS * mesesPeriodo;
+  const utilidad = margenContrib - costosFijos;
+  const ventaMensual = ventaBase / mesesPeriodo;
+  const labelP = `(${mesesPeriodo} mes${mesesPeriodo > 1 ? 'es' : ''})`;
 
-function destroyChart(id) {
-  if (charts[id]) charts[id].destroy();
+  // KPIs
+  document.getElementById('rentKpis').innerHTML = [
+    { label: `Venta Base (sin IVA) ${labelP}`, value: fmt(ventaBase), change: `Neto con IVA: ${fmt(totalNeto)}` },
+    { label: `Costos Variables ${labelP}`, value: fmt(costosVar), change: `${((1-MARGEN_VENTAS)*100).toFixed(0)}% de venta base`, cls: 'neg' },
+    { label: `MC (${(MARGEN_VENTAS*100).toFixed(0)}%) ${labelP}`, value: fmt(margenContrib), change: `Prom/mes: ${fmt(margenContrib/mesesPeriodo)}`, cls: 'pos' },
+    { label: `Costos Fijos ${labelP}`, value: fmt(costosFijos), change: `$135M/mes x ${mesesPeriodo}`, cls: 'neg' },
+    { label: `Utilidad ${labelP}`, value: fmt(Math.abs(utilidad)), change: utilidad >= 0 ? 'Ganancia' : 'Perdida', cls: utilidad >= 0 ? 'pos' : 'neg' },
+    { label: `IVA Facturado ${labelP}`, value: fmt(totalImp), change: 'Pago trimestral', cls: '' },
+  ].map(k => `<div class="card"><div class="metric"><div class="label">${k.label}</div><div class="value ${k.cls||''}">${k.value}</div><div class="change">${k.change}</div></div></div>`).join('');
+
+  // Estructura de costos
+  const totalCostos = costosVar + costosFijos;
+  const pctCV = totalCostos > 0 ? (costosVar/totalCostos*100).toFixed(1) : 0;
+  const pctCF = totalCostos > 0 ? (costosFijos/totalCostos*100).toFixed(1) : 0;
+  const margenNeto = ventaBase > 0 ? (utilidad/ventaBase*100).toFixed(1) : 0;
+  document.getElementById('costStructure').innerHTML = `
+    <div style="font-size:13px;line-height:2.5;">
+      <div style="display:flex;justify-content:space-between;"><span>Venta Base (sin IVA)</span><strong>${fmt(ventaBase)}</strong></div>
+      <div style="display:flex;justify-content:space-between;color:var(--red);"><span>(-) Costos Variables (${((1-MARGEN_VENTAS)*100).toFixed(0)}%)</span><strong>${fmt(costosVar)}</strong></div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:4px;color:var(--green);"><span><strong>= Margen de Contribucion (${(MARGEN_VENTAS*100).toFixed(0)}%)</strong></span><strong>${fmt(margenContrib)}</strong></div>
+      <div style="display:flex;justify-content:space-between;color:var(--red);"><span>(-) Costos Fijos</span><strong>${fmt(costosFijos)}</strong></div>
+      <div style="display:flex;justify-content:space-between;border-top:2px solid var(--border);padding-top:4px;color:${utilidad>=0?'var(--green)':'var(--red)'}"><span><strong>= Utilidad Operativa</strong></span><strong>${fmt(utilidad)}</strong></div>
+      <div style="margin-top:10px;font-size:12px;color:var(--text2);">Margen neto: ${margenNeto}% | CV: ${pctCV}% del costo total | CF: ${pctCF}% del costo total</div>
+    </div>`;
+
+  // Break-even
+  const cubreMes = ventaMensual >= breakEvenMes;
+  document.getElementById('breakEvenContent').innerHTML = `
+    <div style="padding:10px;text-align:center;">
+      <div style="font-size:28px;font-weight:700;color:var(--orange);">${fmt(breakEvenMes)}</div>
+      <div style="color:var(--text2);margin-top:4px;font-size:12px;">Punto de Equilibrio Mensual</div>
+      <div style="margin-top:12px;font-size:13px;line-height:2;color:var(--text2);">
+        <div>Venta base prom/mes: <strong style="color:var(--text)">${fmt(ventaMensual)}</strong></div>
+        <div>MC prom/mes: <strong style="color:var(--text)">${fmt(ventaMensual * MARGEN_VENTAS)}</strong></div>
+        <div>Costo fijo mensual: <strong style="color:var(--red)">${fmt(COSTOS_FIJOS)}</strong></div>
+        <div style="margin-top:6px;font-size:14px;font-weight:600;color:${cubreMes?'var(--green)':'var(--red)'}">
+          ${cubreMes ? 'Cubre equilibrio' : `Falta ${fmt(breakEvenMes - ventaMensual)}/mes`}
+        </div>
+      </div>
+    </div>`;
+
+  // Chart: Tendencia mensual con MC y CF
+  const monthlyData = {};
+  datos.forEach(r => {
+    if (!r.fecha) return;
+    const mes = r.fecha.substring(0, 7);
+    if (!monthlyData[mes]) monthlyData[mes] = { venta: 0, imp: 0 };
+    monthlyData[mes].venta += r.venta_base;
+    monthlyData[mes].imp += r.impuesto_total;
+  });
+  const meses = Object.keys(monthlyData).sort();
+  destroyChart('chartRentabilidad');
+  charts.chartRentabilidad = new Chart(document.getElementById('chartRentabilidad'), {
+    type: 'bar', data: {
+      labels: meses,
+      datasets: [
+        { label: 'MC (45%)', data: meses.map(m => monthlyData[m].venta * MARGEN_VENTAS), backgroundColor: '#10b981' },
+        { label: 'Costo Variable', data: meses.map(m => monthlyData[m].venta * (1-MARGEN_VENTAS)), backgroundColor: '#ef4444' },
+        { label: 'IVA', data: meses.map(m => monthlyData[m].imp), backgroundColor: '#f59e0b' },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'top' } } }
+  });
+
+  // Chart: Estructura costos dona
+  destroyChart('chartCostos');
+  charts.chartCostos = new Chart(document.getElementById('chartCostos'), {
+    type: 'doughnut', data: {
+      labels: ['Costos Variables', 'Costos Fijos', utilidad >= 0 ? 'Utilidad' : 'Perdida'],
+      datasets: [{ data: [costosVar, costosFijos, Math.abs(utilidad)], backgroundColor: utilidad >= 0 ? ['#ef4444','#f59e0b','#10b981'] : ['#ef4444','#f59e0b','#ec4899'] }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Calendario de impuestos trimestral
+  const quarterData = {};
+  datos.forEach(r => {
+    if (!r.fecha) return;
+    const y = r.fecha.substring(0,4);
+    const m = parseInt(r.fecha.substring(5,7));
+    const q = Math.ceil(m / 3);
+    const key = `${y}-Q${q}`;
+    quarterData[key] = (quarterData[key] || 0) + r.impuesto_total;
+  });
+  const quarters = Object.keys(quarterData).sort();
+  const mesLabels = { 'Q1': 'Ene-Mar (pago Abr)', 'Q2': 'Abr-Jun (pago Jul)', 'Q3': 'Jul-Sep (pago Oct)', 'Q4': 'Oct-Dic (pago Ene+1)' };
+  let taxH = '<table><thead><tr><th>Trimestre</th><th>Periodo</th><th class="text-right">IVA Facturado</th><th>Fecha Pago Estimada</th></tr></thead><tbody>';
+  quarters.forEach(q => {
+    const [yr, qn] = q.split('-');
+    const periodo = mesLabels[qn] || qn;
+    const pagoMap = { 'Q1': `${yr}-04-15`, 'Q2': `${yr}-07-15`, 'Q3': `${yr}-10-15`, 'Q4': `${parseInt(yr)+1}-01-15` };
+    const fechaPago = pagoMap[qn] || '';
+    const hoy = new Date().toISOString().substring(0,10);
+    const vencido = fechaPago && fechaPago < hoy;
+    const proximo = fechaPago && fechaPago >= hoy && fechaPago <= new Date(Date.now() + 60*86400000).toISOString().substring(0,10);
+    const cls = vencido ? 'neg' : proximo ? 'style="color:var(--orange)"' : '';
+    const attr = cls.startsWith('style') ? cls : `class="${cls}"`;
+    taxH += `<tr><td><strong>${q}</strong></td><td>${periodo}</td><td class="text-right"><strong>${fmt(quarterData[q])}</strong></td><td ${attr}>${fechaPago}${vencido ? ' (VENCIDO)' : proximo ? ' (PROXIMO)' : ''}</td></tr>`;
+  });
+  taxH += '</tbody></table>';
+  const totalTax = quarters.reduce((s,q) => s + quarterData[q], 0);
+  taxH += `<div style="margin-top:12px;font-size:13px;color:var(--text2);">Total IVA acumulado: <strong style="color:var(--orange)">${fmt(totalTax)}</strong> | Promedio trimestral: <strong>${fmt(totalTax / Math.max(1, quarters.length))}</strong></div>`;
+  document.getElementById('taxCalendar').innerHTML = taxH;
 }
 
 // ============================================================
-// EVENT LISTENERS - FILTROS
+// ANALISIS GERENCIAL
 // ============================================================
-document.getElementById('filterFechaFrom').addEventListener('change', () => {
-  console.log('📅 Fecha desde cambiada');
-  renderDashboard();
+function renderAnalisis() {
+  const from = document.getElementById('anaFilterFrom').value;
+  const to = document.getElementById('anaFilterTo').value;
+
+  let datos = [...ventasData.remisiones];
+  if (from) datos = datos.filter(r => r.fecha && r.fecha >= from);
+  if (to) datos = datos.filter(r => r.fecha && r.fecha <= to);
+
+  let lineas = [...ventasData.lineas];
+  if (from || to) {
+    const validIds = new Set();
+    datos.forEach(r => validIds.add(r.id_remisional));
+    lineas = lineas.filter(l => validIds.has(l.id_remisional));
+  }
+
+  const totalVentaBase = datos.reduce((s,r) => s + r.venta_base, 0);
+  const totalNeto = datos.reduce((s,r) => s + r.monto_neto, 0);
+  const totalDesc = datos.reduce((s,r) => s + r.descuento_total, 0);
+  const totalBruto = datos.reduce((s,r) => s + r.precio_bruto, 0);
+  const totalUnidades = lineas.reduce((s,l) => s + l.cantidad, 0);
+  const noPagados = datos.filter(r => !esPagado(r.estado_cxc));
+  const totalPendiente = noPagados.reduce((s,r) => s + r.monto_neto, 0);
+
+  // DSO (Days Sales Outstanding)
+  const meses = calcMeses('anaFilterFrom', 'anaFilterTo', datos);
+  const ventaDiaria = totalNeto / Math.max(1, meses * 30.44);
+  const dso = ventaDiaria > 0 ? Math.round(totalPendiente / ventaDiaria) : 0;
+
+  // Descuento %
+  const descPct = totalBruto > 0 ? (totalDesc / totalBruto * 100).toFixed(1) : 0;
+
+  // Precio promedio por unidad
+  const precioPromU = totalUnidades > 0 ? totalVentaBase / totalUnidades : 0;
+
+  // Clientes unicos
+  const clientesUnicos = new Set(datos.map(r => r.cliente)).size;
+
+  document.getElementById('anaKpis').innerHTML = [
+    { label: 'DSO (Dias Cartera)', value: `${dso} dias`, change: dso > 45 ? 'Alto - revisar cobranza' : 'Saludable', cls: dso > 45 ? 'neg' : 'pos' },
+    { label: 'Descuento Promedio', value: `${descPct}%`, change: `${fmt(totalDesc)} en descuentos`, cls: parseFloat(descPct) > 15 ? 'neg' : '' },
+    { label: 'Precio Prom/Unidad', value: fmt(precioPromU), change: `${Math.round(totalUnidades).toLocaleString('es-CO')} unidades` },
+    { label: 'Clientes Activos', value: clientesUnicos, change: `Ticket prom: ${fmt(totalVentaBase / Math.max(1, datos.length))}` },
+  ].map(k => `<div class="card"><div class="metric"><div class="label">${k.label}</div><div class="value ${k.cls||''}">${k.value}</div><div class="change">${k.change}</div></div></div>`).join('');
+
+  // Pareto: concentracion de clientes
+  const cliMap = {};
+  datos.forEach(r => { cliMap[r.cliente] = (cliMap[r.cliente] || 0) + r.venta_base; });
+  const cliSorted = Object.entries(cliMap).sort((a,b) => b[1] - a[1]);
+  const cliCumul = [];
+  let acum = 0;
+  cliSorted.forEach(([,v]) => { acum += v; cliCumul.push(acum / totalVentaBase * 100); });
+  const top20pct = Math.ceil(cliSorted.length * 0.2);
+  const top20revenue = cliCumul[top20pct - 1] || 0;
+
+  destroyChart('chartPareto');
+  const paretoLabels = cliSorted.slice(0, 20).map(([n]) => n.substring(0, 15));
+  charts.chartPareto = new Chart(document.getElementById('chartPareto'), {
+    type: 'bar', data: {
+      labels: paretoLabels,
+      datasets: [
+        { label: 'Venta Base', data: cliSorted.slice(0,20).map(([,v]) => v), backgroundColor: '#3b82f6', yAxisID: 'y' },
+        { label: '% Acumulado', data: cliCumul.slice(0, 20), type: 'line', borderColor: '#ef4444', pointRadius: 2, yAxisID: 'y1' },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left' }, y1: { position: 'right', min: 0, max: 100, ticks: { callback: v => v + '%' } } }, plugins: { legend: { position: 'top' } } }
+  });
+
+  // Tendencia MoM
+  const monthMap = {};
+  datos.forEach(r => {
+    if (!r.fecha) return;
+    const m = r.fecha.substring(0, 7);
+    if (!monthMap[m]) monthMap[m] = { venta: 0, count: 0, units: 0 };
+    monthMap[m].venta += r.venta_base;
+    monthMap[m].count++;
+  });
+  lineas.forEach(l => {
+    const rem = datos.find(r => r.id_remisional === l.id_remisional);
+    if (rem && rem.fecha) {
+      const m = rem.fecha.substring(0, 7);
+      if (monthMap[m]) monthMap[m].units += l.cantidad;
+    }
+  });
+  const monthKeys = Object.keys(monthMap).sort();
+  const growths = monthKeys.map((m, i) => {
+    if (i === 0) return 0;
+    const prev = monthMap[monthKeys[i-1]].venta;
+    return prev > 0 ? ((monthMap[m].venta - prev) / prev * 100) : 0;
+  });
+
+  destroyChart('chartTendencia');
+  charts.chartTendencia = new Chart(document.getElementById('chartTendencia'), {
+    type: 'bar', data: {
+      labels: monthKeys,
+      datasets: [
+        { label: 'Venta Base', data: monthKeys.map(m => monthMap[m].venta), backgroundColor: '#10b981', yAxisID: 'y' },
+        { label: 'Crecimiento %', data: growths, type: 'line', borderColor: '#f59e0b', pointRadius: 3, yAxisID: 'y1' },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { position: 'left' }, y1: { position: 'right', ticks: { callback: v => v.toFixed(0) + '%' } } }, plugins: { legend: { position: 'top' } } }
+  });
+
+  // MC por linea de produccion
+  const lineaMap = {};
+  lineas.forEach(l => {
+    const bk = l.bodega || 'Sin Linea';
+    if (!lineaMap[bk]) lineaMap[bk] = { venta: 0, cv: 0, units: 0 };
+    const vb = l.precio_neto - l.impuesto;
+    lineaMap[bk].venta += vb;
+    lineaMap[bk].cv += vb * (1 - MARGEN_VENTAS);
+    lineaMap[bk].units += l.cantidad;
+  });
+  const lineaSorted = Object.entries(lineaMap).sort((a,b) => b[1].venta - a[1].venta);
+  destroyChart('chartMCLinea');
+  charts.chartMCLinea = new Chart(document.getElementById('chartMCLinea'), {
+    type: 'bar', data: {
+      labels: lineaSorted.map(([n]) => n),
+      datasets: [
+        { label: `MC (${(MARGEN_VENTAS*100).toFixed(0)}%)`, data: lineaSorted.map(([,d]) => d.venta * MARGEN_VENTAS), backgroundColor: '#10b981' },
+        { label: 'Costo Variable', data: lineaSorted.map(([,d]) => d.cv), backgroundColor: '#ef4444' },
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'top' } } }
+  });
+
+  // Estacionalidad
+  const mesNombres = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const estacionalidad = Array(12).fill(null).map(() => ({ total: 0, count: 0 }));
+  datos.forEach(r => {
+    if (!r.fecha) return;
+    const m = parseInt(r.fecha.substring(5,7)) - 1;
+    estacionalidad[m].total += r.venta_base;
+    estacionalidad[m].count++;
+  });
+  // Group by year-month to get unique months count
+  const yearMonths = {};
+  datos.forEach(r => { if (r.fecha) yearMonths[r.fecha.substring(0,7)] = true; });
+  const monthCounts = Array(12).fill(0);
+  Object.keys(yearMonths).forEach(ym => { monthCounts[parseInt(ym.substring(5,7))-1]++; });
+  const avgByMonth = estacionalidad.map((e, i) => monthCounts[i] > 0 ? e.total / monthCounts[i] : 0);
+
+  destroyChart('chartEstacionalidad');
+  charts.chartEstacionalidad = new Chart(document.getElementById('chartEstacionalidad'), {
+    type: 'bar', data: {
+      labels: mesNombres,
+      datasets: [{ label: 'Venta Prom Mensual', data: avgByMonth, backgroundColor: avgByMonth.map(v => v >= (totalVentaBase / Math.max(1, meses)) ? '#10b981' : '#ef4444') }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+
+  // Eficiencia comercial
+  const vendMap = {};
+  datos.forEach(r => {
+    if (!vendMap[r.vendedor]) vendMap[r.vendedor] = { venta: 0, count: 0, clientes: new Set() };
+    vendMap[r.vendedor].venta += r.venta_base;
+    vendMap[r.vendedor].count++;
+    vendMap[r.vendedor].clientes.add(r.cliente);
+  });
+  let efH = '<table><thead><tr><th>Vendedor</th><th class="text-right">Venta Base</th><th class="text-right">Remisiones</th><th class="text-right">Clientes</th><th class="text-right">Ticket Prom</th><th class="text-right">% del Total</th></tr></thead><tbody>';
+  Object.entries(vendMap).sort((a,b) => b[1].venta - a[1].venta).forEach(([name, d]) => {
+    const pctTotal = totalVentaBase > 0 ? (d.venta / totalVentaBase * 100).toFixed(1) : 0;
+    efH += `<tr><td>${name}</td><td class="text-right">${fmt(d.venta)}</td><td class="text-right">${d.count}</td><td class="text-right">${d.clientes.size}</td><td class="text-right">${fmt(d.venta / d.count)}</td><td class="text-right">${pctTotal}%</td></tr>`;
+  });
+  efH += '</tbody></table>';
+  document.getElementById('anaEficiencia').innerHTML = efH;
+
+  // Alertas y recomendaciones
+  const alertas = [];
+  if (dso > 45) alertas.push({ type: 'red', msg: `DSO de ${dso} dias es alto. Revisar politica de cobranza y clientes morosos.` });
+  if (dso > 30 && dso <= 45) alertas.push({ type: 'orange', msg: `DSO de ${dso} dias. Monitorear cartera de cerca.` });
+  if (parseFloat(descPct) > 15) alertas.push({ type: 'orange', msg: `Descuentos del ${descPct}% sobre bruto. Evaluar politica de precios.` });
+  if (top20revenue > 75) alertas.push({ type: 'orange', msg: `El 20% de clientes genera ${top20revenue.toFixed(0)}% del ingreso. Alta concentracion — diversificar.` });
+  const lastMonth = monthKeys[monthKeys.length - 1];
+  const prevMonth = monthKeys[monthKeys.length - 2];
+  if (lastMonth && prevMonth && monthMap[lastMonth].venta < monthMap[prevMonth].venta * 0.85) {
+    alertas.push({ type: 'red', msg: `Caida de ventas: ${lastMonth} vs ${prevMonth}. Investigar causas.` });
+  }
+  if (totalPendiente > totalNeto * 0.4) alertas.push({ type: 'red', msg: `CxC pendiente es ${(totalPendiente/totalNeto*100).toFixed(0)}% del total facturado. Riesgo de liquidez.` });
+  const breakEvenMes2 = COSTOS_FIJOS / MARGEN_VENTAS;
+  const ventaMensualAna = totalVentaBase / Math.max(1, meses);
+  if (ventaMensualAna < breakEvenMes2) alertas.push({ type: 'red', msg: `Venta promedio mensual (${fmt(ventaMensualAna)}) por debajo del punto de equilibrio (${fmt(breakEvenMes2)}).` });
+  if (ventaMensualAna >= breakEvenMes2 && ventaMensualAna < breakEvenMes2 * 1.15) alertas.push({ type: 'orange', msg: `Venta cerca del punto de equilibrio. Margen de seguridad bajo.` });
+  if (alertas.length === 0) alertas.push({ type: 'green', msg: 'Indicadores saludables. Continuar monitoreando.' });
+
+  document.getElementById('anaAlertas').innerHTML = alertas.map(a =>
+    `<div class="alert alert-${a.type}" style="margin-bottom:8px;">${a.msg}</div>`
+  ).join('');
+
+  // Proyeccion 3 meses
+  const last3 = monthKeys.slice(-3);
+  const avgVentaMes = last3.length > 0 ? last3.reduce((s,m) => s + monthMap[m].venta, 0) / last3.length : 0;
+  const avgImpMes = last3.length > 0 ? last3.reduce((s,m) => {
+    const rem = datos.filter(r => r.fecha && r.fecha.startsWith(m));
+    return s + rem.reduce((ss,r) => ss + r.impuesto_total, 0);
+  }, 0) / last3.length : 0;
+  const avgCVMes = avgVentaMes * (1 - MARGEN_VENTAS);
+  const avgMCMes = avgVentaMes * MARGEN_VENTAS;
+  const avgUtilMes = avgMCMes - COSTOS_FIJOS;
+
+  let projH = '<table><thead><tr><th>Concepto</th><th class="text-right">Mes 1</th><th class="text-right">Mes 2</th><th class="text-right">Mes 3</th><th class="text-right">Total 3 Meses</th></tr></thead><tbody>';
+  const rows = [
+    ['Venta Base Proyectada', avgVentaMes, avgVentaMes, avgVentaMes],
+    ['(-) Costos Variables', avgCVMes, avgCVMes, avgCVMes],
+    ['= Margen Contribucion', avgMCMes, avgMCMes, avgMCMes],
+    ['(-) Costos Fijos', COSTOS_FIJOS, COSTOS_FIJOS, COSTOS_FIJOS],
+    ['= Utilidad Proyectada', avgUtilMes, avgUtilMes, avgUtilMes],
+    ['IVA a Pagar (trimestral)', avgImpMes, avgImpMes, avgImpMes],
+  ];
+  rows.forEach(([label, m1, m2, m3]) => {
+    const isNeg = label.startsWith('(');
+    const isResult = label.startsWith('=');
+    const style = isResult ? 'font-weight:700;' : '';
+    const cls = isResult && m1 >= 0 ? 'pos' : isResult && m1 < 0 ? 'neg' : isNeg ? 'neg' : '';
+    projH += `<tr style="${style}"><td>${label}</td><td class="text-right ${cls}">${fmt(Math.abs(m1))}</td><td class="text-right ${cls}">${fmt(Math.abs(m2))}</td><td class="text-right ${cls}">${fmt(Math.abs(m3))}</td><td class="text-right ${cls}"><strong>${fmt(Math.abs(m1+m2+m3))}</strong></td></tr>`;
+  });
+  projH += '</tbody></table>';
+  projH += `<div style="margin-top:10px;font-size:12px;color:var(--text2);">Basado en promedio de ultimos ${last3.length} meses: ${last3.join(', ')}</div>`;
+  document.getElementById('anaProyeccion').innerHTML = projH;
+}
+
+// ============================================================
+// TESORERIA - Flujo de Caja
+// ============================================================
+function renderTesoreria() {
+  const from = document.getElementById('tesFilterFrom').value;
+  const to = document.getElementById('tesFilterTo').value;
+
+  let datos = [...ventasData.remisiones];
+  if (from) datos = datos.filter(r => r.fecha && r.fecha >= from);
+  if (to) datos = datos.filter(r => r.fecha && r.fecha <= to);
+
+  const hoy = new Date();
+  hoy.setHours(0,0,0,0);
+  const tienePendDoc = Object.keys(ventasData.pendientes_cobro || {}).length > 0;
+
+  // Calcular fecha esperada de pago y monto pendiente
+  const flujos = datos.map(r => {
+    const diasCredito = parseDiasCredito(r.formas_pago);
+    const baseDate = r.fecha_entrega || r.fecha;
+    let fechaPago = null;
+    if (baseDate) {
+      fechaPago = new Date(baseDate);
+      fechaPago.setDate(fechaPago.getDate() + diasCredito);
+    }
+    const pendiente = tienePendDoc
+      ? (ventasData.pendientes_cobro[r.id_remisional] || 0)
+      : r.monto_neto;
+    const pagado = tienePendDoc ? pendiente === 0 : esPagado(r.estado_cxc);
+    return {
+      ...r,
+      _fechaPago: fechaPago,
+      _fechaPagoStr: fechaPago ? fechaPago.toISOString().substring(0,10) : null,
+      _diasCredito: diasCredito,
+      _pendiente: pendiente,
+      _pagado: pagado,
+      _condicion: diasCredito === 0 ? 'Contado' : `${diasCredito} dias`
+    };
+  }).filter(f => f._fechaPago);
+
+  // KPIs
+  const totalFacturado = flujos.reduce((s,f) => s + f.monto_neto, 0);
+  const totalCobrado = flujos.filter(f => f._pagado).reduce((s,f) => s + f.monto_neto, 0);
+  const totalPendiente = flujos.filter(f => !f._pagado).reduce((s,f) => s + f._pendiente, 0);
+  const contado = flujos.filter(f => f._diasCredito === 0);
+  const credito = flujos.filter(f => f._diasCredito > 0);
+  const pctContado = totalFacturado > 0 ? (contado.reduce((s,f) => s + f.monto_neto, 0) / totalFacturado * 100).toFixed(1) : 0;
+
+  document.getElementById('tesKpis').innerHTML = [
+    { label: 'Total Facturado', value: fmt(totalFacturado) },
+    { label: 'Cobrado', value: fmt(totalCobrado), cls: 'pos' },
+    { label: 'Pendiente de Cobro', value: fmt(totalPendiente), cls: 'neg' },
+    { label: '% Contado', value: pctContado + '%', change: `${contado.length} contado / ${credito.length} credito` },
+  ].map(k => `<div class="card"><div class="metric"><div class="label">${k.label}</div><div class="value ${k.cls||''}">${k.value}</div>${k.change ? `<div class="change">${k.change}</div>` : ''}</div></div>`).join('');
+
+  // Flujo semanal: agrupar por semana ISO
+  const weekMap = {};
+  flujos.filter(f => !f._pagado).forEach(f => {
+    const d = f._fechaPago;
+    const startOfWeek = new Date(d);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); // lunes
+    const wk = startOfWeek.toISOString().substring(0,10);
+    if (!weekMap[wk]) weekMap[wk] = { ingreso: 0, count: 0 };
+    weekMap[wk].ingreso += f._pendiente;
+    weekMap[wk].count++;
+  });
+  const weeks = Object.keys(weekMap).sort();
+  const weekLabels = weeks.map(w => {
+    const d = new Date(w);
+    return `${d.getDate()}/${d.getMonth()+1}`;
+  });
+
+  destroyChart('chartFlujo');
+  const weekColors = weeks.map(w => w < hoy.toISOString().substring(0,10) ? '#ef4444' : '#10b981');
+  charts.chartFlujo = new Chart(document.getElementById('chartFlujo'), {
+    type: 'bar', data: {
+      labels: weekLabels,
+      datasets: [{ label: 'Ingreso Esperado', data: weeks.map(w => weekMap[w].ingreso), backgroundColor: weekColors }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+
+  // Chart: Por condicion de pago
+  const condMap = {};
+  flujos.forEach(f => {
+    condMap[f._condicion] = (condMap[f._condicion] || 0) + f.monto_neto;
+  });
+  const condSorted = Object.entries(condMap).sort((a,b) => b[1] - a[1]);
+  destroyChart('chartCondicion');
+  charts.chartCondicion = new Chart(document.getElementById('chartCondicion'), {
+    type: 'doughnut', data: {
+      labels: condSorted.map(([n]) => n), datasets: [{ data: condSorted.map(([,v]) => v), backgroundColor: CHART_COLORS }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Tabla detalle
+  let h = '<table><thead><tr><th>Rem</th><th>Cliente</th><th>Vendedor</th><th>F. Entrega</th><th>Condicion</th><th>F. Pago Esperada</th><th class="text-right">Neto</th><th class="text-right">Pendiente</th><th>Estado</th></tr></thead><tbody>';
+  flujos.sort((a,b) => (a._fechaPagoStr || '').localeCompare(b._fechaPagoStr || '')).forEach(f => {
+    const vencido = !f._pagado && f._fechaPago < hoy;
+    const cls = f._pagado ? 'pos' : vencido ? 'neg' : '';
+    const badge = f._pagado ? 'badge-green' : vencido ? 'badge-red' : 'badge-orange';
+    const estado = f._pagado ? 'Cobrado' : vencido ? 'Vencido' : 'Por Cobrar';
+    h += `<tr><td>${f.id_remisional}</td><td>${f.cliente.substring(0,22)}</td><td>${f.vendedor.substring(0,18)}</td><td>${f.fecha_entrega || '-'}</td><td>${f._condicion}</td><td class="${cls}">${f._fechaPagoStr || '-'}</td><td class="text-right">${fmt(f.monto_neto)}</td><td class="text-right ${f._pendiente > 0 ? 'neg' : 'pos'}">${fmt(f._pendiente)}</td><td><span class="badge ${badge}">${estado}</span></td></tr>`;
+  });
+  h += '</tbody></table>';
+  document.getElementById('tesoreriaTable').innerHTML = h;
+}
+
+// ============================================================
+// INVENTARIO - Tipo de Prenda x Tela
+// ============================================================
+const TIPOS_PRENDA = [
+  { key: 'camiseta', patterns: ['camiseta', 'camisilla', 'camisa'] },
+  { key: 'sudadera', patterns: ['sudadera'] },
+  { key: 'chaqueta', patterns: ['chaqueta', 'jacket'] },
+  { key: 'pantaloneta', patterns: ['pantaloneta', 'short'] },
+  { key: 'pantalon', patterns: ['pantalon', 'pantalón'] },
+  { key: 'medias', patterns: ['media', 'medias'] },
+  { key: 'conjunto', patterns: ['conjunto', 'uniforme'] },
+  { key: 'chaleco', patterns: ['chaleco'] },
+  { key: 'gorra', patterns: ['gorra', 'cachucha'] },
+];
+
+const TELAS_CONOCIDAS = [
+  'montecatini', 'sudafrica', 'dry fit', 'dryfit', 'dry-fit',
+  'algod', 'poliester', 'sublim', 'jersey', 'pique', 'interlock',
+  'lycra', 'nylon', 'polar', 'fleece', 'microfibra', 'spandex',
+  'mesh', 'rib', 'waffle', 'french terry'
+];
+
+function detectTipoPrenda(desc) {
+  if (!desc) return 'otro';
+  const d = desc.toLowerCase();
+  for (const tipo of TIPOS_PRENDA) {
+    for (const p of tipo.patterns) {
+      if (d.includes(p)) return tipo.key;
+    }
+  }
+  return 'otro';
+}
+
+function detectTela(desc) {
+  if (!desc) return 'sin especificar';
+  const d = desc.toLowerCase();
+  for (const tela of TELAS_CONOCIDAS) {
+    if (d.includes(tela)) {
+      // Normalize
+      if (tela.startsWith('dry')) return 'dry fit';
+      if (tela.startsWith('algod')) return 'algodon';
+      if (tela.startsWith('sublim')) return 'sublimacion';
+      return tela;
+    }
+  }
+  return 'sin especificar';
+}
+
+function renderInventario() {
+  const from = document.getElementById('invFilterFrom').value;
+  const to = document.getElementById('invFilterTo').value;
+  const tipoFilter = document.getElementById('invFilterTipo').value;
+  const telaFilter = document.getElementById('invFilterTela').value;
+
+  // Get filtered lineas with fecha_entrega from remisiones
+  let lineas = ventasData.lineas.map(l => {
+    const rem = ventasData.remisiones.find(r => r.id_remisional === l.id_remisional);
+    return { ...l, fecha_entrega: rem ? rem.fecha_entrega : null, fecha: rem ? rem.fecha : null };
+  });
+
+  if (from) lineas = lineas.filter(l => (l.fecha_entrega || l.fecha) && (l.fecha_entrega || l.fecha) >= from);
+  if (to) lineas = lineas.filter(l => (l.fecha_entrega || l.fecha) && (l.fecha_entrega || l.fecha) <= to);
+
+  // Enrich with tipo and tela
+  lineas.forEach(l => {
+    l._tipo = detectTipoPrenda(l.descripcion);
+    l._tela = detectTela(l.descripcion);
+  });
+
+  if (tipoFilter) lineas = lineas.filter(l => l._tipo === tipoFilter);
+  if (telaFilter) lineas = lineas.filter(l => l._tela === telaFilter);
+
+  // Populate filters
+  const allTipos = [...new Set(ventasData.lineas.map(l => detectTipoPrenda(l.descripcion)))].sort();
+  const allTelas = [...new Set(ventasData.lineas.map(l => detectTela(l.descripcion)))].sort();
+  const selTipo = document.getElementById('invFilterTipo');
+  const selTela = document.getElementById('invFilterTela');
+  const curTipo = selTipo.value;
+  const curTela = selTela.value;
+  selTipo.innerHTML = '<option value="">Todos los tipos</option>' + allTipos.map(t => `<option value="${t}" ${t===curTipo?'selected':''}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('');
+  selTela.innerHTML = '<option value="">Todas las telas</option>' + allTelas.map(t => `<option value="${t}" ${t===curTela?'selected':''}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('');
+
+  const totalUnidades = lineas.reduce((s,l) => s + l.cantidad, 0);
+  const totalTipos = new Set(lineas.map(l => l._tipo)).size;
+  const totalTelas = new Set(lineas.map(l => l._tela)).size;
+
+  // Top tipo
+  const tipoMap = {};
+  lineas.forEach(l => {
+    if (!tipoMap[l._tipo]) tipoMap[l._tipo] = 0;
+    tipoMap[l._tipo] += l.cantidad;
+  });
+  const topTipo = Object.entries(tipoMap).sort((a,b) => b[1] - a[1])[0];
+
+  document.getElementById('invKpis').innerHTML = [
+    { label: 'Total Unidades', value: Math.round(totalUnidades).toLocaleString('es-CO') },
+    { label: 'Tipos de Prenda', value: totalTipos },
+    { label: 'Tipos de Tela', value: totalTelas },
+    { label: 'Prenda mas producida', value: topTipo ? topTipo[0].charAt(0).toUpperCase()+topTipo[0].slice(1) : 'N/A', change: topTipo ? `${Math.round(topTipo[1]).toLocaleString('es-CO')} uds` : '' },
+  ].map(k => `<div class="card"><div class="metric"><div class="label">${k.label}</div><div class="value">${k.value}</div>${k.change ? `<div class="change">${k.change}</div>` : ''}</div></div>`).join('');
+
+  // Chart: Unidades por tipo
+  const tipoSorted = Object.entries(tipoMap).sort((a,b) => b[1] - a[1]);
+  destroyChart('chartTipoPrenda');
+  charts.chartTipoPrenda = new Chart(document.getElementById('chartTipoPrenda'), {
+    type: 'bar', data: {
+      labels: tipoSorted.map(([n]) => n.charAt(0).toUpperCase()+n.slice(1)),
+      datasets: [{ label: 'Unidades', data: tipoSorted.map(([,v]) => v), backgroundColor: CHART_COLORS }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+  });
+
+  // Chart: Unidades por tela
+  const telaMap = {};
+  lineas.forEach(l => { telaMap[l._tela] = (telaMap[l._tela] || 0) + l.cantidad; });
+  const telaSorted = Object.entries(telaMap).sort((a,b) => b[1] - a[1]);
+  destroyChart('chartTela');
+  charts.chartTela = new Chart(document.getElementById('chartTela'), {
+    type: 'doughnut', data: {
+      labels: telaSorted.map(([n]) => n.charAt(0).toUpperCase()+n.slice(1)),
+      datasets: [{ data: telaSorted.map(([,v]) => v), backgroundColor: CHART_COLORS }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Chart: Demanda mensual por tipo de prenda (stacked)
+  const mesMap = {};
+  lineas.forEach(l => {
+    const fecha = l.fecha_entrega || l.fecha;
+    if (!fecha) return;
+    const mes = fecha.substring(0, 7);
+    if (!mesMap[mes]) mesMap[mes] = {};
+    mesMap[mes][l._tipo] = (mesMap[mes][l._tipo] || 0) + l.cantidad;
+  });
+  const meses = Object.keys(mesMap).sort();
+  const tiposUnicos = [...new Set(lineas.map(l => l._tipo))].sort();
+
+  destroyChart('chartDemandaMes');
+  charts.chartDemandaMes = new Chart(document.getElementById('chartDemandaMes'), {
+    type: 'bar', data: {
+      labels: meses,
+      datasets: tiposUnicos.map((tipo, i) => ({
+        label: tipo.charAt(0).toUpperCase()+tipo.slice(1),
+        data: meses.map(m => mesMap[m][tipo] || 0),
+        backgroundColor: CHART_COLORS[i % CHART_COLORS.length]
+      }))
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } }, plugins: { legend: { position: 'top' } } }
+  });
+
+  // Proyeccion de abastecimiento: promedio mensual por tipo x tela
+  const comboMap = {};
+  lineas.forEach(l => {
+    const key = `${l._tipo}|${l._tela}`;
+    const fecha = l.fecha_entrega || l.fecha;
+    if (!comboMap[key]) comboMap[key] = { tipo: l._tipo, tela: l._tela, total: 0, meses: new Set() };
+    comboMap[key].total += l.cantidad;
+    if (fecha) comboMap[key].meses.add(fecha.substring(0, 7));
+  });
+  const combos = Object.values(comboMap).map(c => ({
+    ...c,
+    promMes: c.meses.size > 0 ? c.total / c.meses.size : c.total,
+    numMeses: c.meses.size
+  })).sort((a,b) => b.promMes - a.promMes);
+
+  let abH = '<div style="font-size:13px;line-height:2;"><div style="margin-bottom:8px;color:var(--text2);">Consumo promedio mensual por tipo x tela (para planear abastecimiento):</div>';
+  combos.slice(0, 12).forEach(c => {
+    abH += `<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding:2px 0;"><span><strong>${c.tipo.charAt(0).toUpperCase()+c.tipo.slice(1)}</strong> — ${c.tela}</span><span><strong>${Math.round(c.promMes).toLocaleString('es-CO')}</strong> uds/mes</span></div>`;
+  });
+  abH += '</div>';
+  document.getElementById('invAbastecimiento').innerHTML = abH;
+
+  // Tabla detalle: Tipo x Tela x Mes
+  let h = '<table><thead><tr><th>Tipo</th><th>Tela</th><th class="text-right">Total Uds</th><th class="text-right">Prom/Mes</th><th class="text-right">Meses con datos</th>';
+  // Add last 3 months as columns
+  const last3 = meses.slice(-3);
+  last3.forEach(m => { h += `<th class="text-right">${m}</th>`; });
+  h += '</tr></thead><tbody>';
+  combos.forEach(c => {
+    const key = `${c.tipo}|${c.tela}`;
+    h += `<tr><td><strong>${c.tipo.charAt(0).toUpperCase()+c.tipo.slice(1)}</strong></td><td>${c.tela}</td><td class="text-right">${Math.round(c.total).toLocaleString('es-CO')}</td><td class="text-right">${Math.round(c.promMes).toLocaleString('es-CO')}</td><td class="text-right">${c.numMeses}</td>`;
+    last3.forEach(m => {
+      // Find qty for this combo in this month
+      const qty = lineas.filter(l => l._tipo === c.tipo && l._tela === c.tela && (l.fecha_entrega || l.fecha || '').startsWith(m)).reduce((s,l) => s + l.cantidad, 0);
+      h += `<td class="text-right">${qty > 0 ? Math.round(qty).toLocaleString('es-CO') : '-'}</td>`;
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table>';
+  document.getElementById('inventarioTable').innerHTML = h;
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+['filterFechaFrom','filterFechaTo'].forEach(id => {
+  ['change','input'].forEach(evt => document.getElementById(id).addEventListener(evt, renderDashboard));
+});
+document.getElementById('filterCliente').addEventListener('input', renderDashboard);
+document.getElementById('filterVendedor').addEventListener('change', renderDashboard);
+document.getElementById('filterBodega').addEventListener('change', renderDashboard);
+
+['cliFilterFrom','cliFilterTo'].forEach(id => {
+  ['change','input'].forEach(evt => document.getElementById(id).addEventListener(evt, renderClientes));
+});
+document.getElementById('searchCliente').addEventListener('input', renderClientes);
+document.getElementById('cliFilterBodega').addEventListener('change', renderClientes);
+
+['venFilterFrom','venFilterTo'].forEach(id => {
+  ['change','input'].forEach(evt => document.getElementById(id).addEventListener(evt, renderVendedores));
+});
+document.getElementById('searchVendedor').addEventListener('input', renderVendedores);
+document.getElementById('venFilterBodega').addEventListener('change', renderVendedores);
+
+['prodFilterFrom','prodFilterTo'].forEach(id => {
+  ['change','input'].forEach(evt => document.getElementById(id).addEventListener(evt, renderProductos));
+});
+document.getElementById('searchProducto').addEventListener('input', renderProductos);
+document.getElementById('prodFilterBodega').addEventListener('change', renderProductos);
+
+['cxcFilterFrom','cxcFilterTo'].forEach(id => {
+  ['change','input'].forEach(evt => document.getElementById(id).addEventListener(evt, renderCxC));
+});
+document.getElementById('filterEstadoCxC').addEventListener('change', renderCxC);
+document.getElementById('searchCxC').addEventListener('input', renderCxC);
+document.getElementById('cxcFilterVendedor').addEventListener('change', renderCxC);
+
+['anaFilterFrom','anaFilterTo'].forEach(id => {
+  ['change','input'].forEach(evt => document.getElementById(id).addEventListener(evt, renderAnalisis));
 });
 
-document.getElementById('filterFechaTo').addEventListener('change', () => {
-  console.log('📅 Fecha hasta cambiada');
-  renderDashboard();
+['tesFilterFrom','tesFilterTo'].forEach(id => {
+  ['change','input'].forEach(evt => document.getElementById(id).addEventListener(evt, renderTesoreria));
 });
 
-document.getElementById('filterCliente').addEventListener('change', () => {
-  console.log('🔍 Cliente cambiado');
-  renderDashboard();
+['invFilterFrom','invFilterTo'].forEach(id => {
+  ['change','input'].forEach(evt => document.getElementById(id).addEventListener(evt, renderInventario));
 });
-
-document.getElementById('filterVendedor').addEventListener('change', () => {
-  console.log('👤 Vendedor cambiado');
-  renderDashboard();
-});
+document.getElementById('invFilterTipo').addEventListener('change', renderInventario);
+document.getElementById('invFilterTela').addEventListener('change', renderInventario);
 
 // ============================================================
 // INIT
 // ============================================================
 (async () => {
   await loadFromStorage();
-  if (ventasData.remisiones.length > 0) renderAll();
+  if (ventasData.remisiones.length > 0) {
+    const sample = ventasData.remisiones[0];
+    if (sample.fecha && /^\d{4}-\d{2}-\d{2}$/.test(sample.fecha) && sample.venta_base !== undefined) {
+      renderAll();
+    } else {
+      ventasData = { remisiones: [], lineas: [] };
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        tx.objectStore(STORE_NAME).delete(DB_KEY);
+      } catch (e) {}
+      updateStorageInfo();
+    }
+  }
 })();
 </script>
 
