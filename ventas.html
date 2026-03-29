@@ -509,38 +509,78 @@ fileCxC.addEventListener('change', e => handleCxCFile(e.target.files[0]));
 function handleCxCFile(file) {
   if (!file) return;
   const log = document.getElementById('uploadLogCxC');
+  // Always read as text first to detect HTML-XLS
   const reader = new FileReader();
   reader.onload = e => {
     try {
       let pendientes;
-      if (file.name.toLowerCase().endsWith('.csv')) {
-        pendientes = parseCxCCSV(e.target.result);
+      const text = e.target.result;
+      const isCSV = file.name.toLowerCase().endsWith('.csv');
+      const isHTML = text.trim().startsWith('<') || text.includes('<html') || text.includes('<table');
+
+      if (isCSV && !isHTML) {
+        pendientes = parseCxCCSV(text);
+      } else if (isHTML) {
+        // HTML-XLS or HTML file: parse tables directly
+        pendientes = parseCxCHTML(text);
       } else {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        pendientes = parseCxCXLSX(wb);
-      }
-      const count = Object.keys(pendientes).length;
-      if (count === 0) {
-        log.innerHTML = '<div class="alert alert-red">No se encontraron datos de pendientes en ' + file.name + '</div>';
+        // Try XLSX binary parse
+        const reader2 = new FileReader();
+        reader2.onload = e2 => {
+          try {
+            const wb = XLSX.read(new Uint8Array(e2.target.result), { type: 'array' });
+            pendientes = parseCxCXLSX(wb);
+            finishCxCLoad(pendientes, log, file.name);
+          } catch (err) {
+            log.innerHTML = '<div class="alert alert-red">Error: ' + err.message + '</div>';
+          }
+        };
+        reader2.readAsArrayBuffer(file);
         return;
       }
-      ventasData.pendientes_cobro = pendientes;
-      saveToStorage();
-      // Re-render CxC and Tesoreria
-      if (ventasData.remisiones.length > 0) { renderCxC(); renderTesoreria(); }
-      const totalPend = Object.values(pendientes).reduce((s,v) => s + v, 0);
-      const conSaldo = Object.values(pendientes).filter(v => v > 0).length;
-      log.innerHTML = `<div class="alert alert-green"><strong>${count}</strong> remisiones con datos de pendientes | <strong>${conSaldo}</strong> con saldo > $0 | Total pendiente: <strong>${fmt(totalPend)}</strong></div>`;
+      finishCxCLoad(pendientes, log, file.name);
     } catch (err) {
       log.innerHTML = '<div class="alert alert-red">Error: ' + err.message + '</div>';
       console.error(err);
     }
   };
-  if (file.name.toLowerCase().endsWith('.csv')) {
-    reader.readAsText(file, 'UTF-8');
-  } else {
-    reader.readAsArrayBuffer(file);
+  reader.readAsText(file, 'UTF-8');
+}
+
+function finishCxCLoad(pendientes, log, fileName) {
+  const count = Object.keys(pendientes).length;
+  if (count === 0) {
+    log.innerHTML = '<div class="alert alert-red">No se encontraron datos de pendientes en ' + fileName + '</div>';
+    return;
   }
+  ventasData.pendientes_cobro = pendientes;
+  saveToStorage();
+  if (ventasData.remisiones.length > 0) { renderCxC(); renderTesoreria(); }
+  const totalPend = Object.values(pendientes).reduce((s,v) => s + v, 0);
+  const conSaldo = Object.values(pendientes).filter(v => v > 0).length;
+  log.innerHTML = `<div class="alert alert-green"><strong>${count}</strong> remisiones con datos de pendientes | <strong>${conSaldo}</strong> con saldo > $0 | Total pendiente: <strong>${fmt(totalPend)}</strong></div>`;
+}
+
+function parseCxCHTML(html) {
+  const pendientes = {};
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const rows = doc.querySelectorAll('tr');
+  let started = false;
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length < 2) return;
+    const c0 = cells[0].textContent.trim();
+    const c1 = cells[1].textContent.trim();
+    // Skip header row
+    if (c0.toLowerCase().includes('id') || c0.toLowerCase().includes('remisi')) { started = true; return; }
+    if (!started && isNaN(parseInt(c0))) return;
+    started = true;
+    const id = c0.replace(/[^\d]/g, '');
+    if (!id) return;
+    pendientes[id] = parseMonto(c1);
+  });
+  return pendientes;
 }
 
 function parseCxCCSV(rawCsv) {
