@@ -1243,14 +1243,14 @@ function esPagado(estadoCxc) {
   return estadoCxc.toLowerCase().includes('pago total');
 }
 
-// Obtener pendiente real de cobro: si hay documento CxC cargado, usar ese monto; sino, usar monto_neto si no está pagado
+// Obtener pendiente real de cobro por ID de remision
+// Retorna null si el ID no esta en el documento (para mantener logica original)
 function getPendienteCobro(r) {
   const pc = ventasData.pendientes_cobro || {};
-  if (Object.keys(pc).length > 0) {
-    return pc[r.id_remisional] !== undefined ? pc[r.id_remisional] : 0;
+  if (Object.keys(pc).length > 0 && pc[r.id_remisional] !== undefined) {
+    return pc[r.id_remisional];
   }
-  // Sin documento CxC: si pagado = 0, sino monto_neto
-  return r._pagado ? 0 : r.monto_neto;
+  return null; // No encontrado en documento → usar logica original
 }
 
 function renderCxC() {
@@ -1275,10 +1275,16 @@ function renderCxC() {
   data.forEach(r => {
     r._pagado = esPagado(r.estado_cxc);
     r._fechaVenc = calcFechaVencimiento(r);
-    r._pendienteCobro = getPendienteCobro(r);
-    // Si hay doc de pendientes, pagado = pendiente es 0
-    if (tienePendientesDoc) {
-      r._pagado = r._pendienteCobro === 0;
+    const pendDoc = getPendienteCobro(r);
+    if (pendDoc !== null) {
+      // ID encontrado en documento CxC: usar monto real
+      r._pendienteCobro = pendDoc;
+      r._pagado = pendDoc === 0;
+      r._enDoc = true;
+    } else {
+      // ID no en documento: usar logica original (estado_cxc)
+      r._pendienteCobro = r._pagado ? 0 : r.monto_neto;
+      r._enDoc = false;
     }
     if (!r._pagado && r._fechaVenc) {
       r._diasMora = Math.round((hoy - r._fechaVenc) / 86400000);
